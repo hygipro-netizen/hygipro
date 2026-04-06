@@ -326,6 +326,10 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
       <div id="docsCats" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px"></div>
       <div id="docsList"><div class="empty"><div class="empty-ico">📄</div><div class="empty-sub">Chargement...</div></div></div>
     </div>
+    <div class="page" id="page-reception">
+      <div class="section-head"><div class="section-title">Réception livraisons</div><button class="btn-sm primary" onclick="openModal('modalAddReception')">+ Réception</button></div>
+      <div id="receptionList"><div class="empty"><div class="empty-ico">📦</div><div class="empty-sub">Chargement...</div></div></div>
+    </div>
     <div class="page" id="page-admin">
       <div class="section-title" style="margin-bottom:14px">Administration</div>
       <div class="admin-tabs">
@@ -358,6 +362,10 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
       <div id="more-docs" onclick="goPageMore('docs')" style="display:flex;align-items:center;gap:14px;padding:14px 18px;border-bottom:1px solid #1e3a5f;cursor:pointer">
         <div style="width:38px;height:38px;border-radius:10px;background:rgba(96,165,250,0.1);display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#60a5fa" stroke-width="1.8" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>
         <div style="flex:1"><div style="font-size:14px;font-weight:600;color:#e8f4f0">Documents</div><div style="font-size:11px;color:#7ba7c4">PMS, DUERT, Attestations...</div></div>
+      </div>
+      <div onclick="goPageMore('reception')" style="display:flex;align-items:center;gap:14px;padding:14px 18px;border-bottom:1px solid #1e3a5f;cursor:pointer">
+        <div style="width:38px;height:38px;border-radius:10px;background:rgba(245,158,11,0.1);display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#f59e0b" stroke-width="1.8" stroke-linecap="round"><path d="M5 8h14M5 8a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v0a2 2 0 01-2 2M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8"/><path d="M10 12h4"/></svg></div>
+        <div style="flex:1"><div style="font-size:14px;font-weight:600;color:#e8f4f0">Réception livraisons</div><div style="font-size:11px;color:#7ba7c4">Contrôle qualité à réception</div></div>
       </div>
       <div id="more-admin" onclick="goPageMore('admin')" style="display:none;align-items:center;gap:14px;padding:14px 18px;cursor:pointer">
         <div style="width:38px;height:38px;border-radius:10px;background:rgba(167,139,250,0.1);display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#a78bfa" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></div>
@@ -479,6 +487,80 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
 </div></div>
 <button class="btn btn-primary" id="btnSaveDoc" onclick="uploadDoc()">Enregistrer le document</button></div></div>
 
+<!-- MODAL RECEPTION LIVRAISON -->
+<div class="modal-overlay" id="modalAddReception"><div class="modal"><div class="modal-handle"></div>
+<div class="modal-title">📦 Réception livraison <button class="modal-close" onclick="closeModal('modalAddReception')">✕</button></div>
+
+<div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:var(--r-md);padding:10px 12px;margin-bottom:14px;font-size:12px;color:#fcd34d">
+  ⚠️ Conformément au règlement CE 852/2004 — Traçabilité obligatoire à chaque réception
+</div>
+
+<div class="form-row">
+  <div class="form-group"><label class="form-label">Fournisseur *</label><input class="form-input" id="recSupplier" placeholder="Ex: Dupont SAS"/></div>
+  <div class="form-group"><label class="form-label">Date livraison *</label><input class="form-input" id="recDate" type="date"/></div>
+</div>
+<div class="form-row">
+  <div class="form-group"><label class="form-label">Heure</label><input class="form-input" id="recTime" type="time"/></div>
+  <div class="form-group"><label class="form-label">N° bon livraison</label><input class="form-input" id="recLot" placeholder="BL-2024"/></div>
+</div>
+<div class="form-group"><label class="form-label">Désignation produit *</label><input class="form-input" id="recProduct" placeholder="Ex: Farine T55, Beurre 84%..."/></div>
+<div class="form-row">
+  <div class="form-group"><label class="form-label">Quantité</label><input class="form-input" id="recQty" placeholder="Ex: 25 kg"/></div>
+  <div class="form-group"><label class="form-label">DLC / DDM</label><input class="form-input" id="recDlc" type="date"/></div>
+</div>
+
+<div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px;margin-top:4px">Températures</div>
+<div class="form-row">
+  <div class="form-group"><label class="form-label">Temp. camion (°C)</label><input class="form-input" id="recTempCamion" type="number" step="0.1" placeholder="Ex: 4.2"/></div>
+  <div class="form-group"><label class="form-label">Temp. produit (°C)</label><input class="form-input" id="recTempProduit" type="number" step="0.1" placeholder="Ex: 3.8"/></div>
+</div>
+<div class="form-group"><label class="form-label">Temp. conforme ?</label>
+  <div style="display:flex;gap:8px">
+    <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text);background:rgba(45,212,160,0.1);border:1px solid rgba(45,212,160,0.3);padding:8px 14px;border-radius:8px;cursor:pointer"><input type="radio" name="recTempOk" id="recTempOk1" value="1" checked> ✅ Oui</label>
+    <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text);background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3);padding:8px 14px;border-radius:8px;cursor:pointer"><input type="radio" name="recTempOk" id="recTempOk0" value="0"> ❌ Non</label>
+  </div>
+</div>
+
+<div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px;margin-top:4px">Contrôle visuel</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+  <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text);background:var(--bg2);border:1px solid var(--border2);padding:10px 12px;border-radius:8px;cursor:pointer"><input type="checkbox" id="recEmballage" checked> 📦 Emballage intact</label>
+  <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text);background:var(--bg2);border:1px solid var(--border2);padding:10px 12px;border-radius:8px;cursor:pointer"><input type="checkbox" id="recEtiquetage" checked> 🏷️ Étiquetage OK</label>
+  <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text);background:var(--bg2);border:1px solid var(--border2);padding:10px 12px;border-radius:8px;cursor:pointer"><input type="checkbox" id="recOdeur" checked> 👃 Odeur normale</label>
+  <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text);background:var(--bg2);border:1px solid var(--border2);padding:10px 12px;border-radius:8px;cursor:pointer"><input type="checkbox" id="recAspect" checked> 👁️ Aspect correct</label>
+</div>
+
+<div class="form-group"><label class="form-label">Conformité globale</label>
+  <select class="form-select" id="recConformite" onchange="toggleActionCorrective(this.value)">
+    <option value="conforme">✅ Conforme — Accepté</option>
+    <option value="accepte_reserve">⚠️ Accepté avec réserve</option>
+    <option value="refuse">❌ Refusé — Retour fournisseur</option>
+  </select>
+</div>
+<div class="form-group" id="recActionDiv" style="display:none">
+  <label class="form-label">Action corrective *</label>
+  <textarea class="form-textarea" id="recAction" placeholder="Décrivez l'action corrective prise (ex: produit mis en quarantaine, fournisseur contacté...)"></textarea>
+</div>
+
+<div class="form-group">
+  <label class="form-label">Photo du bon / produit</label>
+  <div class="photo-zone" onclick="document.getElementById('recPhotoInput').click()">
+    <div class="photo-zone-ico"><svg viewBox="0 0 26 26"><circle cx="13" cy="13" r="10" stroke-width="1.5"/><circle cx="13" cy="13" r="4" stroke-width="1.5"/></svg></div>
+    <div class="photo-zone-title" id="recPhotoTitle">📸 Photo facultative</div>
+    <div class="photo-zone-sub">Bon de livraison, produit, anomalie...</div>
+    <input type="file" id="recPhotoInput" accept="image/*" capture="environment" style="display:none" onchange="previewRecPhoto(this)">
+  </div>
+  <img id="recPhotoPreview" class="photo-preview">
+</div>
+
+<div class="form-group">
+  <label class="form-label">Signature réceptionnaire</label>
+  <canvas id="recSigCanvas" style="width:100%;height:120px;border-radius:10px;border:1.5px solid #254876;touch-action:none;display:block;background:#0d1f38"></canvas>
+  <button class="btn-sm" onclick="clearRecSig()" style="margin-top:6px">🗑 Effacer</button>
+</div>
+
+<button class="btn btn-primary" id="btnSaveReception" onclick="saveReception()" style="margin-top:8px">✅ Valider la réception</button>
+</div></div>
+
 <div class="modal-overlay" id="modalMyPin"><div class="modal"><div class="modal-handle"></div><div class="modal-title">Mon PIN <button class="modal-close" onclick="closeModal('modalMyPin')">✕</button></div><p style="font-size:13px;color:var(--muted);margin-bottom:16px">Choisissez un nouveau PIN à 6 chiffres pour votre compte.</p><div class="form-group"><label class="form-label">Nouveau PIN (6 chiffres)</label><input class="form-input" id="myNewPin" type="number" placeholder="Ex: 739201"/></div><div class="form-group"><label class="form-label">Confirmer le PIN</label><input class="form-input" id="myNewPinConfirm" type="number" placeholder="Répétez le PIN"/></div><button class="btn btn-primary" onclick="saveMyPin()">Enregistrer mon PIN</button></div></div>
 
 <div class="modal-overlay" id="modalChangePin"><div class="modal"><div class="modal-handle"></div><div class="modal-title">Changer le PIN — <span id="changePinUserName" style="color:var(--teal)"></span> <button class="modal-close" onclick="closeModal('modalChangePin')">✕</button></div><input type="hidden" id="changePinUserId"><div class="form-group"><label class="form-label">Nouveau PIN (6 chiffres)</label><input class="form-input" id="newPinValue" type="number" placeholder="Ex: 482910" maxlength="6"/></div><button class="btn btn-primary" onclick="saveNewPin()">Enregistrer le nouveau PIN</button></div></div>
@@ -581,7 +663,7 @@ function goPage(id,el){
   document.getElementById('page-'+id).classList.add('active');
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   if(el)el.classList.add('active');
-  const loaders={home:loadHome,haccp:loadHaccp,temp:loadTemp,labels:loadLabels,admin:loadAdmin,docs:loadDocs};
+  const loaders={home:loadHome,haccp:loadHaccp,temp:loadTemp,labels:loadLabels,admin:loadAdmin,docs:loadDocs,reception:loadReception};
   if(loaders[id])loaders[id]();
 }
 
@@ -1329,7 +1411,13 @@ async function exportCSV(type){
   showToast('Export téléchargé !','ok',2500);
 }
 
-function openModal(id){document.getElementById(id).classList.add('open');}
+function openModal(id){
+  document.getElementById(id).classList.add('open');
+  if(id==='modalAddReception'){
+    resetReceptionForm();
+    setTimeout(initRecSig,100);
+  }
+}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');}));
 let pdfDoc=null,pdfPage=1,pdfTotal=0;
@@ -1384,6 +1472,147 @@ async function renderPdfPage(num){
 function prevPage(){if(pdfPage>1){pdfPage--;renderPdfPage(pdfPage);}}
 function nextPage(){if(pdfPage<pdfTotal){pdfPage++;renderPdfPage(pdfPage);}}
 function closeDocViewer(){document.getElementById('modalDocViewer').style.display='none';pdfDoc=null;pdfPage=1;pdfTotal=0;}
+
+// ===== RECEPTION LIVRAISONS =====
+let recPhotoFile=null;
+let recSigDrawing=false,recSigLX=0,recSigLY=0;
+
+function toggleActionCorrective(val){
+  document.getElementById('recActionDiv').style.display=val==='conforme'?'none':'block';
+}
+function previewRecPhoto(input){
+  recPhotoFile=input.files[0];
+  if(recPhotoFile){
+    const img=document.getElementById('recPhotoPreview');
+    img.src=URL.createObjectURL(recPhotoFile);img.style.display='block';
+    document.getElementById('recPhotoTitle').textContent='✓ Photo ajoutée';
+  }
+}
+function clearRecSig(){
+  const c=document.getElementById('recSigCanvas');
+  const ctx=c.getContext('2d');
+  ctx.fillStyle='#0d1f38';ctx.fillRect(0,0,c.width,c.height);
+  ctx.strokeStyle='rgba(45,212,160,0.2)';ctx.setLineDash([4,8]);
+  ctx.beginPath();ctx.moveTo(20,c.height*0.7);ctx.lineTo(c.width-20,c.height*0.7);ctx.stroke();
+  ctx.setLineDash([]);ctx.fillStyle='#4a7a9b';ctx.font='11px Arial';ctx.textAlign='center';
+  ctx.fillText('Signez ici',c.width/2,c.height*0.85);
+}
+function initRecSig(){
+  const c=document.getElementById('recSigCanvas');
+  if(!c)return;
+  c.width=c.offsetWidth||320;c.height=120;clearRecSig();
+  const start=e=>{recSigDrawing=true;const r=c.getBoundingClientRect(),t=e.touches?e.touches[0]:e;recSigLX=t.clientX-r.left;recSigLY=t.clientY-r.top;};
+  const move=e=>{if(!recSigDrawing)return;e.preventDefault();const r=c.getBoundingClientRect(),t=e.touches?e.touches[0]:e,ctx=c.getContext('2d');const x=t.clientX-r.left,y=t.clientY-r.top;ctx.strokeStyle='#2dd4a0';ctx.lineWidth=2;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(recSigLX,recSigLY);ctx.lineTo(x,y);ctx.stroke();recSigLX=x;recSigLY=y;};
+  c.addEventListener('mousedown',start);c.addEventListener('mousemove',move);c.addEventListener('mouseup',()=>recSigDrawing=false);
+  c.addEventListener('touchstart',start,{passive:false});c.addEventListener('touchmove',move,{passive:false});c.addEventListener('touchend',()=>recSigDrawing=false);
+}
+
+async function saveReception(){
+  const supplier=document.getElementById('recSupplier').value.trim();
+  const product=document.getElementById('recProduct').value.trim();
+  const date=document.getElementById('recDate').value;
+  if(!supplier||!product||!date){showToast('Fournisseur, produit et date requis','warn');return;}
+  const btn=document.getElementById('btnSaveReception');btn.textContent='Enregistrement...';btn.disabled=true;
+
+  // Check signature
+  const c=document.getElementById('recSigCanvas');
+  const pixels=c.getContext('2d').getImageData(0,0,c.width,c.height).data;
+  let signed=false;
+  for(let i=0;i<pixels.length;i+=4){if(pixels[i+1]>180&&pixels[i]<100){signed=true;break;}}
+
+  let photoUrl=null;
+  if(recPhotoFile){
+    const ext=recPhotoFile.name.split('.').pop()||'jpg';
+    const path='receptions/'+Date.now()+'.'+ext;
+    const{error}=await db.storage.from('hygipro-photos').upload(path,recPhotoFile,{upsert:true,contentType:recPhotoFile.type});
+    if(!error){const{data:u}=db.storage.from('hygipro-photos').getPublicUrl(path);photoUrl=u.publicUrl;}
+  }
+
+  const conformite=document.getElementById('recConformite').value;
+  await db.from('receptions').insert({
+    supplier,product_name:product,delivery_date:date,
+    delivery_time:document.getElementById('recTime').value||null,
+    lot_number:document.getElementById('recLot').value||null,
+    quantity:document.getElementById('recQty').value||null,
+    dlc:document.getElementById('recDlc').value||null,
+    temp_camion:document.getElementById('recTempCamion').value?parseFloat(document.getElementById('recTempCamion').value):null,
+    temp_produit:document.getElementById('recTempProduit').value?parseFloat(document.getElementById('recTempProduit').value):null,
+    temp_conforme:document.querySelector('input[name="recTempOk"]:checked').value==='1',
+    emballage_ok:document.getElementById('recEmballage').checked,
+    etiquetage_ok:document.getElementById('recEtiquetage').checked,
+    odeur_ok:document.getElementById('recOdeur').checked,
+    aspect_ok:document.getElementById('recAspect').checked,
+    conformite,
+    action_corrective:conformite!=='conforme'?document.getElementById('recAction').value:null,
+    photo_url:photoUrl,
+    signature:signed?c.toDataURL('image/png'):null,
+    user_id:currentUser.id,
+  });
+
+  btn.textContent='✅ Valider la réception';btn.disabled=false;
+  closeModal('modalAddReception');
+  resetReceptionForm();
+  showToast(conformite==='conforme'?'✅ Réception enregistrée !':conformite==='refuse'?'❌ Refus enregistré':'⚠️ Réception avec réserve enregistrée',conformite==='conforme'?'ok':conformite==='refuse'?'danger':'warn',4000);
+  loadReception();
+}
+
+function resetReceptionForm(){
+  ['recSupplier','recProduct','recDate','recTime','recLot','recQty','recDlc','recTempCamion','recTempProduit','recAction'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('recDate').value=new Date().toISOString().split('T')[0];
+  document.getElementById('recTime').value=new Date().toTimeString().slice(0,5);
+  document.getElementById('recConformite').value='conforme';
+  document.getElementById('recActionDiv').style.display='none';
+  document.getElementById('recEmballage').checked=true;
+  document.getElementById('recEtiquetage').checked=true;
+  document.getElementById('recOdeur').checked=true;
+  document.getElementById('recAspect').checked=true;
+  document.querySelector('input[name="recTempOk"][value="1"]').checked=true;
+  document.getElementById('recPhotoPreview').style.display='none';
+  document.getElementById('recPhotoTitle').textContent='📸 Photo facultative';
+  recPhotoFile=null;
+  clearRecSig();
+}
+
+async function loadReception(){
+  const{data}=await db.from('receptions').select('*').order('created_at',{ascending:false}).limit(50);
+  const el=document.getElementById('receptionList');
+  if(!data||!data.length){el.innerHTML='<div class="empty"><div class="empty-ico">📦</div><div class="empty-title">Aucune réception</div><div class="empty-sub">Enregistrez votre première livraison</div></div>';return;}
+  const conf={conforme:{cls:'ok',ico:'✅',txt:'Conforme'},accepte_reserve:{cls:'warn',ico:'⚠️',txt:'Avec réserve'},refuse:{cls:'danger',ico:'❌',txt:'Refusé'}};
+  el.innerHTML=data.map(r=>{
+    const c=conf[r.conformite]||conf.conforme;
+    const checks=[r.emballage_ok&&'📦',r.etiquetage_ok&&'🏷️',r.odeur_ok&&'👃',r.aspect_ok&&'👁️'].filter(Boolean).join(' ');
+    const nonConf=[!r.emballage_ok&&'Emballage',!r.etiquetage_ok&&'Étiquetage',!r.odeur_ok&&'Odeur',!r.aspect_ok&&'Aspect'].filter(Boolean).join(', ');
+    return`<div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">${r.product_name}</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px">${r.supplier} · ${new Date(r.delivery_date).toLocaleDateString('fr-FR')}${r.delivery_time?' à '+r.delivery_time:''}</div>
+        </div>
+        <span class="pill ${c.cls}">${c.ico} ${c.txt}</span>
+      </div>
+      <div class="card-body" style="padding-top:10px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px">
+          ${r.temp_camion!==null?`<div class="label-field"><div class="label-key">🚚 Temp. camion</div><div class="label-val" style="color:${r.temp_conforme?'var(--teal)':'var(--red)'}">${r.temp_camion}°C</div></div>`:''}
+          ${r.temp_produit!==null?`<div class="label-field"><div class="label-key">🌡️ Temp. produit</div><div class="label-val" style="color:${r.temp_conforme?'var(--teal)':'var(--red)'}">${r.temp_produit}°C</div></div>`:''}
+          ${r.lot_number?`<div class="label-field"><div class="label-key">N° BL</div><div class="label-val">${r.lot_number}</div></div>`:''}
+          ${r.quantity?`<div class="label-field"><div class="label-key">Quantité</div><div class="label-val">${r.quantity}</div></div>`:''}
+          ${r.dlc?`<div class="label-field"><div class="label-key">DLC/DDM</div><div class="label-val">${new Date(r.dlc).toLocaleDateString('fr-FR')}</div></div>`:''}
+        </div>
+        ${checks?`<div style="font-size:12px;color:var(--muted);margin-bottom:4px">Contrôles OK : ${checks}</div>`:''}
+        ${nonConf?`<div style="font-size:12px;color:var(--red);margin-bottom:4px">⚠ Non conforme : ${nonConf}</div>`:''}
+        ${r.action_corrective?`<div style="font-size:12px;color:var(--amber);background:rgba(245,158,11,0.08);border-radius:6px;padding:6px 8px;margin-top:4px">📋 ${r.action_corrective}</div>`:''}
+        ${r.signature?`<div style="font-size:11px;color:var(--subtle);margin-top:6px">✍️ Signé</div>`:''}
+        ${currentUser.role==='admin'?`<button class="btn-sm danger" onclick="deleteReception('${r.id}')" style="margin-top:8px">🗑 Supprimer</button>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function deleteReception(id){
+  if(!confirm('Supprimer cette réception ?'))return;
+  await db.from('receptions').delete().eq('id',id);
+  showToast('Réception supprimée','ok',2500);loadReception();
+}
 
 // ===== BARCODE SCANNER =====
 let html5QrCode=null;
