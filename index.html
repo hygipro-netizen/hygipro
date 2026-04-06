@@ -313,18 +313,37 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
     </div>
   </div>
   <nav class="bottom-nav" id="bottomNav">
-    <button class="nav-item active" onclick="goPage('home',this)"><div class="nav-ico"><svg viewBox="0 0 24 24"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/></svg></div><span class="nav-lbl">Accueil</span></button>
+    <button class="nav-item active" onclick="goPage('home',this)" id="nav-home"><div class="nav-ico"><svg viewBox="0 0 24 24"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/></svg></div><span class="nav-lbl">Accueil</span></button>
     <button class="nav-item" id="nav-haccp" onclick="goPage('haccp',this)"><div class="nav-ico" style="position:relative"><svg viewBox="0 0 24 24"><path d="M12 2L4 6v6c0 5.5 3.5 10.7 8 12 4.5-1.3 8-6.5 8-12V6L12 2z"/></svg><div class="alert-badge hidden" id="badge-haccp">!</div></div><span class="nav-lbl">HACCP</span></button>
     <button class="nav-item" id="nav-temp" onclick="goPage('temp',this)"><div class="nav-ico" style="position:relative"><svg viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><circle cx="12" cy="17" r="4"/></svg><div class="alert-badge hidden" id="badge-temp">!</div></div><span class="nav-lbl">Temp.</span></button>
     <button class="nav-item" id="nav-labels" onclick="goPage('labels',this)"><div class="nav-ico" style="position:relative"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/></svg><div class="alert-badge hidden" id="badge-labels">!</div></div><span class="nav-lbl">Étiquettes</span></button>
-    <button class="nav-item" id="nav-stock" onclick="goPage('stock',this)"><div class="nav-ico" style="position:relative"><svg viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></svg><div class="alert-badge hidden" id="badge-stock">!</div></div><span class="nav-lbl">Stock</span></button>
-    <button class="nav-item" id="nav-orders" onclick="goPage('orders',this)"><div class="nav-ico" style="position:relative"><svg viewBox="0 0 24 24"><path d="M4 4h16l-2 10H6L4 4z"/><circle cx="9" cy="20" r="1.5"/><circle cx="16" cy="20" r="1.5"/></svg><div class="alert-badge hidden" id="badge-orders">!</div></div><span class="nav-lbl">Commandes</span></button>
-    <button class="nav-item hidden" id="nav-docs" onclick="goPage('docs',this)"><div class="nav-ico"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></div><span class="nav-lbl">Documents</span></button>
-    <button class="nav-item hidden" id="nav-admin" onclick="goPage('admin',this)"><div class="nav-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></div><span class="nav-lbl">Admin</span></button>
+    <button class="nav-item" id="nav-more" onclick="toggleMore()"><div class="nav-ico" style="position:relative"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="5" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="19" cy="12" r="1.5" fill="currentColor"/></svg><div class="alert-badge hidden" id="badge-more">!</div></div><span class="nav-lbl">Plus</span></button>
   </nav>
 </div>
 
-<!-- MODALS -->
+  <div id="moreMenu" style="display:none;position:fixed;bottom:calc(72px + env(safe-area-inset-bottom));left:0;right:0;z-index:200;padding:0 12px 8px">
+    <div style="background:#0d1f38;border:1px solid #254876;border-radius:20px;overflow:hidden;box-shadow:0 -8px 40px rgba(0,0,0,0.5)">
+      <div id="more-stock" onclick="goPageMore('stock')" style="display:flex;align-items:center;gap:14px;padding:14px 18px;border-bottom:1px solid #1e3a5f;cursor:pointer">
+        <div style="width:38px;height:38px;border-radius:10px;background:rgba(45,212,160,0.1);display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#2dd4a0" stroke-width="1.8" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg></div>
+        <div style="flex:1"><div style="font-size:14px;font-weight:600;color:#e8f4f0">Stock matières</div><div style="font-size:11px;color:#7ba7c4">Gestion des stocks</div></div>
+        <div class="alert-badge" id="badge-stock" style="position:static;width:20px;height:20px;display:none">!</div>
+      </div>
+      <div id="more-orders" onclick="goPageMore('orders')" style="display:flex;align-items:center;gap:14px;padding:14px 18px;border-bottom:1px solid #1e3a5f;cursor:pointer">
+        <div style="width:38px;height:38px;border-radius:10px;background:rgba(245,158,11,0.1);display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#f59e0b" stroke-width="1.8" stroke-linecap="round"><path d="M4 4h16l-2 10H6L4 4z"/><circle cx="9" cy="20" r="1.5"/><circle cx="16" cy="20" r="1.5"/></svg></div>
+        <div style="flex:1"><div style="font-size:14px;font-weight:600;color:#e8f4f0">Commandes</div><div style="font-size:11px;color:#7ba7c4">Demandes de réapprovisionnement</div></div>
+        <div class="alert-badge" id="badge-orders" style="position:static;width:20px;height:20px;display:none">!</div>
+      </div>
+      <div id="more-docs" onclick="goPageMore('docs')" style="display:flex;align-items:center;gap:14px;padding:14px 18px;border-bottom:1px solid #1e3a5f;cursor:pointer">
+        <div style="width:38px;height:38px;border-radius:10px;background:rgba(96,165,250,0.1);display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#60a5fa" stroke-width="1.8" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>
+        <div style="flex:1"><div style="font-size:14px;font-weight:600;color:#e8f4f0">Documents</div><div style="font-size:11px;color:#7ba7c4">PMS, DUERT, Attestations...</div></div>
+      </div>
+      <div id="more-admin" onclick="goPageMore('admin')" style="display:none;align-items:center;gap:14px;padding:14px 18px;cursor:pointer">
+        <div style="width:38px;height:38px;border-radius:10px;background:rgba(167,139,250,0.1);display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#a78bfa" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></div>
+        <div style="flex:1"><div style="font-size:14px;font-weight:600;color:#e8f4f0">Administration</div><div style="font-size:11px;color:#7ba7c4">Salariés, zones, rapports</div></div>
+      </div>
+    </div>
+  </div>
+  <div id="moreOverlay" onclick="closeMore()" style="display:none;position:fixed;inset:0;z-index:199;background:rgba(0,0,0,0.4)"></div>
 <div class="modal-overlay" id="modalAddTask"><div class="modal"><div class="modal-handle"></div><div class="modal-title">Nouvelle tâche HACCP <button class="modal-close" onclick="closeModal('modalAddTask')">✕</button></div><div class="form-group"><label class="form-label">Titre</label><input class="form-input" id="taskTitle" placeholder="Ex: Nettoyage plan de travail"/></div><div class="form-group"><label class="form-label">Zone</label><input class="form-input" id="taskZone" placeholder="Ex: Cuisine, Frigo n°1..."/></div><div class="form-group"><label class="form-label">Fréquence</label><select class="form-select" id="taskFreq"><option value="daily">Quotidienne</option><option value="weekly">Hebdomadaire</option><option value="monthly">Mensuelle</option></select></div><button class="btn btn-primary" onclick="createTask()">Créer la tâche</button></div></div>
 
 <div class="modal-overlay" id="modalAddZone"><div class="modal"><div class="modal-handle"></div><div class="modal-title">Nouvelle zone <button class="modal-close" onclick="closeModal('modalAddZone')">✕</button></div><div class="form-group"><label class="form-label">Nom</label><input class="form-input" id="zoneName" placeholder="Ex: Frigo n°1, Congélateur..."/></div><div class="form-row"><div class="form-group"><label class="form-label">Seuil min (°C)</label><input class="form-input" id="zoneMin" type="number" placeholder="-18"/></div><div class="form-group"><label class="form-label">Seuil max (°C)</label><input class="form-input" id="zoneMax" type="number" placeholder="4"/></div></div><button class="btn btn-primary" onclick="createZone()">Ajouter</button></div></div>
@@ -339,7 +358,7 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
 
 <div class="modal-overlay" id="modalAddDoc"><div class="modal"><div class="modal-handle"></div><div class="modal-title">Nouveau document <button class="modal-close" onclick="closeModal('modalAddDoc')">✕</button></div>
 <div class="form-group"><label class="form-label">Titre du document *</label><input class="form-input" id="docTitle" placeholder="Ex: PMS 2024, Attestation Marie..."/></div>
-<div class="form-group"><label class="form-label">Catégorie</label><select class="form-select" id="docCategory"><option value="PMS">PMS</option><option value="DUER">DUER</option><option value="Attestation hygiène">Attestation hygiène</option><option value="Procédure">Procédure</option><option value="Fiche technique">Fiche technique</option><option value="Certificat">Certificat</option><option value="Autres">Autres</option></select></div>
+<div class="form-group"><label class="form-label">Catégorie</label><select class="form-select" id="docCategory"><option value="PMS">PMS</option><option value="DUERT">DUERT</option><option value="Attestation hygiène">Attestation hygiène</option><option value="Contrat dératisation">Contrat dératisation</option><option value="Analyses microbiologiques">Analyses microbiologiques</option><option value="Procédure">Procédure</option><option value="Fiche technique">Fiche technique</option><option value="Certificat">Certificat</option><option value="Autres">Autres</option></select></div>
 <div class="form-group"><label class="form-label">Fichier (PDF ou image) *</label><div class="photo-zone" onclick="document.getElementById('docFileInput').click()"><div class="photo-zone-ico"><svg viewBox="0 0 26 26"><path d="M13 3v13M8 11l5-5 5 5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 19h18" stroke-width="2" stroke-linecap="round"/></svg></div><div class="photo-zone-title" id="docFileName">Appuyez pour choisir un fichier</div><div class="photo-zone-sub">PDF, JPG, PNG acceptés</div><input type="file" id="docFileInput" accept=".pdf,image/*" style="display:none" onchange="onDocFileSelect(this)"></div></div>
 <div class="form-group"><label class="form-label">Accès — qui peut voir ce document ?</label><div style="display:flex;flex-direction:column;gap:8px;margin-top:4px" id="docRolesCheck">
 <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text)"><input type="checkbox" value="patissier"> Pâtissier</label>
@@ -440,8 +459,10 @@ function showApp(){
   if(!p.labels&&currentUser.role!=='admin')document.getElementById('nav-labels').classList.add('hidden');
   if(!p.stock&&currentUser.role!=='admin')document.getElementById('nav-stock').classList.add('hidden');
   if(!p.orders&&currentUser.role!=='admin')document.getElementById('nav-orders').classList.add('hidden');
-  if(currentUser.role==='admin'||p.documents)document.getElementById('nav-docs').classList.remove('hidden');
-  if(currentUser.role==='admin')document.getElementById('btnAddDoc').style.display='block';
+  if(currentUser.role==='admin'){document.getElementById('more-admin').style.display='flex';if(document.getElementById('btnAddDoc'))document.getElementById('btnAddDoc').style.display='block';}
+  if(!p.stock&&currentUser.role!=='admin')document.getElementById('more-stock').style.display='none';
+  if(!p.orders&&currentUser.role!=='admin')document.getElementById('more-orders').style.display='none';
+  if(!p.documents&&currentUser.role!=='admin')document.getElementById('more-docs').style.display='none';
   const h=new Date().getHours();
   document.getElementById('greetingTime').textContent=(h<12?'Bonjour':h<18?'Bon après-midi':'Bonsoir')+' 👋';
   document.getElementById('greetingName').textContent=currentUser.name.split(' ')[0];
@@ -653,13 +674,13 @@ async function loadDocs(){
   const filtered=docsFilter==='Tous'?visible:visible.filter(d=>d.category===docsFilter);
   const el=document.getElementById('docsList');
   if(!filtered.length){el.innerHTML='<div class="empty"><div class="empty-ico">📄</div><div class="empty-title">Aucun document</div><div class="empty-sub">'+(currentUser.role==='admin'?'Ajoutez des documents avec + Document':'Aucun document partagé avec vous')+'</div></div>';return;}
-  const catColors={PMS:'rgba(45,212,160,0.12)',DUER:'rgba(248,113,113,0.12)','Attestation hygiène':'rgba(96,165,250,0.12)',Procédure:'rgba(245,158,11,0.12)','Fiche technique':'rgba(167,139,250,0.12)',Certificat:'rgba(244,114,182,0.12)',Autres:'rgba(255,255,255,0.06)'};
-  const catText={PMS:'var(--teal)',DUER:'var(--red)','Attestation hygiène':'var(--blue)',Procédure:'var(--amber)','Fiche technique':'#a78bfa',Certificat:'#f472b6',Autres:'var(--muted)'};
+  const catColors={PMS:'rgba(45,212,160,0.12)',DUERT:'rgba(248,113,113,0.12)','Attestation hygiène':'rgba(96,165,250,0.12)','Contrat dératisation':'rgba(167,139,250,0.12)','Analyses microbiologiques':'rgba(34,211,238,0.12)',Procédure:'rgba(245,158,11,0.12)','Fiche technique':'rgba(255,200,100,0.12)',Certificat:'rgba(244,114,182,0.12)',Autres:'rgba(255,255,255,0.06)'};
+  const catText={PMS:'var(--teal)',DUERT:'var(--red)','Attestation hygiène':'var(--blue)','Contrat dératisation':'#a78bfa','Analyses microbiologiques':'#22d3ee',Procédure:'var(--amber)','Fiche technique':'#fbbf24',Certificat:'#f472b6',Autres:'var(--muted)'};
   el.innerHTML=filtered.map(d=>{
     const roles=d.allowed_roles||[];
-    const rolesText=roles.includes('patissier')&&roles.includes('boulanger')&&roles.includes('vendeuse')?'Tous les salariés':roles.length===0?'Admin seulement':roles.map(r=>r.charAt(0).toUpperCase()+r.slice(1)).join(', ');
+    const rolesText=roles.includes('patissier')&&roles.includes('boulanger')&&roles.includes('vendeuse')?'Tous les salariés':roles.length===0||roles.every(r=>r==='admin')?'Admin seulement':roles.filter(r=>r!=='admin').map(r=>r.charAt(0).toUpperCase()+r.slice(1)).join(', ');
     return`<div class="card"><div class="card-body" style="display:flex;align-items:center;gap:12px">
-      <div style="width:44px;height:44px;border-radius:12px;background:${catColors[d.category]||catColors.Autres};display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:20px">${d.category==='PMS'?'📋':d.category==='DUER'?'⚠️':d.category==='Attestation hygiène'?'🏆':d.category==='Procédure'?'📝':d.category==='Fiche technique'?'🔧':d.category==='Certificat'?'🎖️':'📄'}</div>
+      <div style="width:44px;height:44px;border-radius:12px;background:${catColors[d.category]||catColors.Autres};display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:20px">${d.category==='PMS'?'📋':d.category==='DUERT'?'⚠️':d.category==='Attestation hygiène'?'🏆':d.category==='Contrat dératisation'?'🐀':d.category==='Analyses microbiologiques'?'🔬':d.category==='Procédure'?'📝':d.category==='Fiche technique'?'🔧':d.category==='Certificat'?'🎖️':'📄'}</div>
       <div style="flex:1;min-width:0">
         <div style="font-size:14px;font-weight:700;color:var(--text)">${d.title}</div>
         <div style="font-size:11px;color:${catText[d.category]||'var(--muted)'};font-weight:600;margin-top:2px">${d.category}</div>
@@ -748,6 +769,24 @@ async function deleteUser(id,name){
   if(error){showToast('Erreur : '+error.message,'danger',5000);return;}
   showToast(name+' supprimé avec succès','ok',3000);
   loadUsersList();loadUsers();
+}
+function toggleMore(){
+  const m=document.getElementById('moreMenu'),o=document.getElementById('moreOverlay');
+  const open=m.style.display==='block';
+  m.style.display=open?'none':'block';
+  o.style.display=open?'none':'block';
+  document.getElementById('nav-more').classList.toggle('active',!open);
+}
+function closeMore(){
+  document.getElementById('moreMenu').style.display='none';
+  document.getElementById('moreOverlay').style.display='none';
+  document.getElementById('nav-more').classList.remove('active');
+}
+function goPageMore(id){
+  closeMore();
+  const navEl=document.getElementById('nav-more');
+  goPage(id,navEl);
+  document.getElementById('nav-more').classList.add('active');
 }
 function openMyPinModal(){
   document.getElementById('myNewPin').value='';
