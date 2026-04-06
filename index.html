@@ -351,7 +351,10 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
       </div>
       <div id="adminDashboard"><div id="dashboardContent"><div class="empty"><div class="empty-sub">Chargement...</div></div></div></div>
       <div id="adminSalaries" class="hidden"><div class="section-head"><div class="card-title">Comptes salariés</div><button class="btn-sm primary" onclick="openModal('modalCreateUser')">+ Salarié</button></div><div id="usersList"></div></div>
-      <div id="adminZones" class="hidden"><div id="zonesList"></div></div>
+      <div id="adminZones" class="hidden">
+        <div class="section-head"><div class="card-title">Meubles réfrigérés</div><button class="btn-sm primary" onclick="openModal('modalAddZoneAdmin')">+ Ajouter</button></div>
+        <div id="zonesList"></div>
+      </div>
       <div id="adminRapports" class="hidden"><div class="card"><div class="card-body" style="display:flex;flex-direction:column;gap:10px">
         <div style="font-size:13px;color:var(--muted);margin-bottom:4px">Téléchargez vos données pour les contrôles sanitaires.</div>
         <button class="btn btn-primary" onclick="generateRapportPDF()">📋 Rapport hygiène journalier (HTML)</button>
@@ -416,6 +419,39 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
 </div></div>
 
 <div class="modal-overlay" id="modalAddTask"><div class="modal"><div class="modal-handle"></div><div class="modal-title">Nouvelle tâche HACCP <button class="modal-close" onclick="closeModal('modalAddTask')">✕</button></div><div class="form-group"><label class="form-label">Titre</label><input class="form-input" id="taskTitle" placeholder="Ex: Nettoyage plan de travail"/></div><div class="form-group"><label class="form-label">Zone</label><input class="form-input" id="taskZone" placeholder="Ex: Cuisine, Frigo n°1..."/></div><div class="form-group"><label class="form-label">Fréquence</label><select class="form-select" id="taskFreq"><option value="daily">Quotidienne</option><option value="weekly">Hebdomadaire</option><option value="monthly">Mensuelle</option></select></div><button class="btn btn-primary" onclick="createTask()">Créer la tâche</button></div></div>
+
+<div class="modal-overlay" id="modalAddZoneAdmin"><div class="modal"><div class="modal-handle"></div>
+<div class="modal-title">➕ Nouveau meuble <button class="modal-close" onclick="closeModal('modalAddZoneAdmin')">✕</button></div>
+<div class="form-group"><label class="form-label">Nom du meuble *</label><input class="form-input" id="newZoneName" placeholder="Ex: Meuble J, Vitrine 1..."/></div>
+<div class="form-group"><label class="form-label">Assigné à</label>
+<select class="form-select" id="newZoneRole">
+  <option value="patissier">🥐 Pâtissier</option>
+  <option value="vendeuse">🛍️ Vendeuse</option>
+  <option value="all">👥 Tous</option>
+</select></div>
+<div class="form-row">
+  <div class="form-group"><label class="form-label">Seuil min (°C)</label><input class="form-input" id="newZoneMin" type="number" placeholder="-18"/></div>
+  <div class="form-group"><label class="form-label">Seuil max (°C)</label><input class="form-input" id="newZoneMax" type="number" placeholder="4"/></div>
+</div>
+<button class="btn btn-primary" onclick="addZoneAdmin()">Ajouter le meuble</button>
+</div></div>
+
+<div class="modal-overlay" id="modalEditZone"><div class="modal"><div class="modal-handle"></div>
+<div class="modal-title">✏️ Modifier le meuble <button class="modal-close" onclick="closeModal('modalEditZone')">✕</button></div>
+<input type="hidden" id="editZoneId">
+<div class="form-group"><label class="form-label">Nom *</label><input class="form-input" id="editZoneName" placeholder="Ex: Meuble A"/></div>
+<div class="form-group"><label class="form-label">Assigné à</label>
+<select class="form-select" id="editZoneRole">
+  <option value="patissier">🥐 Pâtissier</option>
+  <option value="vendeuse">🛍️ Vendeuse</option>
+  <option value="all">👥 Tous</option>
+</select></div>
+<div class="form-row">
+  <div class="form-group"><label class="form-label">Seuil min (°C)</label><input class="form-input" id="editZoneMin" type="number" placeholder="-18"/></div>
+  <div class="form-group"><label class="form-label">Seuil max (°C)</label><input class="form-input" id="editZoneMax" type="number" placeholder="4"/></div>
+</div>
+<button class="btn btn-primary" onclick="saveEditZone()">Enregistrer</button>
+</div></div>
 
 <div class="modal-overlay" id="modalAddZone"><div class="modal"><div class="modal-handle"></div><div class="modal-title">Configurer les seuils <button class="modal-close" onclick="closeModal('modalAddZone')">✕</button></div><div class="form-group"><label class="form-label">Nom du meuble (ex: Meuble A)</label><input class="form-input" id="zoneName" placeholder="Ex: Meuble A, Meuble F..."/></div><div class="form-row"><div class="form-group"><label class="form-label">Seuil min (°C)</label><input class="form-input" id="zoneMin" type="number" placeholder="-18"/></div><div class="form-group"><label class="form-label">Seuil max (°C)</label><input class="form-input" id="zoneMax" type="number" placeholder="4"/></div></div><button class="btn btn-primary" onclick="createZone()">Enregistrer</button></div></div>
 
@@ -865,20 +901,10 @@ async function createTask(){
 }
 
 // ===== TEMPERATURES =====
-const ZONES_PATISSIER=['Meuble A','Meuble B','Meuble C','Meuble D','Meuble E'];
-const ZONES_VENDEUSE=['Meuble F','Meuble G','Meuble H','Meuble I'];
-const ZONES_ALL=[...ZONES_PATISSIER,...ZONES_VENDEUSE];
 let currentSlot='14h';
 let tempChartObj=null;
 let chartDays=7;
 let chartZone=null;
-
-function getMyZones(){
-  const r=currentUser.role;
-  if(r==='patissier')return ZONES_PATISSIER;
-  if(r==='vendeuse')return ZONES_VENDEUSE;
-  return ZONES_ALL; // admin, responsable
-}
 
 function selectSlot(slot){
   currentSlot=slot;
@@ -891,25 +917,25 @@ function selectSlot(slot){
 }
 
 async function loadTemp(){
-  const myZones=getMyZones();
-  const{data}=await db.from('temperature_readings').select('*').order('read_at',{ascending:false}).limit(500);
-  const zm={};
-  (data||[]).forEach(r=>{if(myZones.includes(r.zone_name)&&!zm[r.zone_name])zm[r.zone_name]={name:r.zone_name,min:r.threshold_min,max:r.threshold_max};});
-  zoneConfigs=myZones.map(n=>zm[n]||{name:n,min:null,max:null});
+  // Load zones from DB based on role
+  const role=currentUser.role;
+  const{data:zonesData}=await db.from('zones').select('*').eq('active',true).order('name');
+  const allZones=zonesData||[];
+  const myZonesData=allZones.filter(z=>z.role_assigned==='all'||z.role_assigned===role||role==='admin'||role==='responsable');
+  zoneConfigs=myZonesData.map(z=>({name:z.name,min:z.threshold_min,max:z.threshold_max,role:z.role_assigned}));
   zoneConfigs.forEach(z=>{if(tempValues[z.name]===undefined)tempValues[z.name]=3;});
 
   // Check today's slots
   const today=new Date().toISOString().split('T')[0];
-  const todayData=(data||[]).filter(r=>r.read_at&&r.read_at.startsWith(today)&&myZones.includes(r.zone_name));
-  const done14=myZones.filter(z=>todayData.some(r=>r.zone_name===z&&new Date(r.read_at).getHours()>=13&&new Date(r.read_at).getHours()<18)).length;
-  const done21=myZones.filter(z=>todayData.some(r=>r.zone_name===z&&new Date(r.read_at).getHours()>=18)).length;
-  const total=myZones.length;
-  document.getElementById('slot14Status').textContent=done14===total?'✅ Complet':done14+'/'+total+' fait'+(done14>0?'s':'');
-  document.getElementById('slot14Status').style.color=done14===total?'var(--teal)':done14>0?'var(--amber)':'var(--subtle)';
-  document.getElementById('slot21Status').textContent=done21===total?'✅ Complet':done21+'/'+total+' fait'+(done21>0?'s':'');
-  document.getElementById('slot21Status').style.color=done21===total?'var(--teal)':done21>0?'var(--amber)':'var(--subtle)';
-
-  // Auto-select slot based on time
+  const{data}=await db.from('temperature_readings').select('*').gte('read_at',today).order('read_at',{ascending:false});
+  const todayData=(data||[]).filter(r=>myZonesData.some(z=>z.name===r.zone_name));
+  const done14=myZonesData.filter(z=>todayData.some(r=>r.zone_name===z.name&&new Date(r.read_at).getHours()>=13&&new Date(r.read_at).getHours()<18)).length;
+  const done21=myZonesData.filter(z=>todayData.some(r=>r.zone_name===z.name&&new Date(r.read_at).getHours()>=18)).length;
+  const total=myZonesData.length;
+  document.getElementById('slot14Status').textContent=done14===total&&total>0?'✅ Complet':done14+'/'+total+' fait'+(done14>1?'s':'');
+  document.getElementById('slot14Status').style.color=done14===total&&total>0?'var(--teal)':done14>0?'var(--amber)':'var(--subtle)';
+  document.getElementById('slot21Status').textContent=done21===total&&total>0?'✅ Complet':done21+'/'+total+' fait'+(done21>1?'s':'');
+  document.getElementById('slot21Status').style.color=done21===total&&total>0?'var(--teal)':done21>0?'var(--amber)':'var(--subtle)';
   const h=new Date().getHours();
   selectSlot(h>=18?'21h':'14h');
   renderTempList();
@@ -967,10 +993,10 @@ async function loadTempChart(days,btn){
   chartDays=days;
   document.querySelectorAll('#tempSectionGraph .btn-sm').forEach(b=>b.classList.remove('primary'));
   if(btn)btn.classList.add('primary');
-  const myZones=getMyZones();
+  const myZoneNames=zoneConfigs.map(z=>z.name);
   const since=new Date(Date.now()-days*86400000).toISOString();
   const{data}=await db.from('temperature_readings').select('*').gte('read_at',since).order('read_at',{ascending:true});
-  const filtered=(data||[]).filter(r=>myZones.includes(r.zone_name));
+  const filtered=(data||[]).filter(r=>myZoneNames.includes(r.zone_name));
   if(!filtered.length){
     document.getElementById('tempStatCards').innerHTML='<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--muted)">Aucune donnée sur cette période</div>';
     if(tempChartObj){tempChartObj.destroy();tempChartObj=null;}
@@ -986,9 +1012,10 @@ async function loadTempChart(days,btn){
 function selectChartZone(zone){
   chartZone=zone;
   document.querySelectorAll('#tempZoneTabs button').forEach(b=>b.classList.toggle('primary',b.textContent===zone));
+  const myZoneNames=zoneConfigs.map(z=>z.name);
   const since=new Date(Date.now()-chartDays*86400000).toISOString();
   db.from('temperature_readings').select('*').gte('read_at',since).order('read_at',{ascending:true}).then(({data})=>{
-    if(data)drawChart(data.filter(r=>getMyZones().includes(r.zone_name)),zone);
+    if(data)drawChart(data.filter(r=>myZoneNames.includes(r.zone_name)),zone);
   });
 }
 
@@ -1587,9 +1614,80 @@ async function loadUsersList(){
     return'<div class="user-card"><div class="user-avatar" style="background:'+(bgs[u.role]||'rgba(255,255,255,0.1)')+';color:'+(colors[u.role]||'#e8f4f0')+'">'+ini+'</div><div class="user-info"><div class="user-name">'+u.name+'</div><div class="user-role">'+(roleLabel[u.role]||u.role)+'</div><div class="user-pin">PIN : '+u.pin+'</div></div><div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end"><span class="pill '+(u.active?'ok':'danger')+'">'+(u.active?'Actif':'Inactif')+'</span><button class="btn-sm primary" onclick="openChangePinModal(\''+u.id+'\',\''+u.name+'\')">✏️ PIN</button>'+(isAdmin?'':'<button class="btn-sm '+(u.active?'danger':'primary')+'" onclick="toggleUserActive(\''+u.id+'\','+u.active+')">'+(u.active?'Désactiver':'Activer')+'</button><button class="btn-sm danger" onclick="deleteUser(\''+u.id+'\',\''+u.name+'\')">🗑 Suppr.</button>')+'</div></div>';
   }).join('');
 }
-function loadZonesList(){
+async function loadZonesList(){
+  const{data:zones}=await db.from('zones').select('*').eq('active',true).order('name');
   const el=document.getElementById('zonesList');
-  el.innerHTML=zoneConfigs.length?zoneConfigs.map(z=>'<div class="card"><div class="card-body" style="display:flex;align-items:center;justify-content:space-between"><div><div style="font-size:14px;font-weight:700">'+z.name+'</div><div style="font-size:12px;color:var(--muted);margin-top:2px">Min : '+(z.min!==null?z.min+'°C':'—')+' · Max : '+(z.max!==null?z.max+'°C':'—')+'</div></div><span class="pill ok">Active</span></div></div>').join(''):'<div class="empty"><div class="empty-sub">Zones configurées dans Températures</div></div>';
+  if(!zones||!zones.length){
+    el.innerHTML='<div class="empty"><div class="empty-ico">🌡️</div><div class="empty-title">Aucun meuble</div><div class="empty-sub">Ajoutez des meubles avec + Ajouter</div></div>';
+    return;
+  }
+  const roleLabel={patissier:'🥐 Pâtissier',vendeuse:'🛍️ Vendeuse',all:'👥 Tous'};
+  el.innerHTML=zones.map(z=>`
+    <div class="card" style="margin-bottom:8px">
+      <div class="card-body" style="display:flex;align-items:center;gap:12px">
+        <div style="width:40px;height:40px;border-radius:10px;background:rgba(45,212,160,0.1);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">🌡️</div>
+        <div style="flex:1">
+          <div style="font-size:14px;font-weight:700;color:var(--text)">${z.name}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">${roleLabel[z.role_assigned]||z.role_assigned} · Min: ${z.threshold_min!==null?z.threshold_min+'°C':'—'} / Max: ${z.threshold_max!==null?z.threshold_max+'°C':'—'}</div>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button class="btn-sm primary" onclick="openEditZone('${z.id}','${z.name}','${z.role_assigned}',${z.threshold_min},${z.threshold_max})">✏️</button>
+          <button class="btn-sm danger" onclick="deleteZone('${z.id}','${z.name}')">🗑</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+async function addZoneAdmin(){
+  const name=document.getElementById('newZoneName').value.trim();
+  if(!name){showToast('Nom requis','warn');return;}
+  const mn=document.getElementById('newZoneMin').value!==''?parseFloat(document.getElementById('newZoneMin').value):null;
+  const mx=document.getElementById('newZoneMax').value!==''?parseFloat(document.getElementById('newZoneMax').value):null;
+  const role=document.getElementById('newZoneRole').value;
+  const{error}=await db.from('zones').insert({name,role_assigned:role,threshold_min:mn,threshold_max:mx});
+  if(error){showToast('Erreur : '+error.message,'danger');return;}
+  closeModal('modalAddZoneAdmin');
+  document.getElementById('newZoneName').value='';
+  document.getElementById('newZoneMin').value='';
+  document.getElementById('newZoneMax').value='';
+  showToast('Meuble '+name+' ajouté !','ok',2500);
+  loadZonesList();
+}
+
+function openEditZone(id,name,role,mn,mx){
+  document.getElementById('editZoneId').value=id;
+  document.getElementById('editZoneName').value=name;
+  document.getElementById('editZoneRole').value=role;
+  document.getElementById('editZoneMin').value=mn!==null&&mn!=='null'?mn:'';
+  document.getElementById('editZoneMax').value=mx!==null&&mx!=='null'?mx:'';
+  openModal('modalEditZone');
+}
+
+async function saveEditZone(){
+  const id=document.getElementById('editZoneId').value;
+  const name=document.getElementById('editZoneName').value.trim();
+  if(!name){showToast('Nom requis','warn');return;}
+  const mn=document.getElementById('editZoneMin').value!==''?parseFloat(document.getElementById('editZoneMin').value):null;
+  const mx=document.getElementById('editZoneMax').value!==''?parseFloat(document.getElementById('editZoneMax').value):null;
+  const role=document.getElementById('editZoneRole').value;
+  await db.from('zones').update({name,role_assigned:role,threshold_min:mn,threshold_max:mx}).eq('id',id);
+  // Update temperature_readings thresholds for this zone
+  if(mn!==null||mx!==null){
+    await db.from('temperature_readings').update({threshold_min:mn,threshold_max:mx}).eq('zone_name',name);
+  }
+  closeModal('modalEditZone');
+  showToast('Meuble mis à jour !','ok',2500);
+  loadZonesList();
+  // Refresh zoneConfigs
+  loadTemp();
+}
+
+async function deleteZone(id,name){
+  if(!confirm('Supprimer le meuble "'+name+'" ?\nSes relevés de température seront conservés.'))return;
+  await db.from('zones').update({active:false}).eq('id',id);
+  showToast('Meuble '+name+' supprimé','ok',2500);
+  loadZonesList();
+  loadTemp();
 }
 async function toggleUserActive(id,cur){
   await db.from('users').update({active:!cur}).eq('id',id);
