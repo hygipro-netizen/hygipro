@@ -2,1085 +2,663 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#1D9E75">
 <title>HygiPro</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-:root{
-  --teal:#1D9E75;--teal-light:#E1F5EE;--teal-dark:#0F6E56;
-  --amber:#EF9F27;--amber-light:#FAEEDA;
-  --red:#E24B4A;--red-light:#FCEBEB;
-  --bg:#F8F9FA;--card:#fff;--border:#E5E7EB;
-  --text:#1A1A1A;--muted:#6B7280;--subtle:#9CA3AF;
-}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
-
-/* LOGIN */
-.login-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:24px;background:var(--bg)}
-.login-logo{width:72px;height:72px;background:var(--teal);border-radius:20px;display:flex;align-items:center;justify-content:center;margin-bottom:16px}
-.login-logo svg{width:40px;height:40px}
-.login-title{font-size:28px;font-weight:700;color:var(--text);margin-bottom:4px}
-.login-sub{font-size:14px;color:var(--muted);margin-bottom:32px}
-.login-card{background:var(--card);border-radius:16px;padding:24px;width:100%;max-width:360px;border:1px solid var(--border)}
-.field-label{font-size:13px;font-weight:500;color:var(--muted);margin-bottom:6px}
-.field-input{width:100%;border:1.5px solid var(--border);border-radius:10px;padding:12px 14px;font-size:15px;color:var(--text);background:var(--card);outline:none;transition:border 0.15s}
-.field-input:focus{border-color:var(--teal)}
-.field-group{margin-bottom:16px}
-.pin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:16px 0}
-.pin-btn{height:58px;border-radius:12px;border:1.5px solid var(--border);background:var(--card);font-size:22px;font-weight:500;cursor:pointer;transition:all 0.1s;color:var(--text)}
+:root{--teal:#1D9E75;--teal2:#17856a;--teal-light:#E1F5EE;--teal-dark:#0F6E56;--amber:#F59E0B;--amber-light:#FEF3C7;--amber-dark:#92400E;--red:#EF4444;--red-light:#FEE2E2;--red-dark:#991B1B;--blue:#3B82F6;--blue-light:#EFF6FF;--bg:#F0F4F3;--card:#fff;--border:#E2E8E6;--text:#111827;--muted:#6B7280;--subtle:#9CA3AF;--nav-h:68px;--top-h:60px;--r-sm:10px;--r-md:14px;--r-lg:20px;--r-xl:24px}
+html,body{height:100%;overflow:hidden}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text)}
+#toastContainer{position:fixed;top:calc(var(--top-h) + 8px);left:50%;transform:translateX(-50%);z-index:999;display:flex;flex-direction:column;gap:6px;width:calc(100% - 32px);max-width:420px;pointer-events:none}
+.toast{padding:12px 16px;border-radius:var(--r-md);font-size:13px;font-weight:500;display:flex;align-items:center;gap:10px;pointer-events:all;animation:slideDown .3s ease;box-shadow:0 4px 20px rgba(0,0,0,0.15)}
+.toast.danger{background:#FEF2F2;border:1px solid #FECACA;color:#991B1B}
+.toast.warn{background:#FFFBEB;border:1px solid #FDE68A;color:#92400E}
+.toast.ok{background:#F0FDF4;border:1px solid #BBF7D0;color:#14532D}
+.toast.info{background:#EFF6FF;border:1px solid #BFDBFE;color:#1E40AF}
+.toast-close{margin-left:auto;background:none;border:none;cursor:pointer;font-size:16px;opacity:0.5}
+@keyframes slideDown{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+.alert-badge{position:absolute;top:-4px;right:-4px;width:18px;height:18px;background:var(--red);border-radius:50%;font-size:10px;font-weight:700;color:white;display:flex;align-items:center;justify-content:center;border:2px solid var(--bg)}
+.login-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:24px;background:linear-gradient(160deg,#0d4a38 0%,#1D9E75 60%,#2dd4a0 100%);overflow-y:auto}
+.login-logo-wrap{margin-bottom:24px;text-align:center}
+.login-logo{width:80px;height:80px;background:rgba(255,255,255,0.2);border-radius:24px;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;border:2px solid rgba(255,255,255,0.3)}
+.login-logo svg{width:46px;height:46px}
+.login-title{font-size:32px;font-weight:800;color:white;letter-spacing:-0.5px}
+.login-sub{font-size:14px;color:rgba(255,255,255,0.75);margin-top:4px}
+.login-card{background:white;border-radius:var(--r-xl);padding:24px;width:100%;max-width:360px;box-shadow:0 24px 60px rgba(0,0,0,0.2)}
+.field-label{font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px}
+.field-select{width:100%;border:2px solid var(--border);border-radius:var(--r-md);padding:13px 14px;font-size:15px;color:var(--text);background:var(--bg);outline:none;font-weight:500;appearance:none;margin-bottom:16px}
+.field-select:focus{border-color:var(--teal)}
+.pin-label{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px}
+.pin-display{display:flex;gap:12px;justify-content:center;margin-bottom:20px}
+.pin-dot{width:16px;height:16px;border-radius:50%;border:2.5px solid var(--border);background:transparent;transition:all .2s}
+.pin-dot.filled{background:var(--teal);border-color:var(--teal);transform:scale(1.1)}
+.pin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.pin-btn{height:62px;border-radius:var(--r-md);border:2px solid var(--border);background:var(--bg);font-size:24px;font-weight:600;cursor:pointer;transition:all .15s;color:var(--text)}
 .pin-btn:active{background:var(--teal-light);border-color:var(--teal);transform:scale(0.95)}
-.pin-display{display:flex;gap:10px;justify-content:center;margin:16px 0}
-.pin-dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--border);background:transparent;transition:all 0.15s}
-.pin-dot.filled{background:var(--teal);border-color:var(--teal)}
-.btn{width:100%;padding:14px;border-radius:12px;border:none;font-size:15px;font-weight:600;cursor:pointer;transition:all 0.15s}
-.btn-primary{background:var(--teal);color:white}
-.btn-primary:active{background:var(--teal-dark)}
-.btn-danger{background:var(--red-light);color:var(--red)}
-.btn-outline{background:transparent;border:1.5px solid var(--border);color:var(--text)}
-.error-msg{background:var(--red-light);color:var(--red);padding:10px 14px;border-radius:10px;font-size:13px;margin-bottom:12px;text-align:center}
-.success-msg{background:var(--teal-light);color:var(--teal-dark);padding:10px 14px;border-radius:10px;font-size:13px;margin-bottom:12px;text-align:center}
-
-/* APP SHELL */
-.app{display:none;flex-direction:column;min-height:100vh}
+.pin-btn-ok{background:var(--teal);color:white;border-color:var(--teal);font-size:15px}
+.pin-hint{font-size:11px;color:var(--subtle);text-align:center;margin-top:12px}
+.login-error{background:var(--red-light);color:var(--red-dark);padding:10px 14px;border-radius:var(--r-sm);font-size:13px;margin-bottom:14px;text-align:center;display:none}
+.app{display:none;flex-direction:column;height:100vh;overflow:hidden}
 .app.visible{display:flex}
-.topbar{background:var(--teal);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
-.topbar-title{font-size:17px;font-weight:700;color:white}
-.topbar-user{display:flex;align-items:center;gap:8px}
-.topbar-avatar{width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.25);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:white}
-.topbar-name{font-size:13px;color:rgba(255,255,255,0.9)}
-.logout-btn{background:rgba(255,255,255,0.2);border:none;color:white;padding:6px 10px;border-radius:8px;font-size:12px;cursor:pointer}
-
-/* BOTTOM NAV */
-.bottom-nav{background:var(--card);border-top:1px solid var(--border);display:flex;position:sticky;bottom:0;z-index:100}
-.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 4px 12px;cursor:pointer;border:none;background:transparent}
-.nav-item svg{width:22px;height:22px;stroke:var(--subtle);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.nav-item span{font-size:10px;color:var(--subtle);font-weight:500}
-.nav-item.active svg{stroke:var(--teal)}
-.nav-item.active span{color:var(--teal)}
-
-/* CONTENT */
-.content{flex:1;overflow-y:auto;padding:16px}
-.page{display:none}
+.topbar{height:var(--top-h);background:var(--teal);padding:0 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.topbar-left{display:flex;align-items:center;gap:10px}
+.topbar-logo{width:32px;height:32px;background:rgba(255,255,255,0.2);border-radius:10px;display:flex;align-items:center;justify-content:center}
+.topbar-logo svg{width:18px;height:18px}
+.topbar-title{font-size:18px;font-weight:800;color:white;letter-spacing:-0.3px}
+.topbar-right{display:flex;align-items:center;gap:8px}
+.topbar-avatar{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,0.25);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:white;border:2px solid rgba(255,255,255,0.4)}
+.topbar-name{font-size:12px;color:rgba(255,255,255,0.9);font-weight:500;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.logout-btn{background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:white;padding:6px 10px;border-radius:8px;font-size:12px;cursor:pointer;font-weight:500}
+.alert-bar{background:#FFFBEB;border-bottom:2px solid #FDE68A;padding:10px 16px;display:none;align-items:center;gap:8px;flex-shrink:0}
+.alert-bar.visible{display:flex}
+.alert-bar-text{font-size:12px;color:#92400E;font-weight:600;flex:1}
+.alert-bar-close{background:none;border:none;font-size:18px;cursor:pointer;color:#92400E}
+.content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:calc(var(--nav-h) + 8px)}
+.page{display:none;padding:16px}
 .page.active{display:block}
-
-/* CARDS */
-.card{background:var(--card);border-radius:14px;border:1px solid var(--border);margin-bottom:14px;overflow:hidden}
+.bottom-nav{height:var(--nav-h);background:var(--card);border-top:1px solid var(--border);display:flex;flex-shrink:0;padding-bottom:env(safe-area-inset-bottom)}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;border:none;background:transparent;padding:8px 2px;position:relative;min-width:0}
+.nav-ico{width:26px;height:26px;display:flex;align-items:center;justify-content:center;position:relative}
+.nav-ico svg{width:22px;height:22px;stroke:var(--subtle);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:stroke .15s}
+.nav-lbl{font-size:10px;color:var(--subtle);font-weight:500;transition:color .15s;white-space:nowrap}
+.nav-item.active .nav-ico svg{stroke:var(--teal)}
+.nav-item.active .nav-lbl{color:var(--teal);font-weight:700}
+.greeting-block{margin-bottom:18px}
+.greeting-time{font-size:12px;color:var(--muted);font-weight:500;margin-bottom:2px}
+.greeting-name{font-size:22px;font-weight:800;color:var(--text);letter-spacing:-0.3px}
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.kpi{background:var(--card);border-radius:var(--r-lg);padding:16px;border:1px solid var(--border);position:relative;overflow:hidden}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.kpi.ok::before{background:var(--teal)}
+.kpi.warn::before{background:var(--amber)}
+.kpi.danger::before{background:var(--red)}
+.kpi.info::before{background:var(--blue)}
+.kpi-ico{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:10px}
+.kpi-ico svg{width:18px;height:18px;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;fill:none}
+.kpi-val{font-size:28px;font-weight:800;color:var(--text);letter-spacing:-1px;line-height:1}
+.kpi-label{font-size:11px;color:var(--muted);font-weight:500;margin-top:4px}
+.section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.section-title{font-size:16px;font-weight:700;color:var(--text)}
+.alert-card{border-radius:var(--r-md);padding:12px 14px;display:flex;gap:10px;align-items:flex-start;margin-bottom:8px;border:1px solid}
+.alert-card.danger{background:#FEF2F2;border-color:#FECACA}
+.alert-card.warn{background:#FFFBEB;border-color:#FDE68A}
+.alert-card.ok{background:#F0FDF4;border-color:#BBF7D0}
+.alert-card.info{background:#EFF6FF;border-color:#BFDBFE}
+.alert-card-ico{font-size:18px;flex-shrink:0;line-height:1.2}
+.alert-card-content{flex:1}
+.alert-card-title{font-size:13px;font-weight:600;margin-bottom:2px}
+.alert-card.danger .alert-card-title{color:#991B1B}
+.alert-card.warn .alert-card-title{color:#92400E}
+.alert-card.info .alert-card-title{color:#1E40AF}
+.activity-card{background:var(--card);border-radius:var(--r-lg);border:1px solid var(--border);overflow:hidden;margin-bottom:16px}
+.activity-head{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.activity-title{font-size:14px;font-weight:700}
+.act-row{display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid var(--border)}
+.act-row:last-child{border-bottom:none}
+.act-ico{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;background:#F3F4F6}
+.act-info{flex:1;min-width:0}
+.act-title{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.act-sub{font-size:11px;color:var(--muted);margin-top:1px}
+.pill{font-size:11px;font-weight:600;padding:4px 9px;border-radius:20px;white-space:nowrap}
+.pill.ok{background:#DCFCE7;color:#14532D}
+.pill.warn{background:#FEF9C3;color:#854D0E}
+.pill.danger{background:#FEE2E2;color:#991B1B}
+.pill.pending{background:#F3F4F6;color:#6B7280}
+.pill.info{background:#DBEAFE;color:#1E40AF}
+.card{background:var(--card);border-radius:var(--r-lg);border:1px solid var(--border);margin-bottom:12px;overflow:hidden}
 .card-header{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
-.card-title{font-size:14px;font-weight:600;color:var(--text)}
+.card-title{font-size:14px;font-weight:700}
 .card-body{padding:14px 16px}
-
-/* KPI */
-.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
-.kpi{background:var(--card);border-radius:12px;border:1px solid var(--border);padding:14px}
-.kpi-label{font-size:11px;color:var(--muted);margin-bottom:4px;font-weight:500}
-.kpi-value{font-size:26px;font-weight:700;color:var(--text)}
-.kpi-value.danger{color:var(--red)}
-.kpi-value.warn{color:var(--amber)}
-.kpi-value.ok{color:var(--teal)}
-
-/* ALERTS */
-.alert{padding:12px 14px;border-radius:10px;font-size:13px;margin-bottom:10px;display:flex;gap:10px;align-items:flex-start}
-.alert.warn{background:var(--amber-light);color:#633806}
-.alert.danger{background:var(--red-light);color:#7F1D1D}
-.alert.ok{background:var(--teal-light);color:var(--teal-dark)}
-.alert-icon{font-size:16px;flex-shrink:0}
-
-/* PILLS */
-.pill{font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px}
-.pill.ok{background:var(--teal-light);color:var(--teal-dark)}
-.pill.warn{background:var(--amber-light);color:#854F0B}
-.pill.danger{background:var(--red-light);color:#991B1B}
-.pill.pending{background:#F3F4F6;color:var(--muted)}
-
-/* ROWS */
-.list-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
-.list-row:last-child{border-bottom:none}
-.row-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px}
-.row-info{flex:1;min-width:0}
-.row-title{font-size:13px;font-weight:500;color:var(--text)}
-.row-sub{font-size:11px;color:var(--muted);margin-top:2px}
-
-/* FORMS */
-.form-group{margin-bottom:14px}
-.form-label{font-size:12px;font-weight:500;color:var(--muted);margin-bottom:6px;display:block}
-.form-input{width:100%;border:1.5px solid var(--border);border-radius:10px;padding:11px 13px;font-size:14px;color:var(--text);background:var(--card);outline:none}
-.form-input:focus{border-color:var(--teal)}
-.form-select{width:100%;border:1.5px solid var(--border);border-radius:10px;padding:11px 13px;font-size:14px;color:var(--text);background:var(--card);outline:none;appearance:none}
-.form-textarea{width:100%;border:1.5px solid var(--border);border-radius:10px;padding:11px 13px;font-size:14px;color:var(--text);background:var(--card);outline:none;resize:none;height:80px}
-.btn-sm{padding:8px 14px;border-radius:9px;border:1.5px solid var(--border);background:transparent;font-size:12px;font-weight:600;cursor:pointer;color:var(--text)}
-.btn-sm.primary{background:var(--teal);color:white;border-color:var(--teal)}
-.btn-sm.danger{background:var(--red-light);color:var(--red);border-color:var(--red-light)}
-
-/* TEMP */
-.temp-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px}
-.temp-zone{font-size:13px;font-weight:600;color:var(--text);margin-bottom:10px}
-.temp-controls{display:flex;align-items:center;gap:12px}
-.temp-val{font-size:32px;font-weight:700;min-width:100px}
+.check-item{display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:1px solid var(--border)}
+.check-item:last-child{border-bottom:none}
+.chk{width:26px;height:26px;border-radius:8px;border:2.5px solid var(--border);flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.chk.on{background:var(--teal);border-color:var(--teal)}
+.chk.on::after{content:'';width:12px;height:7px;border-left:2.5px solid white;border-bottom:2.5px solid white;transform:rotate(-45deg) translateY(-1px);display:block}
+.chk-label{font-size:13px;font-weight:500;flex:1}
+.chk-label.done{text-decoration:line-through;color:var(--subtle)}
+.chk-zone{font-size:11px;color:var(--muted);background:var(--bg);padding:2px 7px;border-radius:6px}
+.temp-card{background:var(--card);border-radius:var(--r-lg);border:1px solid var(--border);padding:16px;margin-bottom:10px;position:relative;overflow:hidden}
+.temp-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px}
+.temp-card.ok::before{background:var(--teal)}
+.temp-card.danger::before{background:var(--red)}
+.temp-card.unknown::before{background:var(--subtle)}
+.temp-zone-name{font-size:14px;font-weight:700;margin-bottom:12px}
+.temp-row{display:flex;align-items:center;gap:12px}
+.temp-val{font-size:38px;font-weight:800;letter-spacing:-1px;line-height:1;flex:1}
 .temp-val.ok{color:var(--teal)}
 .temp-val.danger{color:var(--red)}
-.temp-adjbtn{width:44px;height:44px;border-radius:10px;border:1.5px solid var(--border);background:var(--bg);font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:600}
-.temp-seuil{font-size:11px;color:var(--muted);margin-top:4px}
-
-/* STOCK BAR */
-.stock-bar-wrap{flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden}
-.stock-bar{height:100%;border-radius:3px;transition:width 0.3s}
+.temp-val.unknown{color:var(--muted)}
+.temp-btns{display:flex;flex-direction:column;gap:8px}
+.temp-btn{width:44px;height:44px;border-radius:var(--r-sm);border:2px solid var(--border);background:var(--bg);font-size:22px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text);transition:all .1s}
+.temp-btn:active{background:var(--teal-light);border-color:var(--teal)}
+.temp-seuil{font-size:11px;color:var(--muted);margin-top:6px}
+.temp-alert-txt{font-size:11px;color:var(--red);font-weight:600;margin-top:4px}
+.stock-card{background:var(--card);border-radius:var(--r-lg);border:1px solid var(--border);padding:16px;margin-bottom:10px}
+.stock-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px}
+.stock-name{font-size:14px;font-weight:700}
+.stock-unit{font-size:11px;color:var(--muted);margin-top:2px}
+.stock-qty{font-size:24px;font-weight:800;color:var(--text);text-align:right}
+.stock-qty-unit{font-size:12px;color:var(--muted);text-align:right}
+.stock-bar-wrap{height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin-bottom:10px}
+.stock-bar{height:100%;border-radius:3px;transition:width .4s}
 .stock-bar.ok{background:var(--teal)}
 .stock-bar.warn{background:var(--amber)}
 .stock-bar.danger{background:var(--red)}
-
-/* CHECKLIST */
-.check-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
-.check-item:last-child{border-bottom:none}
-.check-box{width:24px;height:24px;border-radius:7px;border:2px solid var(--border);flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s}
-.check-box.checked{background:var(--teal);border-color:var(--teal)}
-.check-box.checked::after{content:'';width:12px;height:7px;border-left:2.5px solid white;border-bottom:2.5px solid white;transform:rotate(-45deg) translateY(-1px)}
-.check-label{font-size:13px;color:var(--text);flex:1}
-.check-label.done{text-decoration:line-through;color:var(--muted)}
-
-/* PHOTO UPLOAD */
-.photo-zone{border:2px dashed var(--border);border-radius:12px;padding:28px 20px;text-align:center;cursor:pointer;transition:all 0.15s;background:var(--bg)}
-.photo-zone:hover{border-color:var(--teal);background:var(--teal-light)}
-.photo-preview{width:100%;border-radius:12px;margin-top:12px;max-height:200px;object-fit:cover}
-
-/* MODAL */
-.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;align-items:flex-end;justify-content:center}
+.order-card{background:var(--card);border-radius:var(--r-lg);border:1px solid var(--border);padding:16px;margin-bottom:10px}
+.order-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px}
+.order-name{font-size:14px;font-weight:700}
+.order-meta{font-size:12px;color:var(--muted);margin-top:2px}
+.label-card{background:var(--card);border-radius:var(--r-lg);border:1px solid var(--border);overflow:hidden;margin-bottom:12px}
+.label-photo{width:100%;height:140px;object-fit:cover}
+.label-body{padding:14px 16px}
+.label-name{font-size:15px;font-weight:700;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px}
+.label-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.label-field{background:var(--bg);border-radius:var(--r-sm);padding:8px 10px}
+.label-key{font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.4px}
+.label-val{font-size:13px;font-weight:600;color:var(--text);margin-top:2px}
+.btn{width:100%;padding:15px;border-radius:var(--r-md);border:none;font-size:15px;font-weight:700;cursor:pointer;transition:all .15s}
+.btn-primary{background:var(--teal);color:white}
+.btn-primary:active{background:var(--teal2);transform:scale(0.98)}
+.btn-outline{background:transparent;border:2px solid var(--border);color:var(--text)}
+.btn-sm{padding:9px 14px;border-radius:var(--r-sm);border:1.5px solid var(--border);background:transparent;font-size:12px;font-weight:700;cursor:pointer;color:var(--text);transition:all .1s;white-space:nowrap}
+.btn-sm:active{transform:scale(0.96)}
+.btn-sm.primary{background:var(--teal);color:white;border-color:var(--teal)}
+.btn-sm.danger{background:var(--red-light);color:var(--red-dark);border-color:var(--red-light)}
+.form-group{margin-bottom:14px}
+.form-label{font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px;display:block;text-transform:uppercase;letter-spacing:0.4px}
+.form-input,.form-select,.form-textarea{width:100%;border:2px solid var(--border);border-radius:var(--r-md);padding:12px 14px;font-size:14px;color:var(--text);background:var(--bg);outline:none;transition:border .15s;font-family:inherit}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--teal);background:white}
+.form-select{appearance:none}
+.form-textarea{resize:none;height:80px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.photo-zone{border:2.5px dashed var(--border);border-radius:var(--r-lg);padding:28px 20px;text-align:center;cursor:pointer;background:var(--bg);margin-bottom:12px}
+.photo-zone:active{border-color:var(--teal);background:var(--teal-light)}
+.photo-zone-ico{width:56px;height:56px;background:var(--teal-light);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 12px}
+.photo-zone-ico svg{width:26px;height:26px;stroke:var(--teal);fill:none;stroke-width:2;stroke-linecap:round}
+.photo-zone-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:4px}
+.photo-zone-sub{font-size:12px;color:var(--muted)}
+.photo-preview{width:100%;border-radius:var(--r-md);margin-top:12px;max-height:200px;object-fit:cover;display:none}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:300;align-items:flex-end;justify-content:center}
 .modal-overlay.open{display:flex}
-.modal{background:var(--card);border-radius:20px 20px 0 0;padding:20px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto}
-.modal-title{font-size:16px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between}
-.modal-close{background:var(--bg);border:none;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center}
-
-/* SECTION HEADER */
-.section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
-.section-title{font-size:16px;font-weight:700;color:var(--text)}
-
-/* ADMIN */
-.admin-tab-bar{display:flex;gap:4px;margin-bottom:16px;overflow-x:auto;padding-bottom:2px}
-.admin-tab{padding:8px 14px;border-radius:20px;font-size:13px;font-weight:500;cursor:pointer;border:none;background:var(--bg);color:var(--muted);white-space:nowrap}
+.modal{background:var(--card);border-radius:var(--r-xl) var(--r-xl) 0 0;padding:20px 20px calc(20px + env(safe-area-inset-bottom));width:100%;max-width:480px;max-height:92vh;overflow-y:auto}
+.modal-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 16px}
+.modal-title{font-size:18px;font-weight:800;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between}
+.modal-close{background:var(--bg);border:none;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;color:var(--muted);flex-shrink:0}
+.admin-tabs{display:flex;gap:6px;margin-bottom:16px;background:var(--card);border-radius:var(--r-lg);padding:4px;border:1px solid var(--border)}
+.admin-tab{flex:1;padding:9px 6px;border-radius:var(--r-md);font-size:12px;font-weight:600;cursor:pointer;border:none;background:transparent;color:var(--muted);text-align:center}
 .admin-tab.active{background:var(--teal);color:white}
-
-.hidden{display:none}
-.spinner{display:inline-block;width:20px;height:20px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:spin 0.7s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-
-.fab{position:fixed;bottom:80px;right:16px;width:52px;height:52px;border-radius:16px;background:var(--teal);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:50;box-shadow:0 4px 12px rgba(29,158,117,0.4)}
-.fab svg{width:24px;height:24px;stroke:white;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.user-card{background:var(--card);border-radius:var(--r-lg);border:1px solid var(--border);padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;gap:12px}
+.user-avatar{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;flex-shrink:0}
+.user-info{flex:1;min-width:0}
+.user-name{font-size:14px;font-weight:700}
+.user-role{font-size:12px;color:var(--muted);margin-top:2px}
+.user-pin{font-size:11px;color:var(--subtle);font-family:monospace;margin-top:1px}
+.empty{text-align:center;padding:48px 20px;color:var(--muted)}
+.empty-ico{font-size:40px;margin-bottom:12px;opacity:0.5}
+.empty-title{font-size:15px;font-weight:600;color:var(--text);margin-bottom:6px}
+.empty-sub{font-size:13px}
+.hidden{display:none!important}
 </style>
 </head>
 <body>
-
-<!-- LOGIN -->
+<div id="toastContainer"></div>
 <div id="loginScreen" class="login-screen">
-  <div class="login-logo">
-    <svg viewBox="0 0 40 40" fill="none">
-      <path d="M20 4L5 12v8c0 9 6 17.4 15 19.5C29 37.4 35 29 35 20v-8L20 4z" fill="white" fill-opacity="0.9"/>
-      <path d="M13 20l5 5 9-9" stroke="#1D9E75" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
+  <div class="login-logo-wrap">
+    <div class="login-logo"><svg viewBox="0 0 46 46" fill="none"><path d="M23 4L6 13v9c0 10.5 7 20.4 17 23 10-2.6 17-12.5 17-23v-9L23 4z" fill="white" opacity=".95"/><path d="M15 23l6 6 10-10" stroke="#1D9E75" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <div class="login-title">HygiPro</div>
+    <div class="login-sub">Hygiène &amp; HACCP professionnel</div>
   </div>
-  <div class="login-title">HygiPro</div>
-  <div class="login-sub">Hygiène & HACCP professionnel</div>
   <div class="login-card">
-    <div id="loginError" class="error-msg hidden"></div>
-    <div class="field-group">
-      <div class="field-label">Votre nom</div>
-      <select id="userSelect" class="field-input">
-        <option value="">Chargement...</option>
-      </select>
-    </div>
-    <div class="field-label">Code PIN</div>
-    <div class="pin-display">
-      <div class="pin-dot" id="pd0"></div>
-      <div class="pin-dot" id="pd1"></div>
-      <div class="pin-dot" id="pd2"></div>
-      <div class="pin-dot" id="pd3"></div>
-    </div>
+    <div id="loginError" class="login-error"></div>
+    <div class="field-label">Votre nom</div>
+    <select id="userSelect" class="field-select"><option value="">Chargement...</option></select>
+    <div class="pin-label">Code PIN</div>
+    <div class="pin-display"><div class="pin-dot" id="pd0"></div><div class="pin-dot" id="pd1"></div><div class="pin-dot" id="pd2"></div><div class="pin-dot" id="pd3"></div></div>
     <div class="pin-grid">
-      <button class="pin-btn" onclick="pinPress('1')">1</button>
-      <button class="pin-btn" onclick="pinPress('2')">2</button>
-      <button class="pin-btn" onclick="pinPress('3')">3</button>
-      <button class="pin-btn" onclick="pinPress('4')">4</button>
-      <button class="pin-btn" onclick="pinPress('5')">5</button>
-      <button class="pin-btn" onclick="pinPress('6')">6</button>
-      <button class="pin-btn" onclick="pinPress('7')">7</button>
-      <button class="pin-btn" onclick="pinPress('8')">8</button>
-      <button class="pin-btn" onclick="pinPress('9')">9</button>
-      <button class="pin-btn" onclick="pinPress('')" style="font-size:13px;color:var(--muted)">⌫</button>
+      <button class="pin-btn" onclick="pinPress('1')">1</button><button class="pin-btn" onclick="pinPress('2')">2</button><button class="pin-btn" onclick="pinPress('3')">3</button>
+      <button class="pin-btn" onclick="pinPress('4')">4</button><button class="pin-btn" onclick="pinPress('5')">5</button><button class="pin-btn" onclick="pinPress('6')">6</button>
+      <button class="pin-btn" onclick="pinPress('7')">7</button><button class="pin-btn" onclick="pinPress('8')">8</button><button class="pin-btn" onclick="pinPress('9')">9</button>
+      <button class="pin-btn" onclick="pinPress('DEL')" style="font-size:18px;color:var(--muted)">⌫</button>
       <button class="pin-btn" onclick="pinPress('0')">0</button>
-      <button class="pin-btn" onclick="doLogin()" style="background:var(--teal);color:white;border-color:var(--teal);font-size:13px">OK</button>
+      <button class="pin-btn pin-btn-ok" onclick="doLogin()">OK ✓</button>
     </div>
-    <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:8px">Admin par défaut : PIN 0000</div>
+    <div class="pin-hint">Admin par défaut · PIN 0000</div>
   </div>
 </div>
 
-<!-- APP -->
 <div id="app" class="app">
   <div class="topbar">
-    <div class="topbar-title">HygiPro</div>
-    <div class="topbar-user">
+    <div class="topbar-left">
+      <div class="topbar-logo"><svg viewBox="0 0 18 18" fill="none"><path d="M9 1.5L2 5v4c0 4.4 3 8.5 7 9.5 4-1 7-5.1 7-9.5V5L9 1.5z" fill="white" opacity=".9"/><path d="M6 9l2.5 2.5 3.5-3.5" stroke="#1D9E75" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div class="topbar-title">HygiPro</div>
+    </div>
+    <div class="topbar-right">
       <div class="topbar-avatar" id="topbarAvatar">--</div>
       <div class="topbar-name" id="topbarName">--</div>
       <button class="logout-btn" onclick="doLogout()">Quitter</button>
     </div>
   </div>
-
+  <div class="alert-bar" id="alertBar">
+    <span style="font-size:16px">⚠️</span>
+    <span class="alert-bar-text" id="alertBarText"></span>
+    <button class="alert-bar-close" onclick="document.getElementById('alertBar').classList.remove('visible')">✕</button>
+  </div>
   <div class="content">
-
-    <!-- ACCUEIL -->
     <div class="page active" id="page-home">
-      <div class="kpi-grid">
-        <div class="kpi"><div class="kpi-label">Tâches HACCP</div><div class="kpi-value ok" id="kpi-haccp">--</div></div>
-        <div class="kpi"><div class="kpi-label">Alertes stock</div><div class="kpi-value danger" id="kpi-stock">--</div></div>
-        <div class="kpi"><div class="kpi-label">Commandes</div><div class="kpi-value warn" id="kpi-orders">--</div></div>
-        <div class="kpi"><div class="kpi-label">Étiquettes</div><div class="kpi-value" id="kpi-labels">--</div></div>
-      </div>
-      <div id="homeAlerts"></div>
-      <div class="card">
-        <div class="card-header"><div class="card-title">Activité récente</div></div>
-        <div class="card-body" id="recentActivity">
-          <div style="text-align:center;color:var(--muted);font-size:13px;padding:20px 0">Chargement...</div>
-        </div>
+      <div class="greeting-block"><div class="greeting-time" id="greetingTime">Bonjour 👋</div><div class="greeting-name" id="greetingName">--</div></div>
+      <div class="kpi-grid" id="kpiGrid"></div>
+      <div id="alertCards"></div>
+      <div class="activity-card">
+        <div class="activity-head"><div class="activity-title">Activité récente</div><button style="font-size:12px;color:var(--teal);font-weight:600;background:none;border:none;cursor:pointer" onclick="goPage('labels',document.getElementById('nav-labels'))">Voir tout</button></div>
+        <div id="recentActivity"><div class="empty"><div class="empty-sub">Chargement...</div></div></div>
       </div>
     </div>
-
-    <!-- HACCP -->
     <div class="page" id="page-haccp">
-      <div class="section-head">
-        <div class="section-title">HACCP & Hygiène</div>
-        <button class="btn-sm primary" onclick="openModal('modalAddTask')" id="btnAddTask">+ Tâche</button>
-      </div>
-      <div id="haccpList">
-        <div style="text-align:center;color:var(--muted);font-size:13px;padding:40px 0">Chargement...</div>
-      </div>
+      <div class="section-head"><div class="section-title">HACCP &amp; Hygiène</div><button class="btn-sm primary" id="btnAddTask" onclick="openModal('modalAddTask')">+ Tâche</button></div>
+      <div id="haccpList"><div class="empty"><div class="empty-ico">✅</div><div class="empty-sub">Chargement...</div></div></div>
     </div>
-
-    <!-- TEMPÉRATURES -->
     <div class="page" id="page-temp">
-      <div class="section-head">
-        <div class="section-title">Températures</div>
-        <button class="btn-sm primary" onclick="openModal('modalAddZone')">+ Zone</button>
-      </div>
-      <div id="tempSuccess" class="success-msg hidden">Relevé enregistré !</div>
-      <div id="tempList">
-        <div style="text-align:center;color:var(--muted);font-size:13px;padding:40px 0">Chargement...</div>
-      </div>
-      <button class="btn btn-primary" onclick="saveAllTemps()" style="margin-top:8px">Enregistrer tous les relevés</button>
+      <div class="section-head"><div class="section-title">Températures</div><button class="btn-sm primary" onclick="openModal('modalAddZone')">+ Zone</button></div>
+      <div id="tempSaved" class="hidden" style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:var(--r-md);padding:12px 14px;text-align:center;font-size:13px;font-weight:600;color:#14532D;margin-bottom:12px">✓ Relevés enregistrés !</div>
+      <div id="tempList"></div>
+      <button class="btn btn-primary" onclick="saveAllTemps()" style="margin-top:4px">Enregistrer tous les relevés</button>
     </div>
-
-    <!-- ÉTIQUETTES -->
     <div class="page" id="page-labels">
-      <div class="section-head">
-        <div class="section-title">Étiquetage</div>
-        <button class="btn-sm primary" onclick="openModal('modalAddLabel')">+ Étiquette</button>
-      </div>
-      <div id="labelsList">
-        <div style="text-align:center;color:var(--muted);font-size:13px;padding:40px 0">Chargement...</div>
-      </div>
+      <div class="section-head"><div class="section-title">Étiquetage</div><button class="btn-sm primary" onclick="openModal('modalAddLabel')">+ Étiquette</button></div>
+      <div id="labelsList"><div class="empty"><div class="empty-ico">🏷️</div><div class="empty-sub">Chargement...</div></div></div>
     </div>
-
-    <!-- STOCK -->
     <div class="page" id="page-stock">
-      <div class="section-head">
-        <div class="section-title">Stock matières</div>
-        <button class="btn-sm primary" onclick="openModal('modalAddProduct')">+ Produit</button>
-      </div>
-      <div id="stockList">
-        <div style="text-align:center;color:var(--muted);font-size:13px;padding:40px 0">Chargement...</div>
-      </div>
+      <div class="section-head"><div class="section-title">Stock matières</div><button class="btn-sm primary" onclick="openModal('modalAddProduct')">+ Produit</button></div>
+      <div id="stockList"><div class="empty"><div class="empty-ico">📦</div><div class="empty-sub">Chargement...</div></div></div>
     </div>
-
-    <!-- COMMANDES -->
     <div class="page" id="page-orders">
-      <div class="section-head">
-        <div class="section-title">Commandes</div>
-        <button class="btn-sm primary" onclick="openModal('modalNewOrder')">+ Commander</button>
-      </div>
-      <div id="ordersList">
-        <div style="text-align:center;color:var(--muted);font-size:13px;padding:40px 0">Chargement...</div>
-      </div>
+      <div class="section-head"><div class="section-title">Commandes</div><button class="btn-sm primary" onclick="openModal('modalNewOrder')">+ Commander</button></div>
+      <div id="ordersList"><div class="empty"><div class="empty-ico">🛒</div><div class="empty-sub">Chargement...</div></div></div>
     </div>
-
-    <!-- ADMIN -->
     <div class="page" id="page-admin">
       <div class="section-title" style="margin-bottom:14px">Administration</div>
-      <div class="admin-tab-bar">
-        <button class="admin-tab active" onclick="adminTab('salaries',this)">Salariés</button>
-        <button class="admin-tab" onclick="adminTab('zones',this)">Zones temp.</button>
-        <button class="admin-tab" onclick="adminTab('rapports',this)">Rapports</button>
+      <div class="admin-tabs">
+        <button class="admin-tab active" onclick="adminTab('Salaries',this)">Salariés</button>
+        <button class="admin-tab" onclick="adminTab('Zones',this)">Zones</button>
+        <button class="admin-tab" onclick="adminTab('Rapports',this)">Rapports</button>
       </div>
-      <div id="adminSalaries">
-        <div class="section-head">
-          <div class="card-title">Comptes salariés</div>
-          <button class="btn-sm primary" onclick="openModal('modalCreateUser')">+ Salarié</button>
-        </div>
-        <div id="usersList"></div>
-      </div>
-      <div id="adminZones" class="hidden">
-        <div class="card-title" style="margin-bottom:12px">Zones de température configurées</div>
-        <div id="zonesList"></div>
-      </div>
-      <div id="adminRapports" class="hidden">
-        <div class="card">
-          <div class="card-body">
-            <div style="font-size:13px;color:var(--muted);margin-bottom:16px">Exportez vos données HACCP pour les contrôles sanitaires.</div>
-            <button class="btn btn-outline" onclick="exportCSV('haccp')" style="margin-bottom:10px">Exporter HACCP (CSV)</button>
-            <button class="btn btn-outline" onclick="exportCSV('temperatures')" style="margin-bottom:10px">Exporter Températures (CSV)</button>
-            <button class="btn btn-outline" onclick="exportCSV('labels')">Exporter Étiquettes (CSV)</button>
-          </div>
-        </div>
-      </div>
+      <div id="adminSalaries"><div class="section-head"><div class="card-title">Comptes salariés</div><button class="btn-sm primary" onclick="openModal('modalCreateUser')">+ Salarié</button></div><div id="usersList"></div></div>
+      <div id="adminZones" class="hidden"><div id="zonesList"></div></div>
+      <div id="adminRapports" class="hidden"><div class="card"><div class="card-body" style="display:flex;flex-direction:column;gap:10px">
+        <div style="font-size:13px;color:var(--muted);margin-bottom:4px">Téléchargez vos données pour les contrôles sanitaires.</div>
+        <button class="btn btn-outline" onclick="exportCSV('haccp')">📋 Exporter HACCP (CSV)</button>
+        <button class="btn btn-outline" onclick="exportCSV('temperatures')">🌡️ Exporter Températures (CSV)</button>
+        <button class="btn btn-outline" onclick="exportCSV('labels')">🏷️ Exporter Étiquettes (CSV)</button>
+      </div></div></div>
     </div>
-
   </div>
-
-  <!-- BOTTOM NAV -->
   <nav class="bottom-nav" id="bottomNav">
-    <button class="nav-item active" onclick="goPage('home',this)">
-      <svg viewBox="0 0 24 24"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/></svg>
-      <span>Accueil</span>
-    </button>
-    <button class="nav-item" onclick="goPage('haccp',this)" id="nav-haccp">
-      <svg viewBox="0 0 24 24"><path d="M12 2L4 6v6c0 5.5 3.5 10.7 8 12 4.5-1.3 8-6.5 8-12V6L12 2z"/></svg>
-      <span>HACCP</span>
-    </button>
-    <button class="nav-item" onclick="goPage('temp',this)" id="nav-temp">
-      <svg viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><circle cx="12" cy="17" r="4"/></svg>
-      <span>Temp.</span>
-    </button>
-    <button class="nav-item" onclick="goPage('labels',this)" id="nav-labels">
-      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-      <span>Étiquettes</span>
-    </button>
-    <button class="nav-item" onclick="goPage('stock',this)" id="nav-stock">
-      <svg viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
-      <span>Stock</span>
-    </button>
-    <button class="nav-item" onclick="goPage('orders',this)" id="nav-orders">
-      <svg viewBox="0 0 24 24"><path d="M4 4h16l-2 10H6L4 4z"/><circle cx="9" cy="20" r="1.5"/><circle cx="16" cy="20" r="1.5"/></svg>
-      <span>Commandes</span>
-    </button>
-    <button class="nav-item" id="nav-admin" onclick="goPage('admin',this)" style="display:none">
-      <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
-      <span>Admin</span>
-    </button>
+    <button class="nav-item active" onclick="goPage('home',this)"><div class="nav-ico"><svg viewBox="0 0 24 24"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/></svg></div><span class="nav-lbl">Accueil</span></button>
+    <button class="nav-item" id="nav-haccp" onclick="goPage('haccp',this)"><div class="nav-ico" style="position:relative"><svg viewBox="0 0 24 24"><path d="M12 2L4 6v6c0 5.5 3.5 10.7 8 12 4.5-1.3 8-6.5 8-12V6L12 2z"/></svg><div class="alert-badge hidden" id="badge-haccp">!</div></div><span class="nav-lbl">HACCP</span></button>
+    <button class="nav-item" id="nav-temp" onclick="goPage('temp',this)"><div class="nav-ico" style="position:relative"><svg viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><circle cx="12" cy="17" r="4"/></svg><div class="alert-badge hidden" id="badge-temp">!</div></div><span class="nav-lbl">Temp.</span></button>
+    <button class="nav-item" id="nav-labels" onclick="goPage('labels',this)"><div class="nav-ico" style="position:relative"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/></svg><div class="alert-badge hidden" id="badge-labels">!</div></div><span class="nav-lbl">Étiquettes</span></button>
+    <button class="nav-item" id="nav-stock" onclick="goPage('stock',this)"><div class="nav-ico" style="position:relative"><svg viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></svg><div class="alert-badge hidden" id="badge-stock">!</div></div><span class="nav-lbl">Stock</span></button>
+    <button class="nav-item" id="nav-orders" onclick="goPage('orders',this)"><div class="nav-ico" style="position:relative"><svg viewBox="0 0 24 24"><path d="M4 4h16l-2 10H6L4 4z"/><circle cx="9" cy="20" r="1.5"/><circle cx="16" cy="20" r="1.5"/></svg><div class="alert-badge hidden" id="badge-orders">!</div></div><span class="nav-lbl">Commandes</span></button>
+    <button class="nav-item hidden" id="nav-admin" onclick="goPage('admin',this)"><div class="nav-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></div><span class="nav-lbl">Admin</span></button>
   </nav>
 </div>
 
 <!-- MODALS -->
+<div class="modal-overlay" id="modalAddTask"><div class="modal"><div class="modal-handle"></div><div class="modal-title">Nouvelle tâche HACCP <button class="modal-close" onclick="closeModal('modalAddTask')">✕</button></div><div class="form-group"><label class="form-label">Titre</label><input class="form-input" id="taskTitle" placeholder="Ex: Nettoyage plan de travail"/></div><div class="form-group"><label class="form-label">Zone</label><input class="form-input" id="taskZone" placeholder="Ex: Cuisine, Frigo n°1..."/></div><div class="form-group"><label class="form-label">Fréquence</label><select class="form-select" id="taskFreq"><option value="daily">Quotidienne</option><option value="weekly">Hebdomadaire</option><option value="monthly">Mensuelle</option></select></div><button class="btn btn-primary" onclick="createTask()">Créer la tâche</button></div></div>
 
-<!-- Add HACCP Task -->
-<div class="modal-overlay" id="modalAddTask">
-  <div class="modal">
-    <div class="modal-title">Nouvelle tâche HACCP <button class="modal-close" onclick="closeModal('modalAddTask')">✕</button></div>
-    <div class="form-group"><label class="form-label">Titre de la tâche</label><input class="form-input" id="taskTitle" placeholder="Ex: Nettoyage plan de travail"/></div>
-    <div class="form-group"><label class="form-label">Zone</label><input class="form-input" id="taskZone" placeholder="Ex: Cuisine, Frigo n°1..."/></div>
-    <div class="form-group"><label class="form-label">Fréquence</label>
-      <select class="form-select" id="taskFreq">
-        <option value="daily">Quotidienne</option>
-        <option value="weekly">Hebdomadaire</option>
-        <option value="monthly">Mensuelle</option>
-      </select>
-    </div>
-    <button class="btn btn-primary" onclick="createTask()">Créer la tâche</button>
-  </div>
-</div>
+<div class="modal-overlay" id="modalAddZone"><div class="modal"><div class="modal-handle"></div><div class="modal-title">Nouvelle zone <button class="modal-close" onclick="closeModal('modalAddZone')">✕</button></div><div class="form-group"><label class="form-label">Nom</label><input class="form-input" id="zoneName" placeholder="Ex: Frigo n°1, Congélateur..."/></div><div class="form-row"><div class="form-group"><label class="form-label">Seuil min (°C)</label><input class="form-input" id="zoneMin" type="number" placeholder="-18"/></div><div class="form-group"><label class="form-label">Seuil max (°C)</label><input class="form-input" id="zoneMax" type="number" placeholder="4"/></div></div><button class="btn btn-primary" onclick="createZone()">Ajouter</button></div></div>
 
-<!-- Add Temperature Zone -->
-<div class="modal-overlay" id="modalAddZone">
-  <div class="modal">
-    <div class="modal-title">Nouvelle zone <button class="modal-close" onclick="closeModal('modalAddZone')">✕</button></div>
-    <div class="form-group"><label class="form-label">Nom de la zone</label><input class="form-input" id="zoneName" placeholder="Ex: Frigo n°1, Congélateur..."/></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-      <div class="form-group"><label class="form-label">Seuil min (°C)</label><input class="form-input" id="zoneMin" type="number" placeholder="-18"/></div>
-      <div class="form-group"><label class="form-label">Seuil max (°C)</label><input class="form-input" id="zoneMax" type="number" placeholder="4"/></div>
-    </div>
-    <button class="btn btn-primary" onclick="createZone()">Ajouter la zone</button>
-  </div>
-</div>
+<div class="modal-overlay" id="modalAddLabel"><div class="modal"><div class="modal-handle"></div><div class="modal-title">Nouvelle étiquette <button class="modal-close" onclick="closeModal('modalAddLabel')">✕</button></div><div class="form-group"><div class="photo-zone" onclick="document.getElementById('photoInput').click()"><div class="photo-zone-ico"><svg viewBox="0 0 26 26"><circle cx="13" cy="13" r="10" stroke-width="1.5"/><circle cx="13" cy="13" r="4" stroke-width="1.5"/></svg></div><div class="photo-zone-title">Photographier l'étiquette</div><div class="photo-zone-sub">Appuyez pour ouvrir l'appareil photo</div><input type="file" id="photoInput" accept="image/*" capture="environment" style="display:none" onchange="previewPhoto(this)"></div><img id="photoPreview" class="photo-preview"></div><div class="form-group"><label class="form-label">Nom du produit *</label><input class="form-input" id="labelProduct" placeholder="Ex: Bœuf haché 5% MG"/></div><div class="form-group"><label class="form-label">DLC</label><input class="form-input" id="labelDlc" type="date"/></div><div class="form-row"><div class="form-group"><label class="form-label">N° de lot</label><input class="form-input" id="labelLot" placeholder="BH-2204"/></div><div class="form-group"><label class="form-label">Fournisseur</label><input class="form-input" id="labelSupplier" placeholder="Dupont"/></div></div><div class="form-group"><label class="form-label">Allergènes</label><input class="form-input" id="labelAllergens" placeholder="Gluten, Lait... ou Aucun"/></div><button class="btn btn-primary" id="btnSaveLabel" onclick="createLabel()">Enregistrer l'étiquette</button></div></div>
 
-<!-- Add Label -->
-<div class="modal-overlay" id="modalAddLabel">
-  <div class="modal">
-    <div class="modal-title">Nouvelle étiquette <button class="modal-close" onclick="closeModal('modalAddLabel')">✕</button></div>
-    <div class="form-group">
-      <label class="form-label">Photo de l'étiquette (optionnel)</label>
-      <div class="photo-zone" onclick="document.getElementById('photoInput').click()">
-        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" style="margin:0 auto 8px;display:block"><circle cx="16" cy="16" r="14" stroke="#9CA3AF" stroke-width="1.5"/><path d="M10 20l4-4 3 3 2-2 3 3" stroke="#9CA3AF" stroke-width="1.5" stroke-linecap="round"/><circle cx="20" cy="12" r="2" stroke="#9CA3AF" stroke-width="1.5"/></svg>
-        <div style="font-size:13px;color:var(--muted)">Appuyer pour photographier</div>
-        <input type="file" id="photoInput" accept="image/*" capture="environment" style="display:none" onchange="previewPhoto(this)">
-      </div>
-      <img id="photoPreview" class="photo-preview hidden">
-    </div>
-    <div class="form-group"><label class="form-label">Nom du produit</label><input class="form-input" id="labelProduct" placeholder="Ex: Bœuf haché 5% MG"/></div>
-    <div class="form-group"><label class="form-label">Date limite de consommation (DLC)</label><input class="form-input" id="labelDlc" type="date"/></div>
-    <div class="form-group"><label class="form-label">Numéro de lot</label><input class="form-input" id="labelLot" placeholder="Ex: BH-2204"/></div>
-    <div class="form-group"><label class="form-label">Fournisseur</label><input class="form-input" id="labelSupplier" placeholder="Ex: Maison Dupont"/></div>
-    <div class="form-group"><label class="form-label">Allergènes</label><input class="form-input" id="labelAllergens" placeholder="Ex: Gluten, Lait... ou Aucun"/></div>
-    <button class="btn btn-primary" onclick="createLabel()">Enregistrer l'étiquette</button>
-  </div>
-</div>
+<div class="modal-overlay" id="modalAddProduct"><div class="modal"><div class="modal-handle"></div><div class="modal-title">Nouveau produit <button class="modal-close" onclick="closeModal('modalAddProduct')">✕</button></div><div class="form-group"><label class="form-label">Nom</label><input class="form-input" id="productName" placeholder="Ex: Farine de blé T55"/></div><div class="form-row"><div class="form-group"><label class="form-label">Unité</label><select class="form-select" id="productUnit"><option value="kg">kg</option><option value="L">L</option><option value="unités">unités</option><option value="boîtes">boîtes</option><option value="g">g</option></select></div><div class="form-group"><label class="form-label">Stock initial</label><input class="form-input" id="productStock" type="number" placeholder="0" min="0"/></div></div><div class="form-group"><label class="form-label">Seuil d'alerte minimum</label><input class="form-input" id="productMin" type="number" placeholder="5" min="0"/></div><button class="btn btn-primary" onclick="createProduct()">Ajouter le produit</button></div></div>
 
-<!-- Add Product -->
-<div class="modal-overlay" id="modalAddProduct">
-  <div class="modal">
-    <div class="modal-title">Nouveau produit <button class="modal-close" onclick="closeModal('modalAddProduct')">✕</button></div>
-    <div class="form-group"><label class="form-label">Nom du produit</label><input class="form-input" id="productName" placeholder="Ex: Farine de blé T55"/></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-      <div class="form-group"><label class="form-label">Unité</label>
-        <select class="form-select" id="productUnit">
-          <option value="kg">kg</option>
-          <option value="L">L</option>
-          <option value="unités">unités</option>
-          <option value="boîtes">boîtes</option>
-          <option value="g">g</option>
-        </select>
-      </div>
-      <div class="form-group"><label class="form-label">Stock initial</label><input class="form-input" id="productStock" type="number" placeholder="0" min="0"/></div>
-    </div>
-    <div class="form-group"><label class="form-label">Seuil d'alerte minimum</label><input class="form-input" id="productMin" type="number" placeholder="5" min="0"/></div>
-    <button class="btn btn-primary" onclick="createProduct()">Ajouter le produit</button>
-  </div>
-</div>
+<div class="modal-overlay" id="modalStockMove"><div class="modal"><div class="modal-handle"></div><div class="modal-title" id="stockMoveTitle">Mouvement <button class="modal-close" onclick="closeModal('modalStockMove')">✕</button></div><input type="hidden" id="stockMoveProductId"><div class="form-group"><label class="form-label">Quantité</label><input class="form-input" id="stockMoveQty" type="number" placeholder="0" step="0.1"/></div><div class="form-group"><label class="form-label">Motif</label><select class="form-select" id="stockMoveReason"><option>Réception fournisseur</option><option>Utilisation cuisine</option><option>Perte / périmé</option><option>Correction inventaire</option></select></div><div class="form-row" style="margin-top:4px"><button class="btn btn-primary" onclick="saveStockMove(1)" style="background:var(--teal)">+ Entrée</button><button class="btn btn-primary" onclick="saveStockMove(-1)" style="background:var(--red)">− Sortie</button></div></div></div>
 
-<!-- Stock Movement -->
-<div class="modal-overlay" id="modalStockMove">
-  <div class="modal">
-    <div class="modal-title" id="stockMoveTitle">Mouvement de stock <button class="modal-close" onclick="closeModal('modalStockMove')">✕</button></div>
-    <input type="hidden" id="stockMoveProductId">
-    <div class="form-group"><label class="form-label">Quantité</label><input class="form-input" id="stockMoveQty" type="number" placeholder="0" step="0.1"/></div>
-    <div class="form-group"><label class="form-label">Motif</label>
-      <select class="form-select" id="stockMoveReason">
-        <option value="Réception fournisseur">Réception fournisseur</option>
-        <option value="Utilisation cuisine">Utilisation cuisine</option>
-        <option value="Perte / périmé">Perte / périmé</option>
-        <option value="Inventaire">Correction inventaire</option>
-      </select>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-      <button class="btn btn-primary" onclick="saveStockMove(1)">+ Entrée</button>
-      <button class="btn btn-danger" onclick="saveStockMove(-1)">− Sortie</button>
-    </div>
-  </div>
-</div>
+<div class="modal-overlay" id="modalNewOrder"><div class="modal"><div class="modal-handle"></div><div class="modal-title">Passer une commande <button class="modal-close" onclick="closeModal('modalNewOrder')">✕</button></div><div class="form-group"><label class="form-label">Produit</label><select class="form-select" id="orderProduct"></select></div><div class="form-group"><label class="form-label">Quantité</label><input class="form-input" id="orderQty" type="number" placeholder="5" min="1"/></div><div class="form-group"><label class="form-label">Motif</label><select class="form-select" id="orderReason"><option>Stock bas — risque de rupture</option><option>Réapprovisionnement planifié</option><option>Commande urgente</option></select></div><div class="form-group"><label class="form-label">Note (optionnel)</label><textarea class="form-textarea" id="orderNote" placeholder="Précisions..."></textarea></div><button class="btn btn-primary" onclick="createOrder()">Envoyer la demande</button></div></div>
 
-<!-- New Order -->
-<div class="modal-overlay" id="modalNewOrder">
-  <div class="modal">
-    <div class="modal-title">Passer une commande <button class="modal-close" onclick="closeModal('modalNewOrder')">✕</button></div>
-    <div class="form-group"><label class="form-label">Produit</label>
-      <select class="form-select" id="orderProduct"></select>
-    </div>
-    <div class="form-group"><label class="form-label">Quantité</label><input class="form-input" id="orderQty" type="number" placeholder="5" min="1"/></div>
-    <div class="form-group"><label class="form-label">Motif</label>
-      <select class="form-select" id="orderReason">
-        <option value="Stock bas — risque de rupture">Stock bas — risque de rupture</option>
-        <option value="Réapprovisionnement planifié">Réapprovisionnement planifié</option>
-        <option value="Commande urgente">Commande urgente</option>
-      </select>
-    </div>
-    <div class="form-group"><label class="form-label">Note (optionnel)</label><textarea class="form-textarea" id="orderNote" placeholder="Précisions..."></textarea></div>
-    <button class="btn btn-primary" onclick="createOrder()">Envoyer la demande</button>
-  </div>
-</div>
-
-<!-- Create User -->
-<div class="modal-overlay" id="modalCreateUser">
-  <div class="modal">
-    <div class="modal-title">Nouveau salarié <button class="modal-close" onclick="closeModal('modalCreateUser')">✕</button></div>
-    <div class="form-group"><label class="form-label">Prénom et nom</label><input class="form-input" id="newUserName" placeholder="Ex: Marie Lemoine"/></div>
-    <div class="form-group"><label class="form-label">Rôle</label>
-      <select class="form-select" id="newUserRole">
-        <option value="employe">Employé</option>
-        <option value="chef">Chef de partie</option>
-        <option value="admin">Administrateur</option>
-      </select>
-    </div>
-    <div class="form-group"><label class="form-label">Code PIN (4 chiffres)</label><input class="form-input" id="newUserPin" type="number" placeholder="1234" maxlength="4"/></div>
-    <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Permissions :</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
-      <label style="display:flex;align-items:center;gap:8px;font-size:13px"><input type="checkbox" id="perm-haccp" checked> HACCP</label>
-      <label style="display:flex;align-items:center;gap:8px;font-size:13px"><input type="checkbox" id="perm-temperatures" checked> Températures</label>
-      <label style="display:flex;align-items:center;gap:8px;font-size:13px"><input type="checkbox" id="perm-labels" checked> Étiquettes</label>
-      <label style="display:flex;align-items:center;gap:8px;font-size:13px"><input type="checkbox" id="perm-stock"> Stock</label>
-      <label style="display:flex;align-items:center;gap:8px;font-size:13px"><input type="checkbox" id="perm-orders" checked> Commandes</label>
-    </div>
-    <button class="btn btn-primary" onclick="createUser()">Créer le compte</button>
-  </div>
-</div>
+<div class="modal-overlay" id="modalCreateUser"><div class="modal"><div class="modal-handle"></div><div class="modal-title">Nouveau salarié <button class="modal-close" onclick="closeModal('modalCreateUser')">✕</button></div><div class="form-group"><label class="form-label">Prénom et nom</label><input class="form-input" id="newUserName" placeholder="Ex: Marie Lemoine"/></div><div class="form-row"><div class="form-group"><label class="form-label">Rôle</label><select class="form-select" id="newUserRole"><option value="employe">Employé</option><option value="chef">Chef de partie</option><option value="admin">Administrateur</option></select></div><div class="form-group"><label class="form-label">PIN (4 chiffres)</label><input class="form-input" id="newUserPin" type="number" placeholder="1234"/></div></div><div style="font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:10px">Permissions</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px"><label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500"><input type="checkbox" id="perm-haccp" checked> HACCP</label><label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500"><input type="checkbox" id="perm-temperatures" checked> Températures</label><label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500"><input type="checkbox" id="perm-labels" checked> Étiquettes</label><label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500"><input type="checkbox" id="perm-stock"> Stock</label><label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500"><input type="checkbox" id="perm-orders" checked> Commandes</label></div><button class="btn btn-primary" onclick="createUser()">Créer le compte</button></div></div>
 
 <script>
-const SUPA_URL = 'https://mzyrffxosabnmkcqduvc.supabase.co';
-const SUPA_KEY = 'sb_publishable_hEMwMOhLR06ZoCRR7cLifA_o8UUQCce';
-const { createClient } = supabase;
-const db = createClient(SUPA_URL, SUPA_KEY);
+const SUPA_URL='https://mzyrffxosabnmkcqduvc.supabase.co';
+const SUPA_KEY='sb_publishable_hEMwMOhLR06ZoCRR7cLifA_o8UUQCce';
+const{createClient}=supabase;
+const db=createClient(SUPA_URL,SUPA_KEY);
+let currentUser=null,tempValues={},zoneConfigs=[],allProducts=[],photoFile=null,alertInterval=null;
 
-let currentUser = null;
-let tempValues = {};
-let zoneConfigs = [];
-let allProducts = [];
-let photoFile = null;
+function showToast(msg,type='info',dur=4000){
+  const icons={danger:'🚨',warn:'⚠️',ok:'✅',info:'ℹ️'};
+  const t=document.createElement('div');
+  t.className='toast '+type;
+  t.innerHTML='<span>'+icons[type]+'</span><span style="flex:1">'+msg+'</span><button class="toast-close" onclick="this.parentElement.remove()">✕</button>';
+  document.getElementById('toastContainer').appendChild(t);
+  setTimeout(()=>t.remove(),dur);
+}
+function setBadge(id,show){const b=document.getElementById('badge-'+id);if(b)b.classList.toggle('hidden',!show);}
 
-// ── INIT ──
-async function init() {
-  const saved = localStorage.getItem('hygipro_user');
-  if (saved) {
-    currentUser = JSON.parse(saved);
-    showApp();
-  }
+async function checkAlerts(){
+  if(!currentUser)return;
+  const alerts=[];
+  const[{data:products},{data:labels},{data:tasks},{data:done},{data:orders}]=await Promise.all([
+    db.from('products').select('*'),
+    db.from('labels').select('*').order('opened_at',{ascending:false}).limit(100),
+    db.from('haccp_tasks').select('id'),
+    db.from('haccp_completions').select('task_id').gte('completed_at',new Date().toISOString().split('T')[0]).eq('user_id',currentUser.id),
+    currentUser.role==='admin'?db.from('orders').select('id').eq('status','pending'):Promise.resolve({data:[]})
+  ]);
+  const lowStock=(products||[]).filter(p=>p.current_stock<=p.threshold_min);
+  setBadge('stock',lowStock.length>0);
+  if(lowStock.length>0)alerts.push({type:'danger',msg:'Stock critique : '+lowStock.map(p=>p.name).join(', '),page:'stock'});
+  const now=new Date();
+  const dlcPast=(labels||[]).filter(l=>l.dlc&&(new Date(l.dlc)-now)/86400000<0);
+  const dlcSoon=(labels||[]).filter(l=>l.dlc&&(new Date(l.dlc)-now)/86400000>=0&&(new Date(l.dlc)-now)/86400000<=2);
+  setBadge('labels',dlcPast.length>0||dlcSoon.length>0);
+  if(dlcPast.length>0)alerts.push({type:'danger',msg:'DLC dépassée : '+dlcPast.map(l=>l.product_name).join(', '),page:'labels'});
+  if(dlcSoon.length>0)alerts.push({type:'warn',msg:'DLC proche (48h) : '+dlcSoon.map(l=>l.product_name).join(', '),page:'labels'});
+  const doneIds=new Set((done||[]).map(d=>d.task_id));
+  const pending=(tasks||[]).filter(t=>!doneIds.has(t.id));
+  setBadge('haccp',pending.length>0);
+  if(currentUser.role==='admin'&&(orders||[]).length>0){setBadge('orders',true);alerts.push({type:'info',msg:(orders.length)+' commande(s) en attente de validation',page:'orders'});}
+  const dangerAlerts=alerts.filter(a=>a.type==='danger');
+  if(dangerAlerts.length>0){document.getElementById('alertBarText').textContent=dangerAlerts[0].msg;document.getElementById('alertBar').classList.add('visible');}
+  else document.getElementById('alertBar').classList.remove('visible');
+  const el=document.getElementById('alertCards');
+  if(el)el.innerHTML=alerts.map(a=>'<div class="alert-card '+a.type+'"><div class="alert-card-ico">'+(a.type==='danger'?'🚨':a.type==='warn'?'⚠️':'ℹ️')+'</div><div class="alert-card-content"><div class="alert-card-title">'+a.msg+'</div><div style="margin-top:4px"><button style="background:none;border:none;color:var(--teal);font-size:12px;font-weight:600;cursor:pointer;padding:0" onclick="goPage(\''+a.page+'\',document.getElementById(\'nav-'+a.page+'\'))">Voir →</button></div></div></div>').join('');
+}
+
+async function init(){
+  const s=localStorage.getItem('hygipro_user');
+  if(s){currentUser=JSON.parse(s);showApp();}
   await loadUsers();
 }
-
-async function loadUsers() {
-  const { data } = await db.from('users').select('*').eq('active', true).order('name');
-  const sel = document.getElementById('userSelect');
-  sel.innerHTML = '<option value="">Sélectionner...</option>';
-  if (data) data.forEach(u => {
-    const o = document.createElement('option');
-    o.value = u.id;
-    o.textContent = u.name + (u.role === 'admin' ? ' (Admin)' : '');
-    sel.appendChild(o);
-  });
+async function loadUsers(){
+  const{data}=await db.from('users').select('*').eq('active',true).order('name');
+  const sel=document.getElementById('userSelect');
+  sel.innerHTML='<option value="">Sélectionner...</option>';
+  (data||[]).forEach(u=>{const o=document.createElement('option');o.value=u.id;o.textContent=u.name+(u.role==='admin'?' (Admin)':'');sel.appendChild(o);});
 }
 
-// ── LOGIN ──
-let pinValue = '';
-function pinPress(v) {
-  if (v === '') { pinValue = pinValue.slice(0, -1); }
-  else if (pinValue.length < 4) { pinValue += v; }
-  updatePinDisplay();
-  if (pinValue.length === 4) setTimeout(doLogin, 200);
+let pinValue='';
+function pinPress(v){if(v==='DEL')pinValue=pinValue.slice(0,-1);else if(pinValue.length<4)pinValue+=v;updatePinDisplay();if(pinValue.length===4)setTimeout(doLogin,300);}
+function updatePinDisplay(){for(let i=0;i<4;i++)document.getElementById('pd'+i).classList.toggle('filled',i<pinValue.length);}
+async function doLogin(){
+  const uid=document.getElementById('userSelect').value;
+  if(!uid){showLoginError('Sélectionnez votre nom');return;}
+  if(pinValue.length!==4){showLoginError('PIN à 4 chiffres requis');return;}
+  const{data}=await db.from('users').select('*').eq('id',uid).eq('pin',pinValue).single();
+  if(!data){showLoginError('PIN incorrect');pinValue='';updatePinDisplay();return;}
+  currentUser=data;localStorage.setItem('hygipro_user',JSON.stringify(data));showApp();
 }
-function updatePinDisplay() {
-  for (let i = 0; i < 4; i++) {
-    document.getElementById('pd' + i).classList.toggle('filled', i < pinValue.length);
-  }
-}
-async function doLogin() {
-  const userId = document.getElementById('userSelect').value;
-  if (!userId) { showError('Sélectionnez un utilisateur'); return; }
-  if (pinValue.length !== 4) { showError('Entrez votre PIN à 4 chiffres'); return; }
-  const { data } = await db.from('users').select('*').eq('id', userId).eq('pin', pinValue).single();
-  if (!data) { showError('PIN incorrect'); pinValue = ''; updatePinDisplay(); return; }
-  currentUser = data;
-  localStorage.setItem('hygipro_user', JSON.stringify(data));
-  showApp();
-}
-function showError(msg) {
-  const el = document.getElementById('loginError');
-  el.textContent = msg;
-  el.classList.remove('hidden');
-  setTimeout(() => el.classList.add('hidden'), 3000);
-}
-function doLogout() {
-  currentUser = null;
-  localStorage.removeItem('hygipro_user');
-  document.getElementById('app').classList.remove('visible');
-  document.getElementById('loginScreen').style.display = 'flex';
-  pinValue = '';
-  updatePinDisplay();
-}
+function showLoginError(m){const e=document.getElementById('loginError');e.textContent=m;e.style.display='block';setTimeout(()=>e.style.display='none',3000);}
+function doLogout(){currentUser=null;localStorage.removeItem('hygipro_user');clearInterval(alertInterval);document.getElementById('app').classList.remove('visible');document.getElementById('loginScreen').style.display='flex';pinValue='';updatePinDisplay();}
 
-// ── APP SHELL ──
-function showApp() {
-  document.getElementById('loginScreen').style.display = 'none';
+function showApp(){
+  document.getElementById('loginScreen').style.display='none';
   document.getElementById('app').classList.add('visible');
-  const initials = currentUser.name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
-  document.getElementById('topbarAvatar').textContent = initials;
-  document.getElementById('topbarName').textContent = currentUser.name;
-  const p = currentUser.permissions || {};
-  if (currentUser.role === 'admin') {
-    document.getElementById('nav-admin').style.display = 'flex';
-  }
-  // hide nav items based on permissions
-  if (!p.haccp && currentUser.role !== 'admin') document.getElementById('nav-haccp').style.display = 'none';
-  if (!p.temperatures && currentUser.role !== 'admin') document.getElementById('nav-temp').style.display = 'none';
-  if (!p.labels && currentUser.role !== 'admin') document.getElementById('nav-labels').style.display = 'none';
-  if (!p.stock && currentUser.role !== 'admin') document.getElementById('nav-stock').style.display = 'none';
-  if (!p.orders && currentUser.role !== 'admin') document.getElementById('nav-orders').style.display = 'none';
-  loadHome();
+  const ini=currentUser.name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+  document.getElementById('topbarAvatar').textContent=ini;
+  document.getElementById('topbarName').textContent=currentUser.name;
+  const p=currentUser.permissions||{};
+  if(currentUser.role==='admin')document.getElementById('nav-admin').classList.remove('hidden');
+  if(!p.haccp&&currentUser.role!=='admin')document.getElementById('nav-haccp').classList.add('hidden');
+  if(!p.temperatures&&currentUser.role!=='admin')document.getElementById('nav-temp').classList.add('hidden');
+  if(!p.labels&&currentUser.role!=='admin')document.getElementById('nav-labels').classList.add('hidden');
+  if(!p.stock&&currentUser.role!=='admin')document.getElementById('nav-stock').classList.add('hidden');
+  if(!p.orders&&currentUser.role!=='admin')document.getElementById('nav-orders').classList.add('hidden');
+  const h=new Date().getHours();
+  document.getElementById('greetingTime').textContent=(h<12?'Bonjour':h<18?'Bon après-midi':'Bonsoir')+' 👋';
+  document.getElementById('greetingName').textContent=currentUser.name.split(' ')[0];
+  loadHome();checkAlerts();
+  alertInterval=setInterval(checkAlerts,60000);
 }
 
-function goPage(id, el) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.getElementById('page-' + id).classList.add('active');
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  if (el) el.classList.add('active');
-  if (id === 'home') loadHome();
-  if (id === 'haccp') loadHaccp();
-  if (id === 'temp') loadTemp();
-  if (id === 'labels') loadLabels();
-  if (id === 'stock') loadStock();
-  if (id === 'orders') loadOrders();
-  if (id === 'admin') loadAdmin();
+function goPage(id,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  if(el)el.classList.add('active');
+  const loaders={home:loadHome,haccp:loadHaccp,temp:loadTemp,labels:loadLabels,stock:loadStock,orders:loadOrders,admin:loadAdmin};
+  if(loaders[id])loaders[id]();
 }
 
-// ── HOME ──
-async function loadHome() {
-  const today = new Date().toISOString().split('T')[0];
-  const [tasks, completions, products, pendingOrders, labels] = await Promise.all([
+async function loadHome(){
+  const today=new Date().toISOString().split('T')[0];
+  const[t,c,pr,or,lb]=await Promise.all([
     db.from('haccp_tasks').select('id'),
-    db.from('haccp_completions').select('id').gte('completed_at', today),
+    db.from('haccp_completions').select('id').gte('completed_at',today),
     db.from('products').select('*'),
-    db.from('orders').select('id').eq('status', 'pending'),
-    db.from('labels').select('*').order('opened_at', { ascending: false }).limit(5)
+    db.from('orders').select('id').eq('status','pending'),
+    db.from('labels').select('*').order('opened_at',{ascending:false}).limit(5)
   ]);
-  const taskCount = tasks.data?.length || 0;
-  const doneCount = completions.data?.length || 0;
-  document.getElementById('kpi-haccp').textContent = doneCount + '/' + taskCount;
-  const lowStock = (products.data || []).filter(p => p.current_stock <= p.threshold_min).length;
-  document.getElementById('kpi-stock').textContent = lowStock;
-  document.getElementById('kpi-stock').className = 'kpi-value ' + (lowStock > 0 ? 'danger' : 'ok');
-  document.getElementById('kpi-orders').textContent = pendingOrders.data?.length || 0;
-  document.getElementById('kpi-labels').textContent = labels.data?.length || 0;
-
-  // Alerts
-  const alertsEl = document.getElementById('homeAlerts');
-  alertsEl.innerHTML = '';
-  if (lowStock > 0) {
-    const names = (products.data || []).filter(p => p.current_stock <= p.threshold_min).map(p => p.name).join(', ');
-    alertsEl.innerHTML += `<div class="alert danger"><span class="alert-icon">⚠</span><div><b>Stock critique :</b> ${names}</div></div>`;
-  }
-  const dlcSoon = (labels.data || []).filter(l => {
-    if (!l.dlc) return false;
-    const diff = (new Date(l.dlc) - new Date()) / 86400000;
-    return diff >= 0 && diff <= 2;
-  });
-  if (dlcSoon.length > 0) {
-    alertsEl.innerHTML += `<div class="alert warn"><span class="alert-icon">📅</span><div><b>DLC proche :</b> ${dlcSoon.map(l => l.product_name).join(', ')}</div></div>`;
-  }
-
-  // Recent activity
-  const recentEl = document.getElementById('recentActivity');
-  if (labels.data && labels.data.length > 0) {
-    recentEl.innerHTML = labels.data.map(l => {
-      const dlcDate = l.dlc ? new Date(l.dlc) : null;
-      const now = new Date();
-      const diff = dlcDate ? Math.ceil((dlcDate - now) / 86400000) : null;
-      const status = diff === null ? 'pending' : diff < 0 ? 'danger' : diff <= 2 ? 'warn' : 'ok';
-      const statusText = diff === null ? 'Pas de DLC' : diff < 0 ? 'DLC dépassée' : diff <= 2 ? `DLC dans ${diff}j` : `DLC OK`;
-      return `<div class="list-row"><div class="row-icon" style="background:#F3F4F6">📦</div><div class="row-info"><div class="row-title">${l.product_name}</div><div class="row-sub">Lot : ${l.lot_number || '—'} · ${l.supplier || '—'}</div></div><span class="pill ${status}">${statusText}</span></div>`;
+  const tc=t.data?.length||0,dc=c.data?.length||0,ls=(pr.data||[]).filter(p=>p.current_stock<=p.threshold_min).length,oc=or.data?.length||0,lbc=lb.data?.length||0;
+  document.getElementById('kpiGrid').innerHTML=
+    '<div class="kpi '+(dc===tc&&tc>0?'ok':'warn')+'"><div class="kpi-ico" style="background:'+(dc===tc&&tc>0?'#DCFCE7':'#FEF9C3')+'"><svg viewBox="0 0 24 24" stroke="'+(dc===tc&&tc>0?'#14532D':'#854D0E')+'"><path d="M9 12l2 2 4-4M12 2L4 6v6c0 5.5 3.5 10.7 8 12 4.5-1.3 8-6.5 8-12V6L12 2z"/></svg></div><div class="kpi-val">'+dc+'<span style="font-size:16px;color:var(--muted)">/'+tc+'</span></div><div class="kpi-label">Tâches HACCP</div></div>'+
+    '<div class="kpi '+(ls>0?'danger':'ok')+'"><div class="kpi-ico" style="background:'+(ls>0?'#FEE2E2':'#DCFCE7')+'"><svg viewBox="0 0 24 24" stroke="'+(ls>0?'#991B1B':'#14532D')+'"><path d="M3 6h18M3 12h18M3 18h18"/></svg></div><div class="kpi-val">'+ls+'</div><div class="kpi-label">Alertes stock</div></div>'+
+    '<div class="kpi '+(oc>0?'warn':'ok')+'"><div class="kpi-ico" style="background:'+(oc>0?'#FEF3C7':'#DCFCE7')+'"><svg viewBox="0 0 24 24" stroke="'+(oc>0?'#92400E':'#14532D')+'"><path d="M4 4h16l-2 10H6L4 4z"/><circle cx="9" cy="20" r="1.5"/><circle cx="16" cy="20" r="1.5"/></svg></div><div class="kpi-val">'+oc+'</div><div class="kpi-label">Commandes</div></div>'+
+    '<div class="kpi info"><div class="kpi-ico" style="background:#DBEAFE"><svg viewBox="0 0 24 24" stroke="#1E40AF"><rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/></svg></div><div class="kpi-val">'+lbc+'</div><div class="kpi-label">Étiquettes</div></div>';
+  const actEl=document.getElementById('recentActivity');
+  if(lb.data&&lb.data.length>0){
+    actEl.innerHTML=lb.data.map(l=>{
+      const diff=l.dlc?Math.ceil((new Date(l.dlc)-new Date())/86400000):null;
+      const st=diff===null?'pending':diff<0?'danger':diff<=2?'warn':'ok';
+      const stTxt=diff===null?'Sans DLC':diff<0?'DLC dépassée':diff<=2?'DLC '+diff+'j':'DLC OK';
+      return'<div class="act-row"><div class="act-ico">📦</div><div class="act-info"><div class="act-title">'+l.product_name+'</div><div class="act-sub">'+(l.supplier||'—')+' · Lot '+(l.lot_number||'—')+'</div></div><span class="pill '+st+'">'+stTxt+'</span></div>';
     }).join('');
-  } else {
-    recentEl.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:13px;padding:20px 0">Aucune activité récente</div>';
-  }
+  }else{actEl.innerHTML='<div class="empty"><div class="empty-ico">📋</div><div class="empty-title">Pas encore d\'activité</div><div class="empty-sub">Les étiquettes apparaîtront ici</div></div>';}
+  await checkAlerts();
 }
 
-// ── HACCP ──
-async function loadHaccp() {
-  const today = new Date().toISOString().split('T')[0];
-  const [tasks, completions] = await Promise.all([
-    db.from('haccp_tasks').select('*').order('created_at'),
-    db.from('haccp_completions').select('*').gte('completed_at', today).eq('user_id', currentUser.id)
-  ]);
-  const doneIds = new Set((completions.data || []).map(c => c.task_id));
-  const el = document.getElementById('haccpList');
-  if (!tasks.data || tasks.data.length === 0) {
-    el.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:13px;padding:40px 0">Aucune tâche configurée.<br>L\'admin peut en créer.</div>';
-    return;
-  }
-  el.innerHTML = `<div class="card"><div class="card-body">${tasks.data.map(t => {
-    const done = doneIds.has(t.id);
-    return `<div class="check-item">
-      <div class="check-box ${done ? 'checked' : ''}" id="chk-${t.id}" onclick="toggleTask('${t.id}', ${done})"></div>
-      <div class="check-label ${done ? 'done' : ''}" id="lbl-${t.id}">${t.title}${t.zone ? ` <span style="color:var(--muted);font-size:11px">· ${t.zone}</span>` : ''}</div>
-      <span class="pill ${done ? 'ok' : 'pending'}">${done ? 'Fait' : t.frequency === 'daily' ? 'Quotidien' : t.frequency === 'weekly' ? 'Hebdo' : 'Mensuel'}</span>
-    </div>`;
-  }).join('')}</div></div>`;
-  if (currentUser.role !== 'admin') document.getElementById('btnAddTask').style.display = 'none';
+async function loadHaccp(){
+  const today=new Date().toISOString().split('T')[0];
+  const[tasks,completions]=await Promise.all([db.from('haccp_tasks').select('*').order('created_at'),db.from('haccp_completions').select('*').gte('completed_at',today).eq('user_id',currentUser.id)]);
+  const doneIds=new Set((completions.data||[]).map(c=>c.task_id));
+  const el=document.getElementById('haccpList');
+  if(!tasks.data||tasks.data.length===0){el.innerHTML='<div class="empty"><div class="empty-ico">✅</div><div class="empty-title">Aucune tâche</div><div class="empty-sub">L\'admin peut en créer avec + Tâche</div></div>';return;}
+  const todo=tasks.data.filter(t=>!doneIds.has(t.id)),done=tasks.data.filter(t=>doneIds.has(t.id));
+  el.innerHTML=(todo.length>0?'<div style="font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px">À faire ('+todo.length+')</div><div class="card"><div>'+todo.map(t=>'<div class="check-item"><div class="chk" id="chk-'+t.id+'" onclick="toggleTask(\''+t.id+'\')"></div><div class="chk-label" id="lbl-'+t.id+'">'+t.title+'</div>'+(t.zone?'<span class="chk-zone">'+t.zone+'</span>':'')+'<span class="pill pending">'+(t.frequency==='daily'?'Quotidien':t.frequency==='weekly'?'Hebdo':'Mensuel')+'</span></div>').join('')+'</div></div>':'')+
+  (done.length>0?'<div style="font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.4px;margin:12px 0 8px">Fait aujourd\'hui ('+done.length+')</div><div class="card"><div>'+done.map(t=>'<div class="check-item"><div class="chk on"></div><div class="chk-label done">'+t.title+'</div>'+(t.zone?'<span class="chk-zone">'+t.zone+'</span>':'')+'<span class="pill ok">Fait</span></div>').join('')+'</div></div>':'');
+  if(currentUser.role!=='admin')document.getElementById('btnAddTask').classList.add('hidden');
+}
+async function toggleTask(id){
+  document.getElementById('chk-'+id).classList.add('on');
+  document.getElementById('lbl-'+id).classList.add('done');
+  await db.from('haccp_completions').insert({task_id:id,user_id:currentUser.id});
+  showToast('Tâche validée !','ok',2500);
+  setTimeout(()=>{loadHaccp();checkAlerts();},800);
+}
+async function createTask(){
+  const t=document.getElementById('taskTitle').value.trim();if(!t)return;
+  await db.from('haccp_tasks').insert({title:t,zone:document.getElementById('taskZone').value,frequency:document.getElementById('taskFreq').value});
+  closeModal('modalAddTask');document.getElementById('taskTitle').value='';document.getElementById('taskZone').value='';
+  showToast('Tâche créée','ok',2500);loadHaccp();
 }
 
-async function toggleTask(taskId, wasDone) {
-  if (wasDone) return;
-  await db.from('haccp_completions').insert({ task_id: taskId, user_id: currentUser.id });
-  document.getElementById('chk-' + taskId).classList.add('checked');
-  document.getElementById('lbl-' + taskId).classList.add('done');
-}
-
-async function createTask() {
-  const title = document.getElementById('taskTitle').value.trim();
-  if (!title) return;
-  await db.from('haccp_tasks').insert({ title, zone: document.getElementById('taskZone').value, frequency: document.getElementById('taskFreq').value });
-  closeModal('modalAddTask');
-  document.getElementById('taskTitle').value = '';
-  document.getElementById('taskZone').value = '';
-  loadHaccp();
-}
-
-// ── TEMPERATURES ──
-async function loadTemp() {
-  const { data } = await db.from('temperature_readings').select('zone_name, threshold_min, threshold_max').order('read_at', { ascending: false });
-  // Get unique zones from past readings + default zones
-  const zonesFromDB = [...new Set((data || []).map(r => r.zone_name))];
-  if (zonesFromDB.length === 0) zonesFromDB.push('Frigo n°1', 'Congélateur', 'Chambre froide');
-  zoneConfigs = zonesFromDB.map(z => {
-    const last = (data || []).find(r => r.zone_name === z);
-    return { name: z, min: last?.threshold_min ?? null, max: last?.threshold_max ?? null };
-  });
-  if (!tempValues || Object.keys(tempValues).length === 0) {
-    zoneConfigs.forEach(z => tempValues[z.name] = z.max ? z.max - 1 : 3);
-  }
+async function loadTemp(){
+  const{data}=await db.from('temperature_readings').select('*').order('read_at',{ascending:false}).limit(200);
+  const zm={};
+  (data||[]).forEach(r=>{if(!zm[r.zone_name])zm[r.zone_name]={name:r.zone_name,min:r.threshold_min,max:r.threshold_max};});
+  if(Object.keys(zm).length===0)['Frigo n°1','Frigo n°2','Congélateur','Chambre froide'].forEach(z=>zm[z]={name:z,min:null,max:null});
+  zoneConfigs=Object.values(zm);
+  zoneConfigs.forEach(z=>{if(tempValues[z.name]===undefined)tempValues[z.name]=z.max?z.max-1:3;});
   renderTempList();
 }
-
-function renderTempList() {
-  const el = document.getElementById('tempList');
-  el.innerHTML = zoneConfigs.map(z => {
-    const v = tempValues[z.name] !== undefined ? tempValues[z.name] : 3;
-    const isOk = (z.min === null || v >= z.min) && (z.max === null || v <= z.max);
-    const display = (v >= 0 ? '+' : '') + v.toFixed(1) + '°C';
-    const seuil = z.min !== null && z.max !== null ? `Seuil : ${z.min}°C / ${z.max}°C` : z.max !== null ? `Seuil max : ${z.max}°C` : 'Aucun seuil défini';
-    return `<div class="temp-card">
-      <div class="temp-zone">${z.name}</div>
-      <div class="temp-controls">
-        <div><div class="temp-val ${isOk ? 'ok' : 'danger'}" id="tv-${z.name.replace(/\s/g,'_')}">${display}</div><div class="temp-seuil">${seuil}${!isOk ? ' ⚠ HORS SEUIL' : ''}</div></div>
-        <div style="margin-left:auto;display:flex;gap:8px">
-          <div class="temp-adjbtn" onclick="adjTemp('${z.name}', -0.1)">−</div>
-          <div class="temp-adjbtn" onclick="adjTemp('${z.name}', 0.1)">+</div>
-        </div>
-      </div>
-    </div>`;
+function renderTempList(){
+  const el=document.getElementById('tempList');
+  if(!zoneConfigs.length){el.innerHTML='<div class="empty"><div class="empty-ico">🌡️</div><div class="empty-title">Aucune zone</div><div class="empty-sub">Ajoutez des zones avec + Zone</div></div>';return;}
+  el.innerHTML=zoneConfigs.map(z=>{
+    const v=tempValues[z.name]!==undefined?tempValues[z.name]:3;
+    const ok=(z.min===null||v>=z.min)&&(z.max===null||v<=z.max);
+    const cls=z.min===null&&z.max===null?'unknown':ok?'ok':'danger';
+    const seuil=z.min!==null&&z.max!==null?'Seuil : '+z.min+'°C → '+z.max+'°C':z.max!==null?'Seuil max : '+z.max+'°C':z.min!==null?'Seuil min : '+z.min+'°C':'Aucun seuil défini';
+    return'<div class="temp-card '+cls+'"><div class="temp-zone-name">'+z.name+'</div><div class="temp-row"><div style="flex:1"><div class="temp-val '+cls+'" id="tv-'+z.name.replace(/[^a-z0-9]/gi,'_')+'">'+(v>=0?'+':'')+v.toFixed(1)+'°C</div><div class="temp-seuil">'+seuil+'</div>'+(cls==='danger'?'<div class="temp-alert-txt">⚠ Hors seuil — action requise</div>':'')+'</div><div class="temp-btns"><div class="temp-btn" onclick="adjTemp(\''+z.name+'\',0.1)">+</div><div class="temp-btn" onclick="adjTemp(\''+z.name+'\',-0.1)">−</div></div></div></div>';
   }).join('');
 }
-
-function adjTemp(zone, delta) {
-  tempValues[zone] = Math.round(((tempValues[zone] || 3) + delta) * 10) / 10;
-  renderTempList();
+function adjTemp(z,d){tempValues[z]=Math.round(((tempValues[z]||3)+d)*10)/10;renderTempList();}
+async function saveAllTemps(){
+  await db.from('temperature_readings').insert(zoneConfigs.map(z=>({zone_name:z.name,value_celsius:tempValues[z.name],threshold_min:z.min,threshold_max:z.max,user_id:currentUser.id})));
+  const oor=zoneConfigs.filter(z=>(z.min!==null&&tempValues[z.name]<z.min)||(z.max!==null&&tempValues[z.name]>z.max));
+  const s=document.getElementById('tempSaved');s.classList.remove('hidden');setTimeout(()=>s.classList.add('hidden'),3000);
+  oor.length>0?showToast('⚠ '+oor.map(z=>z.name).join(', ')+' hors seuil !','danger',6000):showToast('Relevés enregistrés','ok',2500);
+}
+async function createZone(){
+  const n=document.getElementById('zoneName').value.trim();if(!n)return;
+  const mn=document.getElementById('zoneMin').value!==''?parseFloat(document.getElementById('zoneMin').value):null;
+  const mx=document.getElementById('zoneMax').value!==''?parseFloat(document.getElementById('zoneMax').value):null;
+  zoneConfigs.push({name:n,min:mn,max:mx});tempValues[n]=mx?mx-1:3;
+  closeModal('modalAddZone');document.getElementById('zoneName').value='';
+  showToast('Zone ajoutée','ok',2000);renderTempList();
 }
 
-async function saveAllTemps() {
-  const rows = zoneConfigs.map(z => ({
-    zone_name: z.name,
-    value_celsius: tempValues[z.name],
-    threshold_min: z.min,
-    threshold_max: z.max,
-    user_id: currentUser.id
-  }));
-  await db.from('temperature_readings').insert(rows);
-  const s = document.getElementById('tempSuccess');
-  s.classList.remove('hidden');
-  setTimeout(() => s.classList.add('hidden'), 3000);
-}
-
-async function createZone() {
-  const name = document.getElementById('zoneName').value.trim();
-  if (!name) return;
-  const min = parseFloat(document.getElementById('zoneMin').value) || null;
-  const max = parseFloat(document.getElementById('zoneMax').value) || null;
-  zoneConfigs.push({ name, min, max });
-  tempValues[name] = max ? max - 1 : 3;
-  closeModal('modalAddZone');
-  document.getElementById('zoneName').value = '';
-  renderTempList();
-}
-
-// ── LABELS ──
-async function loadLabels() {
-  const { data } = await db.from('labels').select('*').order('opened_at', { ascending: false }).limit(50);
-  const el = document.getElementById('labelsList');
-  if (!data || data.length === 0) {
-    el.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:13px;padding:40px 0">Aucune étiquette enregistrée</div>';
-    return;
-  }
-  el.innerHTML = data.map(l => {
-    const dlcDate = l.dlc ? new Date(l.dlc) : null;
-    const now = new Date();
-    const diff = dlcDate ? Math.ceil((dlcDate - now) / 86400000) : null;
-    const status = diff === null ? 'pending' : diff < 0 ? 'danger' : diff <= 2 ? 'warn' : 'ok';
-    const statusText = diff === null ? 'Pas de DLC' : diff < 0 ? 'DLC dépassée' : diff <= 2 ? `DLC dans ${diff}j` : `DLC: ${l.dlc}`;
-    return `<div class="card"><div class="card-body">
-      ${l.photo_url ? `<img src="${l.photo_url}" style="width:100%;border-radius:10px;margin-bottom:12px;max-height:140px;object-fit:cover">` : ''}
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px">
-        <div style="font-size:14px;font-weight:600">${l.product_name}</div>
-        <span class="pill ${status}">${statusText}</span>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px;color:var(--muted)">
-        ${l.lot_number ? `<div>Lot : <b style="color:var(--text)">${l.lot_number}</b></div>` : ''}
-        ${l.supplier ? `<div>Fourn. : <b style="color:var(--text)">${l.supplier}</b></div>` : ''}
-        ${l.allergens ? `<div style="grid-column:1/-1">Allergènes : <b style="color:var(--text)">${l.allergens}</b></div>` : ''}
-      </div>
-    </div></div>`;
+async function loadLabels(){
+  const{data}=await db.from('labels').select('*').order('opened_at',{ascending:false}).limit(50);
+  const el=document.getElementById('labelsList');
+  if(!data||!data.length){el.innerHTML='<div class="empty"><div class="empty-ico">🏷️</div><div class="empty-title">Aucune étiquette</div><div class="empty-sub">Appuyez sur + Étiquette</div></div>';return;}
+  el.innerHTML=data.map(l=>{
+    const diff=l.dlc?Math.ceil((new Date(l.dlc)-new Date())/86400000):null;
+    const st=diff===null?'pending':diff<0?'danger':diff<=2?'warn':'ok';
+    const stTxt=diff===null?'Pas de DLC':diff<0?'DLC dépassée !':diff<=2?'DLC dans '+diff+'j':'DLC : '+l.dlc;
+    return'<div class="label-card">'+(l.photo_url?'<img src="'+l.photo_url+'" class="label-photo" onerror="this.style.display=\'none\'">':'')+'<div class="label-body"><div class="label-name">'+l.product_name+'<span class="pill '+st+'">'+stTxt+'</span></div><div class="label-grid">'+(l.lot_number?'<div class="label-field"><div class="label-key">Lot</div><div class="label-val">'+l.lot_number+'</div></div>':'')+(l.supplier?'<div class="label-field"><div class="label-key">Fournisseur</div><div class="label-val">'+l.supplier+'</div></div>':'')+(l.allergens?'<div class="label-field" style="grid-column:1/-1"><div class="label-key">Allergènes</div><div class="label-val">'+l.allergens+'</div></div>':'')+'</div></div></div>';
   }).join('');
 }
-
-function previewPhoto(input) {
-  photoFile = input.files[0];
-  if (photoFile) {
-    const url = URL.createObjectURL(photoFile);
-    const img = document.getElementById('photoPreview');
-    img.src = url;
-    img.classList.remove('hidden');
+function previewPhoto(input){photoFile=input.files[0];if(photoFile){const img=document.getElementById('photoPreview');img.src=URL.createObjectURL(photoFile);img.style.display='block';}}
+async function createLabel(){
+  const product=document.getElementById('labelProduct').value.trim();if(!product){showToast('Nom du produit requis','warn');return;}
+  const btn=document.getElementById('btnSaveLabel');btn.textContent='Enregistrement...';btn.disabled=true;
+  let photoUrl=null;
+  if(photoFile){
+    const ext=photoFile.name.split('.').pop()||'jpg';
+    const path='labels/'+Date.now()+'_'+Math.random().toString(36).slice(2)+'.'+ext;
+    const{error}=await db.storage.from('hygipro-photos').upload(path,photoFile,{upsert:true,contentType:photoFile.type});
+    if(!error){const{data:u}=db.storage.from('hygipro-photos').getPublicUrl(path);photoUrl=u.publicUrl;}
   }
-}
-
-async function createLabel() {
-  const product = document.getElementById('labelProduct').value.trim();
-  if (!product) return;
-  let photoUrl = null;
-  if (photoFile) {
-    const ext = photoFile.name.split('.').pop();
-    const path = `labels/${Date.now()}.${ext}`;
-    const { data: upload, error } = await db.storage.from('hygipro-photos').upload(path, photoFile, { upsert: true });
-    if (!error) {
-      const { data: urlData } = db.storage.from('hygipro-photos').getPublicUrl(path);
-      photoUrl = urlData.publicUrl;
-    }
-  }
-  await db.from('labels').insert({
-    product_name: product,
-    dlc: document.getElementById('labelDlc').value || null,
-    lot_number: document.getElementById('labelLot').value || null,
-    supplier: document.getElementById('labelSupplier').value || null,
-    allergens: document.getElementById('labelAllergens').value || null,
-    photo_url: photoUrl,
-    user_id: currentUser.id
-  });
+  await db.from('labels').insert({product_name:product,dlc:document.getElementById('labelDlc').value||null,lot_number:document.getElementById('labelLot').value||null,supplier:document.getElementById('labelSupplier').value||null,allergens:document.getElementById('labelAllergens').value||null,photo_url:photoUrl,user_id:currentUser.id});
+  btn.textContent="Enregistrer l'étiquette";btn.disabled=false;
   closeModal('modalAddLabel');
-  document.getElementById('labelProduct').value = '';
-  document.getElementById('labelDlc').value = '';
-  document.getElementById('labelLot').value = '';
-  document.getElementById('labelSupplier').value = '';
-  document.getElementById('labelAllergens').value = '';
-  document.getElementById('photoPreview').classList.add('hidden');
-  photoFile = null;
-  loadLabels();
+  ['labelProduct','labelDlc','labelLot','labelSupplier','labelAllergens'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('photoPreview').style.display='none';photoFile=null;
+  showToast('Étiquette enregistrée !','ok',3000);loadLabels();checkAlerts();
 }
 
-// ── STOCK ──
-async function loadStock() {
-  const { data } = await db.from('products').select('*').order('name');
-  allProducts = data || [];
-  const el = document.getElementById('stockList');
-  if (!data || data.length === 0) {
-    el.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:13px;padding:40px 0">Aucun produit configuré</div>';
-    return;
-  }
-  el.innerHTML = data.map(p => {
-    const pct = p.threshold_min > 0 ? Math.min(100, Math.round((p.current_stock / (p.threshold_min * 3)) * 100)) : 60;
-    const status = p.current_stock <= p.threshold_min ? 'danger' : p.current_stock <= p.threshold_min * 1.5 ? 'warn' : 'ok';
-    const statusText = p.current_stock <= p.threshold_min ? 'Critique' : p.current_stock <= p.threshold_min * 1.5 ? 'Bas' : 'OK';
-    return `<div class="card"><div class="card-body">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-        <div style="flex:1"><div style="font-size:13px;font-weight:600">${p.name}</div><div style="font-size:11px;color:var(--muted)">Seuil min : ${p.threshold_min} ${p.unit}</div></div>
-        <div style="font-size:18px;font-weight:700;color:var(--text)">${p.current_stock} <span style="font-size:12px;color:var(--muted)">${p.unit}</span></div>
-        <span class="pill ${status}">${statusText}</span>
-      </div>
-      <div class="stock-bar-wrap"><div class="stock-bar ${status}" style="width:${pct}%"></div></div>
-      <div style="display:flex;gap:8px;margin-top:10px">
-        <button class="btn-sm primary" onclick="openStockMove('${p.id}','${p.name}')">Mouvement</button>
-      </div>
-    </div></div>`;
+async function loadStock(){
+  const{data}=await db.from('products').select('*').order('name');
+  allProducts=data||[];
+  const el=document.getElementById('stockList');
+  if(!allProducts.length){el.innerHTML='<div class="empty"><div class="empty-ico">📦</div><div class="empty-title">Aucun produit</div><div class="empty-sub">Ajoutez vos matières premières</div></div>';return;}
+  el.innerHTML=allProducts.map(p=>{
+    const r=p.threshold_min>0?Math.min(100,Math.round((p.current_stock/(p.threshold_min*3))*100)):60;
+    const st=p.current_stock<=p.threshold_min?'danger':p.current_stock<=p.threshold_min*1.5?'warn':'ok';
+    return'<div class="stock-card"><div class="stock-head"><div><div class="stock-name">'+p.name+'</div><div class="stock-unit">Seuil min : '+p.threshold_min+' '+p.unit+'</div></div><div><div class="stock-qty">'+p.current_stock+'</div><div class="stock-qty-unit">'+p.unit+'</div></div></div><div class="stock-bar-wrap"><div class="stock-bar '+st+'" style="width:'+r+'%"></div></div><div style="display:flex;align-items:center;justify-content:space-between"><span class="pill '+st+'">'+(st==='danger'?'Critique':st==='warn'?'Bas':'OK')+'</span><button class="btn-sm primary" onclick="openStockMove(\''+p.id+'\',\''+p.name+'\')">Mouvement</button></div></div>';
   }).join('');
 }
-
-function openStockMove(id, name) {
-  document.getElementById('stockMoveProductId').value = id;
-  document.getElementById('stockMoveTitle').innerHTML = `Stock : ${name} <button class="modal-close" onclick="closeModal('modalStockMove')">✕</button>`;
-  document.getElementById('stockMoveQty').value = '';
-  openModal('modalStockMove');
-}
-
-async function saveStockMove(sign) {
-  const productId = document.getElementById('stockMoveProductId').value;
-  const qty = parseFloat(document.getElementById('stockMoveQty').value);
-  if (!qty || qty <= 0) return;
-  const delta = sign * qty;
-  const reason = document.getElementById('stockMoveReason').value;
-  await db.from('stock_movements').insert({ product_id: productId, user_id: currentUser.id, delta, reason });
-  const product = allProducts.find(p => p.id === productId);
-  const newStock = Math.max(0, (product?.current_stock || 0) + delta);
-  await db.from('products').update({ current_stock: newStock }).eq('id', productId);
+function openStockMove(id,name){document.getElementById('stockMoveProductId').value=id;document.getElementById('stockMoveTitle').innerHTML=name+' <button class="modal-close" onclick="closeModal(\'modalStockMove\')">✕</button>';document.getElementById('stockMoveQty').value='';openModal('modalStockMove');}
+async function saveStockMove(sign){
+  const pid=document.getElementById('stockMoveProductId').value;
+  const qty=parseFloat(document.getElementById('stockMoveQty').value);
+  if(!qty||qty<=0){showToast('Entrez une quantité valide','warn');return;}
+  const delta=sign*qty,reason=document.getElementById('stockMoveReason').value;
+  await db.from('stock_movements').insert({product_id:pid,user_id:currentUser.id,delta,reason});
+  const p=allProducts.find(x=>x.id===pid);
+  const ns=Math.max(0,(p?.current_stock||0)+delta);
+  await db.from('products').update({current_stock:ns}).eq('id',pid);
   closeModal('modalStockMove');
-  loadStock();
+  showToast(sign>0?'+'+qty+' ajouté':'-'+qty+' retiré','ok',2500);
+  if(ns<=(p?.threshold_min||0))showToast('⚠ Stock '+p?.name+' sous le seuil !','warn',5000);
+  loadStock();checkAlerts();
+}
+async function createProduct(){
+  const n=document.getElementById('productName').value.trim();if(!n)return;
+  await db.from('products').insert({name:n,unit:document.getElementById('productUnit').value,current_stock:parseFloat(document.getElementById('productStock').value)||0,threshold_min:parseFloat(document.getElementById('productMin').value)||0});
+  closeModal('modalAddProduct');document.getElementById('productName').value='';document.getElementById('productStock').value='';document.getElementById('productMin').value='';
+  showToast('Produit ajouté','ok',2500);loadStock();
 }
 
-async function createProduct() {
-  const name = document.getElementById('productName').value.trim();
-  if (!name) return;
-  await db.from('products').insert({
-    name,
-    unit: document.getElementById('productUnit').value,
-    current_stock: parseFloat(document.getElementById('productStock').value) || 0,
-    threshold_min: parseFloat(document.getElementById('productMin').value) || 0
-  });
-  closeModal('modalAddProduct');
-  document.getElementById('productName').value = '';
-  document.getElementById('productStock').value = '';
-  document.getElementById('productMin').value = '';
-  loadStock();
-}
-
-// ── ORDERS ──
-async function loadOrders() {
-  const sel = document.getElementById('orderProduct');
-  sel.innerHTML = allProducts.map(p => `<option value="${p.id}">${p.name} (stock: ${p.current_stock} ${p.unit})</option>`).join('');
-  if (allProducts.length === 0) {
-    const { data } = await db.from('products').select('*').order('name');
-    allProducts = data || [];
-    sel.innerHTML = allProducts.map(p => `<option value="${p.id}">${p.name} (stock: ${p.current_stock} ${p.unit})</option>`).join('');
-  }
-
-  let query = db.from('orders').select('*, products(name, unit), users(name)').order('created_at', { ascending: false });
-  if (currentUser.role !== 'admin') query = query.eq('user_id', currentUser.id);
-  const { data } = await query;
-
-  const el = document.getElementById('ordersList');
-  if (!data || data.length === 0) {
-    el.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:13px;padding:40px 0">Aucune commande</div>';
-    return;
-  }
-  el.innerHTML = data.map(o => {
-    const st = o.status === 'pending' ? 'warn' : o.status === 'approved' ? 'ok' : 'danger';
-    const stTxt = o.status === 'pending' ? 'En attente' : o.status === 'approved' ? 'Validée' : 'Refusée';
-    const adminBtns = currentUser.role === 'admin' && o.status === 'pending'
-      ? `<div style="display:flex;gap:8px;margin-top:10px">
-          <button class="btn-sm primary" onclick="updateOrder('${o.id}','approved')">Valider</button>
-          <button class="btn-sm danger" onclick="updateOrder('${o.id}','rejected')">Refuser</button>
-        </div>` : '';
-    return `<div class="card"><div class="card-body">
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px">
-        <div><div style="font-size:13px;font-weight:600">${o.products?.name || '—'}</div>
-        <div style="font-size:11px;color:var(--muted)">${o.quantity} ${o.products?.unit || ''} · ${o.users?.name || '—'}</div></div>
-        <span class="pill ${st}">${stTxt}</span>
-      </div>
-      <div style="font-size:12px;color:var(--muted)">${o.reason || ''}</div>
-      ${adminBtns}
-    </div></div>`;
+async function loadOrders(){
+  if(!allProducts.length){const{data}=await db.from('products').select('*').order('name');allProducts=data||[];}
+  document.getElementById('orderProduct').innerHTML=allProducts.length?allProducts.map(p=>'<option value="'+p.id+'">'+p.name+' (stock: '+p.current_stock+' '+p.unit+')</option>').join(''):'<option>Aucun produit</option>';
+  let q=db.from('orders').select('*,products(name,unit),users(name)').order('created_at',{ascending:false});
+  if(currentUser.role!=='admin')q=q.eq('user_id',currentUser.id);
+  const{data}=await q;
+  const el=document.getElementById('ordersList');
+  if(!data||!data.length){el.innerHTML='<div class="empty"><div class="empty-ico">🛒</div><div class="empty-title">Aucune commande</div><div class="empty-sub">Passez une demande avec + Commander</div></div>';return;}
+  el.innerHTML=data.map(o=>{
+    const st=o.status==='pending'?'warn':o.status==='approved'?'ok':'danger';
+    const stTxt=o.status==='pending'?'En attente':o.status==='approved'?'Validée':'Refusée';
+    const adm=currentUser.role==='admin'&&o.status==='pending'?'<div style="display:flex;gap:8px;margin-top:10px"><button class="btn-sm primary" onclick="updateOrder(\''+o.id+'\',\'approved\')">✓ Valider</button><button class="btn-sm danger" onclick="updateOrder(\''+o.id+'\',\'rejected\')">✕ Refuser</button></div>':'';
+    return'<div class="order-card"><div class="order-head"><div><div class="order-name">'+(o.products?.name||'—')+'</div><div class="order-meta">'+o.quantity+' '+(o.products?.unit||'')+' · par '+(o.users?.name||'—')+'</div></div><span class="pill '+st+'">'+stTxt+'</span></div><div style="font-size:12px;color:var(--muted);margin-bottom:4px">'+(o.reason||'')+'</div>'+adm+'</div>';
   }).join('');
 }
-
-async function createOrder() {
-  const productId = document.getElementById('orderProduct').value;
-  const qty = parseFloat(document.getElementById('orderQty').value);
-  if (!productId || !qty) return;
-  await db.from('orders').insert({
-    product_id: productId,
-    user_id: currentUser.id,
-    quantity: qty,
-    reason: document.getElementById('orderReason').value,
-    status: 'pending'
-  });
-  closeModal('modalNewOrder');
-  document.getElementById('orderQty').value = '';
-  loadOrders();
+async function createOrder(){
+  const pid=document.getElementById('orderProduct').value,qty=parseFloat(document.getElementById('orderQty').value);
+  if(!pid||!qty){showToast('Sélectionnez un produit et une quantité','warn');return;}
+  await db.from('orders').insert({product_id:pid,user_id:currentUser.id,quantity:qty,reason:document.getElementById('orderReason').value,status:'pending'});
+  closeModal('modalNewOrder');document.getElementById('orderQty').value='';
+  showToast('Demande envoyée à l\'admin !','ok',3000);loadOrders();
+}
+async function updateOrder(id,status){
+  await db.from('orders').update({status}).eq('id',id);
+  if(status==='approved'){const{data:o}=await db.from('orders').select('*,products(current_stock)').eq('id',id).single();if(o)await db.from('products').update({current_stock:(o.products?.current_stock||0)+o.quantity}).eq('id',o.product_id);}
+  showToast(status==='approved'?'Commande validée ✓':'Commande refusée',status==='approved'?'ok':'warn',2500);
+  loadOrders();checkAlerts();
 }
 
-async function updateOrder(id, status) {
-  await db.from('orders').update({ status }).eq('id', id);
-  if (status === 'approved') {
-    const { data: order } = await db.from('orders').select('*, products(current_stock)').eq('id', id).single();
-    if (order) {
-      const newStock = (order.products?.current_stock || 0) + order.quantity;
-      await db.from('products').update({ current_stock: newStock }).eq('id', order.product_id);
-    }
-  }
-  loadOrders();
+async function loadAdmin(){loadUsersList();}
+function adminTab(tab,el){
+  ['Salaries','Zones','Rapports'].forEach(t=>document.getElementById('admin'+t).classList.add('hidden'));
+  document.getElementById('admin'+tab).classList.remove('hidden');
+  document.querySelectorAll('.admin-tab').forEach(b=>b.classList.remove('active'));el.classList.add('active');
+  if(tab==='Zones')loadZonesList();
 }
-
-// ── ADMIN ──
-async function loadAdmin() {
-  loadUsersList();
-}
-
-function adminTab(tab, el) {
-  ['salaries', 'zones', 'rapports'].forEach(t => document.getElementById('admin' + t.charAt(0).toUpperCase() + t.slice(1)).classList.add('hidden'));
-  document.getElementById('admin' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.remove('hidden');
-  document.querySelectorAll('.admin-tab').forEach(b => b.classList.remove('active'));
-  el.classList.add('active');
-  if (tab === 'zones') loadZonesList();
-}
-
-async function loadUsersList() {
-  const { data } = await db.from('users').select('*').order('name');
-  const el = document.getElementById('usersList');
-  el.innerHTML = (data || []).map(u => {
-    const initials = u.name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
-    const roleColor = u.role === 'admin' ? '#534AB7' : u.role === 'chef' ? '#0F6E56' : '#6B7280';
-    return `<div class="card"><div class="card-body">
-      <div style="display:flex;align-items:center;gap:10px">
-        <div style="width:40px;height:40px;border-radius:50%;background:#F3F4F6;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:14px;color:${roleColor};flex-shrink:0">${initials}</div>
-        <div style="flex:1"><div style="font-size:14px;font-weight:600">${u.name}</div><div style="font-size:11px;color:var(--muted)">${u.role} · PIN: ${u.pin}</div></div>
-        <span class="pill ${u.active ? 'ok' : 'danger'}">${u.active ? 'Actif' : 'Inactif'}</span>
-        ${u.role !== 'admin' ? `<button class="btn-sm danger" onclick="toggleUserActive('${u.id}', ${u.active})">${u.active ? 'Désactiver' : 'Activer'}</button>` : ''}
-      </div>
-    </div></div>`;
+async function loadUsersList(){
+  const{data}=await db.from('users').select('*').order('name');
+  const el=document.getElementById('usersList');
+  if(!data||!data.length){el.innerHTML='<div class="empty"><div class="empty-sub">Aucun salarié</div></div>';return;}
+  const colors={admin:'#7C3AED',chef:'#0F6E56',employe:'#1E40AF'};
+  const bgs={admin:'#EDE9FE',chef:'#DCFCE7',employe:'#DBEAFE'};
+  el.innerHTML=data.map(u=>{
+    const ini=u.name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+    return'<div class="user-card"><div class="user-avatar" style="background:'+(bgs[u.role]||'#F3F4F6')+';color:'+(colors[u.role]||'#374151')+'">'+ini+'</div><div class="user-info"><div class="user-name">'+u.name+'</div><div class="user-role">'+(u.role==='admin'?'Administrateur':u.role==='chef'?'Chef de partie':'Employé')+'</div><div class="user-pin">PIN : '+u.pin+'</div></div><span class="pill '+(u.active?'ok':'danger')+'">'+(u.active?'Actif':'Inactif')+'</span>'+(u.role!=='admin'?'<button class="btn-sm '+(u.active?'danger':'primary')+'" onclick="toggleUserActive(\''+u.id+'\','+u.active+')">'+(u.active?'Désactiver':'Activer')+'</button>':'')+'</div>';
   }).join('');
 }
-
-async function loadZonesList() {
-  const el = document.getElementById('zonesList');
-  el.innerHTML = zoneConfigs.length > 0 ? zoneConfigs.map(z =>
-    `<div class="card"><div class="card-body" style="display:flex;align-items:center;justify-content:space-between">
-      <div><div style="font-size:13px;font-weight:600">${z.name}</div>
-      <div style="font-size:11px;color:var(--muted)">${z.min !== null ? z.min + '°C' : '—'} / ${z.max !== null ? z.max + '°C' : '—'}</div></div>
-    </div></div>`).join('')
-  : '<div style="text-align:center;color:var(--muted);font-size:13px;padding:20px 0">Aucune zone. Ajoutez-en dans l\'onglet Températures.</div>';
+function loadZonesList(){
+  const el=document.getElementById('zonesList');
+  el.innerHTML=zoneConfigs.length?zoneConfigs.map(z=>'<div class="card"><div class="card-body" style="display:flex;align-items:center;justify-content:space-between"><div><div style="font-size:14px;font-weight:700">'+z.name+'</div><div style="font-size:12px;color:var(--muted);margin-top:2px">Min : '+(z.min!==null?z.min+'°C':'—')+' · Max : '+(z.max!==null?z.max+'°C':'—')+'</div></div><span class="pill ok">Active</span></div></div>').join(''):'<div class="empty"><div class="empty-sub">Zones configurées dans Températures</div></div>';
+}
+async function toggleUserActive(id,cur){
+  await db.from('users').update({active:!cur}).eq('id',id);
+  showToast(cur?'Compte désactivé':'Compte activé',cur?'warn':'ok',2500);
+  loadUsersList();loadUsers();
+}
+async function createUser(){
+  const n=document.getElementById('newUserName').value.trim(),pin=String(document.getElementById('newUserPin').value).trim();
+  if(!n||pin.length!==4){showToast('Nom et PIN à 4 chiffres requis','warn');return;}
+  const perms={haccp:document.getElementById('perm-haccp').checked,temperatures:document.getElementById('perm-temperatures').checked,labels:document.getElementById('perm-labels').checked,stock:document.getElementById('perm-stock').checked,orders:document.getElementById('perm-orders').checked};
+  await db.from('users').insert({name:n,role:document.getElementById('newUserRole').value,pin,permissions:perms});
+  closeModal('modalCreateUser');document.getElementById('newUserName').value='';document.getElementById('newUserPin').value='';
+  showToast('Compte créé pour '+n+' · PIN : '+pin,'ok',5000);
+  loadUsersList();loadUsers();
 }
 
-async function toggleUserActive(id, current) {
-  await db.from('users').update({ active: !current }).eq('id', id);
-  loadUsersList();
-  loadUsers();
+async function exportCSV(type){
+  let data,filename;
+  if(type==='haccp'){const{data:d}=await db.from('haccp_completions').select('*,haccp_tasks(title,zone),users(name)').order('completed_at',{ascending:false});data=(d||[]).map(r=>({tache:r.haccp_tasks?.title,zone:r.haccp_tasks?.zone,employe:r.users?.name,date:r.completed_at}));filename='hygipro_haccp.csv';}
+  else if(type==='temperatures'){const{data:d}=await db.from('temperature_readings').select('*,users(name)').order('read_at',{ascending:false});data=(d||[]).map(r=>({zone:r.zone_name,temperature:r.value_celsius,seuil_min:r.threshold_min,seuil_max:r.threshold_max,employe:r.users?.name,date:r.read_at}));filename='hygipro_temperatures.csv';}
+  else{const{data:d}=await db.from('labels').select('*,users(name)').order('opened_at',{ascending:false});data=(d||[]).map(r=>({produit:r.product_name,dlc:r.dlc,lot:r.lot_number,fournisseur:r.supplier,allergenes:r.allergens,employe:r.users?.name,date:r.opened_at}));filename='hygipro_etiquettes.csv';}
+  if(!data||!data.length){showToast('Aucune donnée à exporter','warn');return;}
+  const h=Object.keys(data[0]);
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([[h.join(';'),...data.map(r=>h.map(k=>'"'+(r[k]||'')+'"').join(';'))].join('\n')],{type:'text/csv;charset=utf-8;'}));
+  a.download=filename;a.click();
+  showToast('Export téléchargé !','ok',2500);
 }
 
-async function createUser() {
-  const name = document.getElementById('newUserName').value.trim();
-  const pin = String(document.getElementById('newUserPin').value).trim();
-  if (!name || pin.length !== 4) { alert('Nom et PIN à 4 chiffres requis'); return; }
-  const perms = {
-    haccp: document.getElementById('perm-haccp').checked,
-    temperatures: document.getElementById('perm-temperatures').checked,
-    labels: document.getElementById('perm-labels').checked,
-    stock: document.getElementById('perm-stock').checked,
-    orders: document.getElementById('perm-orders').checked
-  };
-  await db.from('users').insert({ name, role: document.getElementById('newUserRole').value, pin, permissions: perms });
-  closeModal('modalCreateUser');
-  document.getElementById('newUserName').value = '';
-  document.getElementById('newUserPin').value = '';
-  loadUsersList();
-  loadUsers();
-}
-
-// ── EXPORTS ──
-async function exportCSV(type) {
-  let data, fields, filename;
-  if (type === 'haccp') {
-    const { data: d } = await db.from('haccp_completions').select('*, haccp_tasks(title, zone), users(name)').order('completed_at', { ascending: false });
-    data = (d || []).map(r => ({ tache: r.haccp_tasks?.title, zone: r.haccp_tasks?.zone, employe: r.users?.name, date: r.completed_at }));
-    filename = 'hygipro_haccp.csv';
-  } else if (type === 'temperatures') {
-    const { data: d } = await db.from('temperature_readings').select('*, users(name)').order('read_at', { ascending: false });
-    data = (d || []).map(r => ({ zone: r.zone_name, temperature: r.value_celsius, seuil_min: r.threshold_min, seuil_max: r.threshold_max, employe: r.users?.name, date: r.read_at }));
-    filename = 'hygipro_temperatures.csv';
-  } else {
-    const { data: d } = await db.from('labels').select('*, users(name)').order('opened_at', { ascending: false });
-    data = (d || []).map(r => ({ produit: r.product_name, dlc: r.dlc, lot: r.lot_number, fournisseur: r.supplier, allergenes: r.allergens, employe: r.users?.name, date: r.opened_at }));
-    filename = 'hygipro_etiquettes.csv';
-  }
-  if (!data || data.length === 0) { alert('Aucune donnée à exporter'); return; }
-  const headers = Object.keys(data[0]);
-  const csv = [headers.join(';'), ...data.map(r => headers.map(h => '"' + (r[h] || '') + '"').join(';'))].join('\n');
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = filename;
-  a.click();
-}
-
-// ── MODALS ──
-function openModal(id) { document.getElementById(id).classList.add('open'); }
-function closeModal(id) { document.getElementById(id).classList.remove('open'); }
-document.querySelectorAll('.modal-overlay').forEach(m => {
-  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
-});
-
-// ── START ──
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');}));
 init();
-
-// Create storage bucket (admin setup helper)
-async function setupStorage() {
-  await db.storage.createBucket('hygipro-photos', { public: true });
-}
 </script>
 </body>
 </html>
-ENDOFFILE
