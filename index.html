@@ -703,35 +703,51 @@ async function scanAllPhotos(){
   const count=(photoFiles[1]?1:0)+(photoFiles[2]?1:0);
   msg.textContent='🤖 Analyse de '+count+' photo'+(count>1?'s':'')+'...';
   try{
-    // Convert all photos to base64
     const toBase64=f=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(f);});
-    const attachments=[];
-    if(photoFiles[1])attachments.push({type:'image',content:await toBase64(photoFiles[1])});
-    if(photoFiles[2])attachments.push({type:'image',content:await toBase64(photoFiles[2])});
     const prompt=`Tu es un expert en lecture d'étiquettes alimentaires françaises.
-Analyse ${attachments.length===2?'ces 2 photos de la même étiquette':'cette photo d\'étiquette'} et extrait toutes les informations disponibles.
-Réponds UNIQUEMENT en JSON valide, sans texte avant ou après, sans balises markdown :
-{
-  "product_name": "nom complet du produit",
-  "dlc": "date limite en format YYYY-MM-DD, ou null si absente",
-  "lot": "numéro de lot exact, ou null",
-  "supplier": "marque ou fournisseur, ou null",
-  "allergens": "liste allergènes séparés par virgule (ex: Gluten, Lait, Œufs), ou 'Aucun' si aucun, ou null si pas visible"
-}`;
-    const response=await puter.ai.chat(prompt,{attachments});
-    const text=typeof response==='string'?response:response?.message?.content||response?.content||'';
+Analyse ${count===2?'ces 2 photos de la même étiquette':'cette photo d\'étiquette'} et extrait toutes les informations.
+Réponds UNIQUEMENT en JSON valide, sans texte avant ni après, sans balises markdown :
+{"product_name":"nom complet du produit","dlc":"YYYY-MM-DD ou null","lot":"numéro de lot ou null","supplier":"marque/fournisseur ou null","allergens":"liste séparée par virgules ou Aucun ou null"}`;
+
+    // Build message content array with images + text
+    const content=[];
+    if(photoFiles[1]){
+      const b64=await toBase64(photoFiles[1]);
+      content.push({type:'image_url',image_url:{url:b64}});
+    }
+    if(photoFiles[2]){
+      const b64=await toBase64(photoFiles[2]);
+      content.push({type:'image_url',image_url:{url:b64}});
+    }
+    content.push({type:'text',text:prompt});
+
+    const response=await puter.ai.chat([{role:'user',content}],{model:'gpt-4o'});
+
+    // Parse response — Puter returns response.message.content or string
+    let text='';
+    if(typeof response==='string')text=response;
+    else if(response?.message?.content)text=typeof response.message.content==='string'?response.message.content:response.message.content.map(c=>c.text||'').join('');
+    else if(response?.content)text=response.content;
+    else text=JSON.stringify(response);
+
     const clean=text.replace(/```json|```/g,'').trim();
-    const data=JSON.parse(clean);
-    if(data.product_name)document.getElementById('labelProduct').value=data.product_name;
-    if(data.dlc)document.getElementById('labelDlc').value=data.dlc;
-    if(data.lot)document.getElementById('labelLot').value=data.lot;
-    if(data.supplier)document.getElementById('labelSupplier').value=data.supplier;
-    if(data.allergens)document.getElementById('labelAllergens').value=data.allergens;
+    // Find JSON in response even if there's surrounding text
+    const match=clean.match(/\{[\s\S]*\}/);
+    if(!match)throw new Error('No JSON found');
+    const data=JSON.parse(match[0]);
+
+    if(data.product_name&&data.product_name!=='null')document.getElementById('labelProduct').value=data.product_name;
+    if(data.dlc&&data.dlc!=='null')document.getElementById('labelDlc').value=data.dlc;
+    if(data.lot&&data.lot!=='null')document.getElementById('labelLot').value=data.lot;
+    if(data.supplier&&data.supplier!=='null')document.getElementById('labelSupplier').value=data.supplier;
+    if(data.allergens&&data.allergens!=='null')document.getElementById('labelAllergens').value=data.allergens;
+
     spinner.style.display='none';
     msg.textContent='✅ '+(count>1?'2 photos analysées':'Photo analysée')+' — vérifiez et corrigez si besoin';
   }catch(e){
+    console.error('Scan error:',e);
     spinner.style.display='none';
-    msg.textContent='⚠️ Analyse échouée — remplissez manuellement.';
+    msg.textContent='⚠️ Analyse échouée — remplissez manuellement. ('+e.message+')';
     status.style.background='rgba(245,158,11,0.1)';
     status.style.borderColor='rgba(245,158,11,0.3)';
     msg.style.color='#fcd34d';
