@@ -13,6 +13,7 @@
 <title>HygiPro</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -276,10 +277,45 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
       <div id="haccpList"><div class="empty"><div class="empty-ico">✅</div><div class="empty-sub">Chargement...</div></div></div>
     </div>
     <div class="page" id="page-temp">
-      <div class="section-head"><div class="section-title">Températures</div><button class="btn-sm primary" onclick="openModal('modalAddZone')">+ Zone</button></div>
-      <div id="tempSaved" class="hidden" style="background:rgba(45,212,160,0.1);border:1px solid rgba(45,212,160,0.3);border-radius:var(--r-md);padding:12px 14px;text-align:center;font-size:13px;font-weight:600;color:var(--teal);margin-bottom:12px">✓ Relevés enregistrés !</div>
-      <div id="tempList"></div>
-      <button class="btn btn-primary" onclick="saveAllTemps()" style="margin-top:4px">Enregistrer tous les relevés</button>
+      <div class="section-head"><div class="section-title">Températures</div>
+        <button class="btn-sm" onclick="requestNotifPermission()" id="btnNotif" style="font-size:11px">🔔 Activer alertes</button>
+      </div>
+      <div class="admin-tabs" style="margin-bottom:12px">
+        <button class="admin-tab active" onclick="switchTempTab('releve',this)">🌡️ Relevés</button>
+        <button class="admin-tab" onclick="switchTempTab('graph',this)">📊 Historique</button>
+      </div>
+      <!-- Section relevés -->
+      <div id="tempSectionReleve">
+        <div id="tempSaved" class="hidden" style="background:rgba(45,212,160,0.1);border:1px solid rgba(45,212,160,0.3);border-radius:var(--r-md);padding:12px 14px;text-align:center;font-size:13px;font-weight:600;color:var(--teal);margin-bottom:12px">✓ Relevés enregistrés !</div>
+        <!-- Slot selector -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+          <div id="slot14Btn" onclick="selectSlot('14h')" style="border-radius:var(--r-md);padding:12px;text-align:center;cursor:pointer;border:2px solid rgba(45,212,160,0.4);background:rgba(45,212,160,0.1)">
+            <div style="font-size:18px;font-weight:800;color:var(--teal)">14h00</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:2px">Relevé après-midi</div>
+            <div id="slot14Status" style="font-size:10px;font-weight:600;margin-top:4px;color:var(--subtle)">—</div>
+          </div>
+          <div id="slot21Btn" onclick="selectSlot('21h')" style="border-radius:var(--r-md);padding:12px;text-align:center;cursor:pointer;border:2px solid var(--border2);background:var(--bg2)">
+            <div style="font-size:18px;font-weight:800;color:var(--muted)">21h00</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:2px">Relevé soir</div>
+            <div id="slot21Status" style="font-size:10px;font-weight:600;margin-top:4px;color:var(--subtle)">—</div>
+          </div>
+        </div>
+        <div id="tempList"></div>
+        <button class="btn btn-primary" onclick="saveAllTemps()" style="margin-top:4px">💾 Enregistrer les relevés</button>
+      </div>
+      <!-- Section graphique -->
+      <div id="tempSectionGraph" style="display:none">
+        <div style="display:flex;gap:8px;margin-bottom:12px">
+          <button class="btn-sm primary" id="gf7" onclick="loadTempChart(7,this)">7j</button>
+          <button class="btn-sm" id="gf14" onclick="loadTempChart(14,this)">14j</button>
+          <button class="btn-sm" id="gf30" onclick="loadTempChart(30,this)">30j</button>
+        </div>
+        <div id="tempZoneTabs" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px"></div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:14px;margin-bottom:12px">
+          <canvas id="tempChartCanvas" style="width:100%;max-height:260px"></canvas>
+        </div>
+        <div id="tempStatCards" style="display:grid;grid-template-columns:1fr 1fr;gap:10px"></div>
+      </div>
     </div>
     <div class="page" id="page-labels">
       <div class="section-head"><div class="section-title">Étiquetage</div><button class="btn-sm primary" onclick="openModal('modalAddLabel')">+ Étiquette</button></div>
@@ -355,7 +391,7 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
 
 <div class="modal-overlay" id="modalAddTask"><div class="modal"><div class="modal-handle"></div><div class="modal-title">Nouvelle tâche HACCP <button class="modal-close" onclick="closeModal('modalAddTask')">✕</button></div><div class="form-group"><label class="form-label">Titre</label><input class="form-input" id="taskTitle" placeholder="Ex: Nettoyage plan de travail"/></div><div class="form-group"><label class="form-label">Zone</label><input class="form-input" id="taskZone" placeholder="Ex: Cuisine, Frigo n°1..."/></div><div class="form-group"><label class="form-label">Fréquence</label><select class="form-select" id="taskFreq"><option value="daily">Quotidienne</option><option value="weekly">Hebdomadaire</option><option value="monthly">Mensuelle</option></select></div><button class="btn btn-primary" onclick="createTask()">Créer la tâche</button></div></div>
 
-<div class="modal-overlay" id="modalAddZone"><div class="modal"><div class="modal-handle"></div><div class="modal-title">Nouvelle zone <button class="modal-close" onclick="closeModal('modalAddZone')">✕</button></div><div class="form-group"><label class="form-label">Nom</label><input class="form-input" id="zoneName" placeholder="Ex: Frigo n°1, Congélateur..."/></div><div class="form-row"><div class="form-group"><label class="form-label">Seuil min (°C)</label><input class="form-input" id="zoneMin" type="number" placeholder="-18"/></div><div class="form-group"><label class="form-label">Seuil max (°C)</label><input class="form-input" id="zoneMax" type="number" placeholder="4"/></div></div><button class="btn btn-primary" onclick="createZone()">Ajouter</button></div></div>
+<div class="modal-overlay" id="modalAddZone"><div class="modal"><div class="modal-handle"></div><div class="modal-title">Configurer les seuils <button class="modal-close" onclick="closeModal('modalAddZone')">✕</button></div><div class="form-group"><label class="form-label">Nom du meuble (ex: Meuble A)</label><input class="form-input" id="zoneName" placeholder="Ex: Meuble A, Meuble F..."/></div><div class="form-row"><div class="form-group"><label class="form-label">Seuil min (°C)</label><input class="form-input" id="zoneMin" type="number" placeholder="-18"/></div><div class="form-group"><label class="form-label">Seuil max (°C)</label><input class="form-input" id="zoneMax" type="number" placeholder="4"/></div></div><button class="btn btn-primary" onclick="createZone()">Enregistrer</button></div></div>
 
 <div class="modal-overlay" id="modalAddLabel"><div class="modal"><div class="modal-handle"></div><div class="modal-title">Nouvelle étiquette <button class="modal-close" onclick="closeModal('modalAddLabel')">✕</button></div>
 
@@ -537,6 +573,7 @@ function showApp(){
   document.getElementById('greetingName').textContent=currentUser.name.split(' ')[0];
   loadHome();checkAlerts();
   alertInterval=setInterval(checkAlerts,60000);
+  initNotifications();
 }
 
 function goPage(id,el){
@@ -645,40 +682,221 @@ async function createTask(){
   showToast('Tâche créée','ok',2500);loadHaccp();
 }
 
+// ===== TEMPERATURES =====
+const ZONES_PATISSIER=['Meuble A','Meuble B','Meuble C','Meuble D','Meuble E'];
+const ZONES_VENDEUSE=['Meuble F','Meuble G','Meuble H','Meuble I'];
+const ZONES_ALL=[...ZONES_PATISSIER,...ZONES_VENDEUSE];
+let currentSlot='14h';
+let tempChartObj=null;
+let chartDays=7;
+let chartZone=null;
+
+function getMyZones(){
+  const r=currentUser.role;
+  if(r==='patissier')return ZONES_PATISSIER;
+  if(r==='vendeuse')return ZONES_VENDEUSE;
+  return ZONES_ALL; // admin, responsable
+}
+
+function selectSlot(slot){
+  currentSlot=slot;
+  document.getElementById('slot14Btn').style.border=slot==='14h'?'2px solid rgba(45,212,160,0.4)':'2px solid var(--border2)';
+  document.getElementById('slot14Btn').style.background=slot==='14h'?'rgba(45,212,160,0.1)':'var(--bg2)';
+  document.getElementById('slot14Btn').querySelector('div').style.color=slot==='14h'?'var(--teal)':'var(--muted)';
+  document.getElementById('slot21Btn').style.border=slot==='21h'?'2px solid rgba(45,212,160,0.4)':'2px solid var(--border2)';
+  document.getElementById('slot21Btn').style.background=slot==='21h'?'rgba(45,212,160,0.1)':'var(--bg2)';
+  document.getElementById('slot21Btn').querySelector('div').style.color=slot==='21h'?'var(--teal)':'var(--muted)';
+}
+
 async function loadTemp(){
-  const{data}=await db.from('temperature_readings').select('*').order('read_at',{ascending:false}).limit(200);
+  const myZones=getMyZones();
+  const{data}=await db.from('temperature_readings').select('*').order('read_at',{ascending:false}).limit(500);
   const zm={};
-  (data||[]).forEach(r=>{if(!zm[r.zone_name])zm[r.zone_name]={name:r.zone_name,min:r.threshold_min,max:r.threshold_max};});
-  if(Object.keys(zm).length===0)['Frigo n°1','Frigo n°2','Congélateur','Chambre froide'].forEach(z=>zm[z]={name:z,min:null,max:null});
-  zoneConfigs=Object.values(zm);
-  zoneConfigs.forEach(z=>{if(tempValues[z.name]===undefined)tempValues[z.name]=z.max?z.max-1:3;});
+  (data||[]).forEach(r=>{if(myZones.includes(r.zone_name)&&!zm[r.zone_name])zm[r.zone_name]={name:r.zone_name,min:r.threshold_min,max:r.threshold_max};});
+  zoneConfigs=myZones.map(n=>zm[n]||{name:n,min:null,max:null});
+  zoneConfigs.forEach(z=>{if(tempValues[z.name]===undefined)tempValues[z.name]=3;});
+
+  // Check today's slots
+  const today=new Date().toISOString().split('T')[0];
+  const todayData=(data||[]).filter(r=>r.read_at&&r.read_at.startsWith(today)&&myZones.includes(r.zone_name));
+  const done14=myZones.filter(z=>todayData.some(r=>r.zone_name===z&&new Date(r.read_at).getHours()>=13&&new Date(r.read_at).getHours()<18)).length;
+  const done21=myZones.filter(z=>todayData.some(r=>r.zone_name===z&&new Date(r.read_at).getHours()>=18)).length;
+  const total=myZones.length;
+  document.getElementById('slot14Status').textContent=done14===total?'✅ Complet':done14+'/'+total+' fait'+(done14>0?'s':'');
+  document.getElementById('slot14Status').style.color=done14===total?'var(--teal)':done14>0?'var(--amber)':'var(--subtle)';
+  document.getElementById('slot21Status').textContent=done21===total?'✅ Complet':done21+'/'+total+' fait'+(done21>0?'s':'');
+  document.getElementById('slot21Status').style.color=done21===total?'var(--teal)':done21>0?'var(--amber)':'var(--subtle)';
+
+  // Auto-select slot based on time
+  const h=new Date().getHours();
+  selectSlot(h>=18?'21h':'14h');
   renderTempList();
 }
+
 function renderTempList(){
   const el=document.getElementById('tempList');
-  if(!zoneConfigs.length){el.innerHTML='<div class="empty"><div class="empty-ico">🌡️</div><div class="empty-title">Aucune zone</div><div class="empty-sub">Ajoutez des zones avec + Zone</div></div>';return;}
-  el.innerHTML=zoneConfigs.map(z=>{
+  if(!zoneConfigs.length){el.innerHTML='<div class="empty"><div class="empty-ico">🌡️</div><div class="empty-title">Aucune zone assignée</div></div>';return;}
+  el.innerHTML=`<div style="font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:10px">Relevé ${currentSlot} — Saisissez avec votre thermomètre laser</div>`+
+  zoneConfigs.map(z=>{
     const v=tempValues[z.name]!==undefined?tempValues[z.name]:3;
     const ok=(z.min===null||v>=z.min)&&(z.max===null||v<=z.max);
     const cls=z.min===null&&z.max===null?'unknown':ok?'ok':'danger';
-    const seuil=z.min!==null&&z.max!==null?'Seuil : '+z.min+'°C → '+z.max+'°C':z.max!==null?'Seuil max : '+z.max+'°C':z.min!==null?'Seuil min : '+z.min+'°C':'Aucun seuil défini';
-    return'<div class="temp-card '+cls+'"><div class="temp-zone-name">'+z.name+'</div><div class="temp-row"><div style="flex:1"><div class="temp-val '+cls+'" id="tv-'+z.name.replace(/[^a-z0-9]/gi,'_')+'">'+(v>=0?'+':'')+v.toFixed(1)+'°C</div><div class="temp-seuil">'+seuil+'</div>'+(cls==='danger'?'<div class="temp-alert-txt">⚠ Hors seuil — action requise</div>':'')+'</div><div class="temp-btns"><div class="temp-btn" onclick="adjTemp(\''+z.name+'\',0.1)">+</div><div class="temp-btn" onclick="adjTemp(\''+z.name+'\',-0.1)">−</div></div></div></div>';
+    const seuil=z.min!==null&&z.max!==null?'Seuil : '+z.min+'°C → '+z.max+'°C':z.max!==null?'Max : '+z.max+'°C':z.min!==null?'Min : '+z.min+'°C':'Configurer les seuils';
+    const role=['A','B','C','D','E'].includes(z.name.split(' ')[1])?'Pâtissier':'Vendeuse';
+    return'<div class="temp-card '+cls+'"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><div class="temp-zone-name" style="margin:0">'+z.name+'</div><span class="pill pending" style="font-size:10px">'+role+'</span></div><div class="temp-row"><div style="flex:1"><div class="temp-val '+cls+'" id="tv-'+z.name.replace(/[^a-z0-9]/gi,'_')+'">'+(v>=0?'+':'')+v.toFixed(1)+'°C</div><div class="temp-seuil">'+seuil+'</div>'+(cls==='danger'?'<div class="temp-alert-txt">⚠ Hors seuil !</div>':'')+'</div><div class="temp-btns"><div class="temp-btn" onclick="adjTemp(\''+z.name+'\',0.5)">+</div><div class="temp-btn" onclick="adjTemp(\''+z.name+'\',-0.5)">−</div></div></div></div>';
   }).join('');
 }
+
 function adjTemp(z,d){tempValues[z]=Math.round(((tempValues[z]||3)+d)*10)/10;renderTempList();}
+
 async function saveAllTemps(){
-  await db.from('temperature_readings').insert(zoneConfigs.map(z=>({zone_name:z.name,value_celsius:tempValues[z.name],threshold_min:z.min,threshold_max:z.max,user_id:currentUser.id})));
+  // Set time to slot time
+  const now=new Date();
+  const slotHour=currentSlot==='14h'?14:21;
+  const readAt=new Date(now.getFullYear(),now.getMonth(),now.getDate(),slotHour,0,0).toISOString();
+  await db.from('temperature_readings').insert(zoneConfigs.map(z=>({zone_name:z.name,value_celsius:tempValues[z.name],threshold_min:z.min,threshold_max:z.max,user_id:currentUser.id,read_at:readAt})));
   const oor=zoneConfigs.filter(z=>(z.min!==null&&tempValues[z.name]<z.min)||(z.max!==null&&tempValues[z.name]>z.max));
   const s=document.getElementById('tempSaved');s.classList.remove('hidden');setTimeout(()=>s.classList.add('hidden'),3000);
-  oor.length>0?showToast('⚠ '+oor.map(z=>z.name).join(', ')+' hors seuil !','danger',6000):showToast('Relevés enregistrés','ok',2500);
+  oor.length>0?showToast('⚠ '+oor.map(z=>z.name).join(', ')+' hors seuil !','danger',6000):showToast('Relevés '+currentSlot+' enregistrés ✓','ok',2500);
+  loadTemp();
 }
+
 async function createZone(){
   const n=document.getElementById('zoneName').value.trim();if(!n)return;
   const mn=document.getElementById('zoneMin').value!==''?parseFloat(document.getElementById('zoneMin').value):null;
   const mx=document.getElementById('zoneMax').value!==''?parseFloat(document.getElementById('zoneMax').value):null;
-  zoneConfigs.push({name:n,min:mn,max:mx});tempValues[n]=mx?mx-1:3;
+  // Update threshold in DB for this zone
+  const{data}=await db.from('temperature_readings').select('id').eq('zone_name',n).limit(1);
+  if(data&&data.length)await db.from('temperature_readings').update({threshold_min:mn,threshold_max:mx}).eq('zone_name',n);
+  zoneConfigs=zoneConfigs.map(z=>z.name===n?{...z,min:mn,max:mx}:z);
   closeModal('modalAddZone');document.getElementById('zoneName').value='';
-  showToast('Zone ajoutée','ok',2000);renderTempList();
+  showToast('Seuils mis à jour pour '+n,'ok',2500);renderTempList();
+}
+
+function switchTempTab(tab,el){
+  document.querySelectorAll('#page-temp .admin-tab').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('tempSectionReleve').style.display=tab==='releve'?'block':'none';
+  document.getElementById('tempSectionGraph').style.display=tab==='graph'?'block':'none';
+  if(tab==='graph')loadTempChart(chartDays,document.getElementById('gf'+chartDays));
+}
+
+async function loadTempChart(days,btn){
+  chartDays=days;
+  document.querySelectorAll('#tempSectionGraph .btn-sm').forEach(b=>b.classList.remove('primary'));
+  if(btn)btn.classList.add('primary');
+  const myZones=getMyZones();
+  const since=new Date(Date.now()-days*86400000).toISOString();
+  const{data}=await db.from('temperature_readings').select('*').gte('read_at',since).order('read_at',{ascending:true});
+  const filtered=(data||[]).filter(r=>myZones.includes(r.zone_name));
+  if(!filtered.length){
+    document.getElementById('tempStatCards').innerHTML='<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--muted)">Aucune donnée sur cette période</div>';
+    if(tempChartObj){tempChartObj.destroy();tempChartObj=null;}
+    return;
+  }
+  const zones=[...new Set(filtered.map(r=>r.zone_name))].sort();
+  if(!chartZone||!zones.includes(chartZone))chartZone=zones[0];
+  document.getElementById('tempZoneTabs').innerHTML=zones.map(z=>`<button class="btn-sm ${z===chartZone?'primary':''}" onclick="selectChartZone('${z}')">${z}</button>`).join('');
+  drawChart(filtered,chartZone);
+  drawStats(filtered,zones);
+}
+
+function selectChartZone(zone){
+  chartZone=zone;
+  document.querySelectorAll('#tempZoneTabs button').forEach(b=>b.classList.toggle('primary',b.textContent===zone));
+  const since=new Date(Date.now()-chartDays*86400000).toISOString();
+  db.from('temperature_readings').select('*').gte('read_at',since).order('read_at',{ascending:true}).then(({data})=>{
+    if(data)drawChart(data.filter(r=>getMyZones().includes(r.zone_name)),zone);
+  });
+}
+
+function drawChart(data,zone){
+  const zd=data.filter(r=>r.zone_name===zone);
+  if(!zd.length)return;
+  const labels=zd.map(r=>{const d=new Date(r.read_at);return d.getDate()+'/'+(d.getMonth()+1)+' '+d.getHours()+'h';});
+  const values=zd.map(r=>r.value_celsius);
+  const mn=zd[0].threshold_min,mx=zd[0].threshold_max;
+  const ptColors=values.map(v=>(mn===null||v>=mn)&&(mx===null||v<=mx)?'#2dd4a0':'#f87171');
+  if(tempChartObj)tempChartObj.destroy();
+  const ctx=document.getElementById('tempChartCanvas').getContext('2d');
+  tempChartObj=new Chart(ctx,{
+    type:'line',
+    data:{labels,datasets:[
+      {label:zone+' (°C)',data:values,borderColor:'#2dd4a0',backgroundColor:'rgba(45,212,160,0.07)',pointBackgroundColor:ptColors,pointBorderColor:ptColors,pointRadius:5,borderWidth:2,tension:0.3,fill:true},
+      ...(mx!==null?[{label:'Max '+mx+'°C',data:Array(values.length).fill(mx),borderColor:'rgba(248,113,113,0.6)',borderDash:[6,3],pointRadius:0,borderWidth:1.5,fill:false}]:[]),
+      ...(mn!==null?[{label:'Min '+mn+'°C',data:Array(values.length).fill(mn),borderColor:'rgba(96,165,250,0.6)',borderDash:[6,3],pointRadius:0,borderWidth:1.5,fill:false}]:[]),
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:'#7ba7c4',font:{size:11}}},tooltip:{callbacks:{label:c=>' '+c.parsed.y.toFixed(1)+'°C'}}},
+      scales:{x:{ticks:{color:'#4a7a9b',font:{size:10},maxTicksLimit:8},grid:{color:'rgba(30,58,95,0.4)'}},y:{ticks:{color:'#7ba7c4',callback:v=>v+'°C'},grid:{color:'rgba(30,58,95,0.4)'}}}
+    }
+  });
+}
+
+function drawStats(data,zones){
+  document.getElementById('tempStatCards').innerHTML=zones.map(zone=>{
+    const zd=data.filter(r=>r.zone_name===zone);
+    if(!zd.length)return'';
+    const vals=zd.map(r=>r.value_celsius);
+    const avg=(vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1);
+    const mn=Math.min(...vals).toFixed(1),mx=Math.max(...vals).toFixed(1);
+    const t=zd[0];
+    const anom=zd.filter(r=>(t.threshold_min!==null&&r.value_celsius<t.threshold_min)||(t.threshold_max!==null&&r.value_celsius>t.threshold_max)).length;
+    return`<div class="kpi ${anom>0?'danger':'ok'}">
+      <div class="kpi-ico" style="background:${anom>0?'rgba(248,113,113,0.12)':'rgba(45,212,160,0.12)'}"><svg viewBox="0 0 24 24" stroke="${anom>0?'var(--red)':'var(--teal)'}"><rect x="9" y="2" width="6" height="12" rx="3"/><circle cx="12" cy="17" r="4"/></svg></div>
+      <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px">${zone}</div>
+      <div style="font-size:12px;color:var(--muted)">Moy <b style="color:var(--text)">${avg}°C</b></div>
+      <div style="font-size:11px;color:var(--muted)">${mn}°C / ${mx}°C</div>
+      <div style="font-size:11px;margin-top:4px;font-weight:600;color:${anom>0?'var(--red)':'var(--teal)'}">${anom>0?'⚠ '+anom+' anomalie'+(anom>1?'s':''):'✓ OK'}</div>
+    </div>`;
+  }).join('');
+}
+
+// ===== NOTIFICATIONS TEMPERATURE =====
+function requestNotifPermission(){
+  if(!('Notification' in window)){showToast('Notifications non supportées sur ce navigateur','warn');return;}
+  Notification.requestPermission().then(p=>{
+    if(p==='granted'){
+      showToast('🔔 Alertes activées ! Vous serez notifié à 14h et 21h','ok',4000);
+      document.getElementById('btnNotif').textContent='🔔 Alertes ON';
+      document.getElementById('btnNotif').style.color='var(--teal)';
+      localStorage.setItem('hygipro_notif','1');
+      scheduleNotifications();
+    }else{
+      showToast('Permission refusée — activez les notifications dans les paramètres','warn',4000);
+    }
+  });
+}
+
+function scheduleNotifications(){
+  if(Notification.permission!=='granted')return;
+  if(!localStorage.getItem('hygipro_notif'))return;
+  const now=new Date();
+  const slots=[{h:14,m:0},{h:21,m:0}];
+  slots.forEach(slot=>{
+    const target=new Date(now.getFullYear(),now.getMonth(),now.getDate(),slot.h,slot.m,0);
+    if(target<=now)target.setDate(target.getDate()+1);
+    const delay=target-now;
+    setTimeout(()=>{
+      new Notification('🌡️ HygiPro — Relevé de température',{
+        body:'Il est '+slot.h+'h00 — Prenez les relevés avec votre thermomètre laser !',
+        icon:'/icon.png',
+        badge:'/icon.png',
+        tag:'temp-'+slot.h,
+        renotify:true,
+      });
+      // Reschedule for next day
+      setTimeout(()=>scheduleNotifications(),1000);
+    },delay);
+  });
+}
+
+function initNotifications(){
+  if(localStorage.getItem('hygipro_notif')==='1'){
+    document.getElementById('btnNotif').textContent='🔔 Alertes ON';
+    document.getElementById('btnNotif').style.color='var(--teal)';
+    if(Notification.permission==='granted')scheduleNotifications();
+  }
 }
 
 async function loadLabels(){
