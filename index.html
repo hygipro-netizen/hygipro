@@ -283,12 +283,7 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
       <div class="section-head"><div class="section-title">Étiquetage</div><button class="btn-sm primary" onclick="openModal('modalAddLabel')">+ Étiquette</button></div>
       <div id="labelsList"><div class="empty"><div class="empty-ico">🏷️</div><div class="empty-sub">Chargement...</div></div></div>
     </div>
-    <div class="page" id="page-stock">
-      <div class="section-head"><div class="section-title">Stock matières</div><button class="btn-sm primary" onclick="openModal('modalAddProduct')">+ Produit</button></div>
-      <div id="stockList"><div class="empty"><div class="empty-ico">📦</div><div class="empty-sub">Chargement...</div></div></div>
-    </div>
-    <div class="page" id="page-orders">
-      <div class="section-head"><div class="section-title">Commandes</div><button class="btn-sm primary" onclick="openModal('modalNewOrder')">+ Commander</button></div>
+    <button class="btn-sm primary" onclick="openModal('modalNewOrder')">+ Commander</button></div>
       <div id="ordersList"><div class="empty"><div class="empty-ico">🛒</div><div class="empty-sub">Chargement...</div></div></div>
     </div>
     <div class="page" id="page-docs">
@@ -307,7 +302,8 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
       <div id="adminZones" class="hidden"><div id="zonesList"></div></div>
       <div id="adminRapports" class="hidden"><div class="card"><div class="card-body" style="display:flex;flex-direction:column;gap:10px">
         <div style="font-size:13px;color:var(--muted);margin-bottom:4px">Téléchargez vos données pour les contrôles sanitaires.</div>
-        <button class="btn btn-outline" onclick="exportCSV('haccp')">📋 Exporter HACCP (CSV)</button>
+        <button class="btn btn-primary" onclick="generateRapportPDF()">📋 Rapport hygiène journalier (HTML)</button>
+        <button class="btn btn-outline" onclick="exportCSV('haccp')">📊 Exporter HACCP (CSV)</button>
         <button class="btn btn-outline" onclick="exportCSV('temperatures')">🌡️ Exporter Températures (CSV)</button>
         <button class="btn btn-outline" onclick="exportCSV('labels')">🏷️ Exporter Étiquettes (CSV)</button>
       </div></div></div>
@@ -324,14 +320,10 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
 
   <div id="moreMenu" style="display:none;position:fixed;bottom:calc(72px + env(safe-area-inset-bottom));left:0;right:0;z-index:200;padding:0 12px 8px">
     <div style="background:#0d1f38;border:1px solid #254876;border-radius:20px;overflow:hidden;box-shadow:0 -8px 40px rgba(0,0,0,0.5)">
-      <div id="more-stock" onclick="goPageMore('stock')" style="display:flex;align-items:center;gap:14px;padding:14px 18px;border-bottom:1px solid #1e3a5f;cursor:pointer">
-        <div style="width:38px;height:38px;border-radius:10px;background:rgba(45,212,160,0.1);display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#2dd4a0" stroke-width="1.8" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg></div>
-        <div style="flex:1"><div style="font-size:14px;font-weight:600;color:#e8f4f0">Stock matières</div><div style="font-size:11px;color:#7ba7c4">Gestion des stocks</div></div>
+      <div style="flex:1"><div style="font-size:14px;font-weight:600;color:#e8f4f0">Stock matières</div><div style="font-size:11px;color:#7ba7c4">Gestion des stocks</div></div>
         <div class="alert-badge" id="badge-stock" style="position:static;width:20px;height:20px;display:none">!</div>
       </div>
-      <div id="more-orders" onclick="goPageMore('orders')" style="display:flex;align-items:center;gap:14px;padding:14px 18px;border-bottom:1px solid #1e3a5f;cursor:pointer">
-        <div style="width:38px;height:38px;border-radius:10px;background:rgba(245,158,11,0.1);display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#f59e0b" stroke-width="1.8" stroke-linecap="round"><path d="M4 4h16l-2 10H6L4 4z"/><circle cx="9" cy="20" r="1.5"/><circle cx="16" cy="20" r="1.5"/></svg></div>
-        <div style="flex:1"><div style="font-size:14px;font-weight:600;color:#e8f4f0">Commandes</div><div style="font-size:11px;color:#7ba7c4">Demandes de réapprovisionnement</div></div>
+      <div style="flex:1"><div style="font-size:14px;font-weight:600;color:#e8f4f0">Commandes</div><div style="font-size:11px;color:#7ba7c4">Demandes de réapprovisionnement</div></div>
         <div class="alert-badge" id="badge-orders" style="position:static;width:20px;height:20px;display:none">!</div>
       </div>
       <div id="more-docs" onclick="goPageMore('docs')" style="display:flex;align-items:center;gap:14px;padding:14px 18px;border-bottom:1px solid #1e3a5f;cursor:pointer">
@@ -358,17 +350,25 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
   </div>
 </div>
 
+<div class="modal-overlay" id="modalSignature"><div class="modal"><div class="modal-handle"></div>
+<div class="modal-title">Valider la tâche <button class="modal-close" onclick="closeModal('modalSignature')">✕</button></div>
+<p style="font-size:13px;color:var(--muted);margin-bottom:12px">Signez pour confirmer que la tâche a été effectuée.</p>
+<canvas id="sigCanvas" style="width:100%;height:200px;border-radius:12px;border:1.5px solid #254876;touch-action:none;display:block"></canvas>
+<div style="display:flex;gap:8px;margin-top:12px">
+  <button class="btn btn-outline" onclick="clearSignature()" style="flex:1">🗑 Effacer</button>
+  <button class="btn btn-primary" onclick="confirmSignature()" style="flex:2">✅ Valider</button>
+</div>
+</div></div>
+
 <div class="modal-overlay" id="modalAddTask"><div class="modal"><div class="modal-handle"></div><div class="modal-title">Nouvelle tâche HACCP <button class="modal-close" onclick="closeModal('modalAddTask')">✕</button></div><div class="form-group"><label class="form-label">Titre</label><input class="form-input" id="taskTitle" placeholder="Ex: Nettoyage plan de travail"/></div><div class="form-group"><label class="form-label">Zone</label><input class="form-input" id="taskZone" placeholder="Ex: Cuisine, Frigo n°1..."/></div><div class="form-group"><label class="form-label">Fréquence</label><select class="form-select" id="taskFreq"><option value="daily">Quotidienne</option><option value="weekly">Hebdomadaire</option><option value="monthly">Mensuelle</option></select></div><button class="btn btn-primary" onclick="createTask()">Créer la tâche</button></div></div>
 
 <div class="modal-overlay" id="modalAddZone"><div class="modal"><div class="modal-handle"></div><div class="modal-title">Nouvelle zone <button class="modal-close" onclick="closeModal('modalAddZone')">✕</button></div><div class="form-group"><label class="form-label">Nom</label><input class="form-input" id="zoneName" placeholder="Ex: Frigo n°1, Congélateur..."/></div><div class="form-row"><div class="form-group"><label class="form-label">Seuil min (°C)</label><input class="form-input" id="zoneMin" type="number" placeholder="-18"/></div><div class="form-group"><label class="form-label">Seuil max (°C)</label><input class="form-input" id="zoneMax" type="number" placeholder="4"/></div></div><button class="btn btn-primary" onclick="createZone()">Ajouter</button></div></div>
 
 <div class="modal-overlay" id="modalAddLabel"><div class="modal"><div class="modal-handle"></div><div class="modal-title">Nouvelle étiquette <button class="modal-close" onclick="closeModal('modalAddLabel')">✕</button></div><div class="form-group"><div class="photo-zone" onclick="document.getElementById('photoInput').click()"><div class="photo-zone-ico"><svg viewBox="0 0 26 26"><circle cx="13" cy="13" r="10" stroke-width="1.5"/><circle cx="13" cy="13" r="4" stroke-width="1.5"/></svg></div><div class="photo-zone-title">Photographier l'étiquette</div><div class="photo-zone-sub">Appuyez pour ouvrir l'appareil photo</div><input type="file" id="photoInput" accept="image/*" capture="environment" style="display:none" onchange="previewPhoto(this)"></div><img id="photoPreview" class="photo-preview"></div><div class="form-group"><label class="form-label">Nom du produit *</label><input class="form-input" id="labelProduct" placeholder="Ex: Bœuf haché 5% MG"/></div><div class="form-group"><label class="form-label">DLC</label><input class="form-input" id="labelDlc" type="date"/></div><div class="form-row"><div class="form-group"><label class="form-label">N° de lot</label><input class="form-input" id="labelLot" placeholder="BH-2204"/></div><div class="form-group"><label class="form-label">Fournisseur</label><input class="form-input" id="labelSupplier" placeholder="Dupont"/></div></div><div class="form-group"><label class="form-label">Allergènes</label><input class="form-input" id="labelAllergens" placeholder="Gluten, Lait... ou Aucun"/></div><button class="btn btn-primary" id="btnSaveLabel" onclick="createLabel()">Enregistrer l'étiquette</button></div></div>
 
-<div class="modal-overlay" id="modalAddProduct"><div class="modal"><div class="modal-handle"></div><div class="modal-title">Nouveau produit <button class="modal-close" onclick="closeModal('modalAddProduct')">✕</button></div><div class="form-group"><label class="form-label">Nom</label><input class="form-input" id="productName" placeholder="Ex: Farine de blé T55"/></div><div class="form-row"><div class="form-group"><label class="form-label">Unité</label><select class="form-select" id="productUnit"><option value="kg">kg</option><option value="L">L</option><option value="unités">unités</option><option value="boîtes">boîtes</option><option value="g">g</option></select></div><div class="form-group"><label class="form-label">Stock initial</label><input class="form-input" id="productStock" type="number" placeholder="0" min="0"/></div></div><div class="form-group"><label class="form-label">Seuil d'alerte minimum</label><input class="form-input" id="productMin" type="number" placeholder="5" min="0"/></div><button class="btn btn-primary" onclick="createProduct()">Ajouter le produit</button></div></div>
+<div class="form-group"><label class="form-label">Seuil d'alerte minimum</label><input class="form-input" id="productMin" type="number" placeholder="5" min="0"/></div><button class="btn btn-primary" onclick="createProduct()">Ajouter le produit</button></div></div>
 
-<div class="modal-overlay" id="modalStockMove"><div class="modal"><div class="modal-handle"></div><div class="modal-title" id="stockMoveTitle">Mouvement <button class="modal-close" onclick="closeModal('modalStockMove')">✕</button></div><input type="hidden" id="stockMoveProductId"><div class="form-group"><label class="form-label">Quantité</label><input class="form-input" id="stockMoveQty" type="number" placeholder="0" step="0.1"/></div><div class="form-group"><label class="form-label">Motif</label><select class="form-select" id="stockMoveReason"><option>Réception fournisseur</option><option>Utilisation cuisine</option><option>Perte / périmé</option><option>Correction inventaire</option></select></div><div class="form-row" style="margin-top:4px"><button class="btn btn-primary" onclick="saveStockMove(1)" style="background:var(--teal)">+ Entrée</button><button class="btn btn-primary" onclick="saveStockMove(-1)" style="background:var(--red)">− Sortie</button></div></div></div>
-
-<div class="modal-overlay" id="modalNewOrder"><div class="modal"><div class="modal-handle"></div><div class="modal-title">Passer une commande <button class="modal-close" onclick="closeModal('modalNewOrder')">✕</button></div><div class="form-group"><label class="form-label">Produit</label><select class="form-select" id="orderProduct"></select></div><div class="form-group"><label class="form-label">Quantité</label><input class="form-input" id="orderQty" type="number" placeholder="5" min="1"/></div><div class="form-group"><label class="form-label">Motif</label><select class="form-select" id="orderReason"><option>Stock bas — risque de rupture</option><option>Réapprovisionnement planifié</option><option>Commande urgente</option></select></div><div class="form-group"><label class="form-label">Note (optionnel)</label><textarea class="form-textarea" id="orderNote" placeholder="Précisions..."></textarea></div><button class="btn btn-primary" onclick="createOrder()">Envoyer la demande</button></div></div>
+</div>
 
 <div class="modal-overlay" id="modalAddDoc"><div class="modal"><div class="modal-handle"></div><div class="modal-title">Nouveau document <button class="modal-close" onclick="closeModal('modalAddDoc')">✕</button></div>
 <div class="form-group"><label class="form-label">Titre du document *</label><input class="form-input" id="docTitle" placeholder="Ex: PMS 2024, Attestation Marie..."/></div>
@@ -436,6 +436,7 @@ async function checkAlerts(){
 }
 
 async function init(){
+  initSignatureCanvas();
   const s=localStorage.getItem('hygipro_user');
   if(s){currentUser=JSON.parse(s);showApp();}
   await loadUsers();
@@ -475,8 +476,6 @@ function showApp(){
     const a=document.getElementById('more-admin');if(a)a.style.display='flex';
     const b=document.getElementById('btnAddDoc');if(b)b.style.display='block';
   }
-  if(!p.stock&&currentUser.role!=='admin'){const el=document.getElementById('more-stock');if(el)el.style.display='none';}
-  if(!p.orders&&currentUser.role!=='admin'){const el=document.getElementById('more-orders');if(el)el.style.display='none';}
   if(!p.documents&&currentUser.role!=='admin'){const el=document.getElementById('more-docs');if(el)el.style.display='none';}
   const h=new Date().getHours();
   document.getElementById('greetingTime').textContent=(h<12?'Bonjour':h<18?'Bon après-midi':'Bonsoir')+' 👋';
@@ -490,7 +489,7 @@ function goPage(id,el){
   document.getElementById('page-'+id).classList.add('active');
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   if(el)el.classList.add('active');
-  const loaders={home:loadHome,haccp:loadHaccp,temp:loadTemp,labels:loadLabels,stock:loadStock,orders:loadOrders,admin:loadAdmin,docs:loadDocs};
+  const loaders={home:loadHome,haccp:loadHaccp,temp:loadTemp,labels:loadLabels,admin:loadAdmin,docs:loadDocs};
   if(loaders[id])loaders[id]();
 }
 
@@ -533,11 +532,55 @@ async function loadHaccp(){
   if(currentUser.role!=='admin')document.getElementById('btnAddTask').classList.add('hidden');
 }
 async function toggleTask(id){
-  document.getElementById('chk-'+id).classList.add('on');
-  document.getElementById('lbl-'+id).classList.add('done');
-  await db.from('haccp_completions').insert({task_id:id,user_id:currentUser.id});
-  showToast('Tâche validée !','ok',2500);
-  setTimeout(()=>{loadHaccp();checkAlerts();},800);
+  currentSignTaskId=id;
+  document.getElementById('sigCanvas').width=document.getElementById('sigCanvas').offsetWidth||320;
+  document.getElementById('sigCanvas').height=200;
+  clearSignature();
+  openModal('modalSignature');
+}
+let currentSignTaskId=null,sigDrawing=false,sigLastX=0,sigLastY=0;
+function clearSignature(){
+  const c=document.getElementById('sigCanvas');
+  const ctx=c.getContext('2d');
+  ctx.fillStyle='#0d1f38';
+  ctx.fillRect(0,0,c.width,c.height);
+  ctx.strokeStyle='rgba(45,212,160,0.3)';
+  ctx.setLineDash([4,8]);
+  ctx.beginPath();ctx.moveTo(20,c.height*0.7);ctx.lineTo(c.width-20,c.height*0.7);ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle='#4a7a9b';ctx.font='12px Arial';ctx.textAlign='center';
+  ctx.fillText('Signez ici',c.width/2,c.height*0.85);
+}
+function sigStart(e){
+  sigDrawing=true;
+  const r=document.getElementById('sigCanvas').getBoundingClientRect();
+  const t=e.touches?e.touches[0]:e;
+  sigLastX=t.clientX-r.left;sigLastY=t.clientY-r.top;
+}
+function sigMove(e){
+  if(!sigDrawing)return;e.preventDefault();
+  const c=document.getElementById('sigCanvas'),ctx=c.getContext('2d');
+  const r=c.getBoundingClientRect();
+  const t=e.touches?e.touches[0]:e;
+  const x=t.clientX-r.left,y=t.clientY-r.top;
+  ctx.strokeStyle='#2dd4a0';ctx.lineWidth=2.5;ctx.lineCap='round';ctx.lineJoin='round';
+  ctx.beginPath();ctx.moveTo(sigLastX,sigLastY);ctx.lineTo(x,y);ctx.stroke();
+  sigLastX=x;sigLastY=y;
+}
+function sigEnd(){sigDrawing=false;}
+async function confirmSignature(){
+  const c=document.getElementById('sigCanvas');
+  const pixels=c.getContext('2d').getImageData(0,0,c.width,c.height).data;
+  let signed=false;
+  for(let i=0;i<pixels.length;i+=4){if(pixels[i]===45&&pixels[i+1]>180){signed=true;break;}}
+  if(!signed){showToast('Veuillez signer avant de valider','warn');return;}
+  const sigData=c.toDataURL('image/png');
+  document.getElementById('chk-'+currentSignTaskId)?.classList.add('on');
+  document.getElementById('lbl-'+currentSignTaskId)?.classList.add('done');
+  await db.from('haccp_completions').insert({task_id:currentSignTaskId,user_id:currentUser.id,notes:'sig:'+sigData});
+  closeModal('modalSignature');
+  showToast('✅ Tâche validée avec signature !','ok',3000);
+  setTimeout(()=>{loadHaccp();checkAlerts();},500);
 }
 async function createTask(){
   const t=document.getElementById('taskTitle').value.trim();if(!t)return;
@@ -743,7 +786,63 @@ async function deleteDoc(id){
   loadDocs();
 }
 
-async function loadAdmin(){loadUsersList();}
+function initSignatureCanvas(){
+  const c=document.getElementById('sigCanvas');
+  if(!c)return;
+  c.addEventListener('mousedown',sigStart);c.addEventListener('mousemove',sigMove);c.addEventListener('mouseup',sigEnd);
+  c.addEventListener('touchstart',sigStart,{passive:false});c.addEventListener('touchmove',sigMove,{passive:false});c.addEventListener('touchend',sigEnd);
+}
+
+async function generateRapportPDF(){
+  const today=new Date().toISOString().split('T')[0];
+  const dateStr=new Date().toLocaleDateString('fr-FR',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  const[tasks,completions,temps,labels]=await Promise.all([
+    db.from('haccp_tasks').select('*'),
+    db.from('haccp_completions').select('*,users(name)').gte('completed_at',today),
+    db.from('temperature_readings').select('*,users(name)').gte('read_at',today),
+    db.from('labels').select('*').order('opened_at',{ascending:false}).limit(20)
+  ]);
+  const doneIds=new Set((completions.data||[]).map(c=>c.task_id));
+  const todo=(tasks.data||[]).filter(t=>!doneIds.has(t.id));
+  const done=(tasks.data||[]).filter(t=>doneIds.has(t.id));
+  const dlcAlert=(labels.data||[]).filter(l=>l.dlc&&Math.ceil((new Date(l.dlc)-new Date())/86400000)<=2);
+
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <style>body{font-family:Arial,sans-serif;color:#111;padding:30px;max-width:800px;margin:0 auto}
+  h1{color:#0f6e56;border-bottom:3px solid #0f6e56;padding-bottom:10px}
+  h2{color:#1d9e75;margin-top:24px;font-size:16px}
+  table{width:100%;border-collapse:collapse;margin-top:10px;font-size:13px}
+  th{background:#0f6e56;color:white;padding:8px 10px;text-align:left}
+  td{padding:7px 10px;border-bottom:1px solid #ddd}
+  tr:nth-child(even){background:#f5f5f5}
+  .ok{color:#0f6e56;font-weight:700}.danger{color:#cc0000;font-weight:700}.warn{color:#d97706;font-weight:700}
+  .footer{margin-top:40px;font-size:11px;color:#888;border-top:1px solid #ddd;padding-top:10px}
+  .watermark{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-30deg);font-size:60px;color:rgba(0,0,0,0.04);font-weight:900;white-space:nowrap;pointer-events:none}
+  </style></head><body>
+  <div class="watermark">CONFIDENTIEL</div>
+  <h1>📋 Rapport d'hygiène journalier</h1>
+  <p><strong>Date :</strong> ${dateStr}<br><strong>Établissement :</strong> HygiPro<br><strong>Généré par :</strong> ${currentUser.name}</p>
+
+  <h2>✅ Tâches HACCP (${done.length}/${(tasks.data||[]).length})</h2>
+  ${done.length===0?'<p style="color:#888">Aucune tâche validée aujourd\'hui.</p>':'<table><tr><th>Tâche</th><th>Zone</th><th>Validée par</th><th>Heure</th></tr>'+done.map(t=>{const c=(completions.data||[]).find(c=>c.task_id===t.id);return'<tr><td>'+t.title+'</td><td>'+(t.zone||'—')+'</td><td>'+(c?.users?.name||'—')+'</td><td>'+(c?new Date(c.completed_at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}):'—')+'</td></tr>';}).join('')+'</table>'}
+  ${todo.length>0?'<p class="danger">⚠ Tâches non effectuées ('+todo.length+') : '+todo.map(t=>t.title).join(', ')+'</p>':'<p class="ok">✓ Toutes les tâches ont été effectuées.</p>'}
+
+  <h2>🌡️ Températures du jour (${(temps.data||[]).length} relevés)</h2>
+  ${(temps.data||[]).length===0?'<p style="color:#888">Aucun relevé aujourd\'hui.</p>':'<table><tr><th>Zone</th><th>Température</th><th>Seuils</th><th>Statut</th><th>Salarié</th></tr>'+(temps.data||[]).map(r=>{const ok=(r.threshold_min===null||r.value_celsius>=r.threshold_min)&&(r.threshold_max===null||r.value_celsius<=r.threshold_max);return'<tr><td>'+r.zone_name+'</td><td><strong>'+(r.value_celsius>=0?'+':'')+r.value_celsius+'°C</strong></td><td>'+(r.threshold_min!==null?r.threshold_min+'°C':'-')+' → '+(r.threshold_max!==null?r.threshold_max+'°C':'-')+'</td><td class="'+(ok?'ok':'danger')+'">'+(ok?'✓ OK':'✗ Hors seuil')+'</td><td>'+(r.users?.name||'—')+'</td></tr>';}).join('')+'</table>'}
+
+  <h2>🏷️ Étiquettes récentes (${(labels.data||[]).length})</h2>
+  ${dlcAlert.length>0?'<p class="warn">⚠ DLC proches ou dépassées : '+dlcAlert.map(l=>l.product_name+' ('+l.dlc+')').join(', ')+'</p>':''}
+  <table><tr><th>Produit</th><th>DLC</th><th>Lot</th><th>Fournisseur</th><th>Statut</th></tr>${(labels.data||[]).map(l=>{const diff=l.dlc?Math.ceil((new Date(l.dlc)-new Date())/86400000):null;const st=diff===null?'pending':diff<0?'danger':diff<=2?'warn':'ok';const stTxt=diff===null?'Sans DLC':diff<0?'Dépassée':diff<=2?'DLC dans '+diff+'j':'OK';return'<tr><td>'+l.product_name+'</td><td>'+(l.dlc||'—')+'</td><td>'+(l.lot_number||'—')+'</td><td>'+(l.supplier||'—')+'</td><td class="'+st+'">'+stTxt+'</td></tr>';}).join('')}</table>
+
+  <div class="footer">Rapport généré le ${new Date().toLocaleString('fr-FR')} · HygiPro · Confidentiel</div>
+  </body></html>`;
+
+  const blob=new Blob([html],{type:'text/html'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download='rapport_hygiene_'+today+'.html';a.click();
+  showToast('📋 Rapport téléchargé !','ok',3000);
+}
 function adminTab(tab,el){
   ['Salaries','Zones','Rapports'].forEach(t=>document.getElementById('admin'+t).classList.add('hidden'));
   document.getElementById('admin'+tab).classList.remove('hidden');
