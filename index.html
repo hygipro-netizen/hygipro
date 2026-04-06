@@ -453,16 +453,16 @@ function showApp(){
   document.getElementById('topbarAvatar').textContent=ini;
   document.getElementById('topbarName').textContent=currentUser.name;
   const p=currentUser.permissions||{};
-  if(currentUser.role==='admin')document.getElementById('nav-admin').classList.remove('hidden');
-  if(!p.haccp&&currentUser.role!=='admin')document.getElementById('nav-haccp').classList.add('hidden');
-  if(!p.temperatures&&currentUser.role!=='admin')document.getElementById('nav-temp').classList.add('hidden');
-  if(!p.labels&&currentUser.role!=='admin')document.getElementById('nav-labels').classList.add('hidden');
-  if(!p.stock&&currentUser.role!=='admin')document.getElementById('nav-stock').classList.add('hidden');
-  if(!p.orders&&currentUser.role!=='admin')document.getElementById('nav-orders').classList.add('hidden');
-  if(currentUser.role==='admin'){document.getElementById('more-admin').style.display='flex';if(document.getElementById('btnAddDoc'))document.getElementById('btnAddDoc').style.display='block';}
-  if(!p.stock&&currentUser.role!=='admin')document.getElementById('more-stock').style.display='none';
-  if(!p.orders&&currentUser.role!=='admin')document.getElementById('more-orders').style.display='none';
-  if(!p.documents&&currentUser.role!=='admin')document.getElementById('more-docs').style.display='none';
+  if(!p.haccp&&currentUser.role!=='admin'){const el=document.getElementById('nav-haccp');if(el)el.classList.add('hidden');}
+  if(!p.temperatures&&currentUser.role!=='admin'){const el=document.getElementById('nav-temp');if(el)el.classList.add('hidden');}
+  if(!p.labels&&currentUser.role!=='admin'){const el=document.getElementById('nav-labels');if(el)el.classList.add('hidden');}
+  if(currentUser.role==='admin'){
+    const a=document.getElementById('more-admin');if(a)a.style.display='flex';
+    const b=document.getElementById('btnAddDoc');if(b)b.style.display='block';
+  }
+  if(!p.stock&&currentUser.role!=='admin'){const el=document.getElementById('more-stock');if(el)el.style.display='none';}
+  if(!p.orders&&currentUser.role!=='admin'){const el=document.getElementById('more-orders');if(el)el.style.display='none';}
+  if(!p.documents&&currentUser.role!=='admin'){const el=document.getElementById('more-docs');if(el)el.style.display='none';}
   const h=new Date().getHours();
   document.getElementById('greetingTime').textContent=(h<12?'Bonjour':h<18?'Bon après-midi':'Bonsoir')+' 👋';
   document.getElementById('greetingName').textContent=currentUser.name.split(' ')[0];
