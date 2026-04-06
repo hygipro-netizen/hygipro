@@ -344,11 +344,13 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
     <div class="page" id="page-admin">
       <div class="section-title" style="margin-bottom:14px">Administration</div>
       <div class="admin-tabs">
-        <button class="admin-tab active" onclick="adminTab('Salaries',this)">Salariés</button>
+        <button class="admin-tab active" onclick="adminTab('Dashboard',this)">📊 Dashboard</button>
+        <button class="admin-tab" onclick="adminTab('Salaries',this)">Salariés</button>
         <button class="admin-tab" onclick="adminTab('Zones',this)">Zones</button>
         <button class="admin-tab" onclick="adminTab('Rapports',this)">Rapports</button>
       </div>
-      <div id="adminSalaries"><div class="section-head"><div class="card-title">Comptes salariés</div><button class="btn-sm primary" onclick="openModal('modalCreateUser')">+ Salarié</button></div><div id="usersList"></div></div>
+      <div id="adminDashboard"><div id="dashboardContent"><div class="empty"><div class="empty-sub">Chargement...</div></div></div></div>
+      <div id="adminSalaries" class="hidden"><div class="section-head"><div class="card-title">Comptes salariés</div><button class="btn-sm primary" onclick="openModal('modalCreateUser')">+ Salarié</button></div><div id="usersList"></div></div>
       <div id="adminZones" class="hidden"><div id="zonesList"></div></div>
       <div id="adminRapports" class="hidden"><div class="card"><div class="card-body" style="display:flex;flex-direction:column;gap:10px">
         <div style="font-size:13px;color:var(--muted);margin-bottom:4px">Téléchargez vos données pour les contrôles sanitaires.</div>
@@ -1344,7 +1346,7 @@ function initSignatureCanvas(){
   c.addEventListener('touchstart',sigStart,{passive:false});c.addEventListener('touchmove',sigMove,{passive:false});c.addEventListener('touchend',sigEnd);
 }
 
-async function loadAdmin(){loadUsersList();}
+async function loadAdmin(){loadDashboard();}
 
 async function generateRapportPDF(){
   const today=new Date().toISOString().split('T')[0];
@@ -1397,11 +1399,180 @@ async function generateRapportPDF(){
   showToast('📋 Rapport téléchargé !','ok',3000);
 }
 function adminTab(tab,el){
-  ['Salaries','Zones','Rapports'].forEach(t=>document.getElementById('admin'+t).classList.add('hidden'));
+  ['Dashboard','Salaries','Zones','Rapports'].forEach(t=>document.getElementById('admin'+t).classList.add('hidden'));
   document.getElementById('admin'+tab).classList.remove('hidden');
   document.querySelectorAll('.admin-tab').forEach(b=>b.classList.remove('active'));el.classList.add('active');
   if(tab==='Zones')loadZonesList();
+  if(tab==='Dashboard')loadDashboard();
 }
+async function loadDashboard(){
+  const el=document.getElementById('dashboardContent');
+  el.innerHTML='<div class="empty"><div class="empty-sub">Chargement du tableau de bord...</div></div>';
+  const today=new Date().toISOString().split('T')[0];
+  const week=new Date(Date.now()-7*86400000).toISOString();
+
+  const[
+    {data:tasks},{data:completions},
+    {data:temps},{data:labels},
+    {data:incidents},{data:receptions},
+    {data:users}
+  ]=await Promise.all([
+    db.from('haccp_tasks').select('id,title'),
+    db.from('haccp_completions').select('task_id,user_id,completed_at').gte('completed_at',today),
+    db.from('temperature_readings').select('*').gte('read_at',today),
+    db.from('labels').select('*').order('opened_at',{ascending:false}).limit(100),
+    db.from('incidents').select('*').eq('status','ouvert'),
+    db.from('receptions').select('*').gte('delivery_date',new Date(Date.now()-7*86400000).toISOString().split('T')[0]),
+    db.from('users').select('*').eq('active',true),
+  ]);
+
+  const tc=tasks?.length||0;
+  const dc=new Set((completions||[]).map(c=>c.task_id)).size;
+  const haccpPct=tc>0?Math.round((dc/tc)*100):0;
+
+  const now=new Date();
+  const dlcExpired=(labels||[]).filter(l=>l.dlc&&new Date(l.dlc)<now).length;
+  const dlcSoon=(labels||[]).filter(l=>l.dlc&&(new Date(l.dlc)-now)/86400000<=2&&new Date(l.dlc)>=now).length;
+
+  const tempOk=(temps||[]).filter(r=>(r.threshold_min===null||r.value_celsius>=r.threshold_min)&&(r.threshold_max===null||r.value_celsius<=r.threshold_max)).length;
+  const tempTotal=temps?.length||0;
+  const tempKo=tempTotal-tempOk;
+
+  const incCrit=(incidents||[]).filter(i=>i.severity==='critique').length;
+  const incMaj=(incidents||[]).filter(i=>i.severity==='majeur').length;
+  const incMin=(incidents||[]).filter(i=>i.severity==='mineur').length;
+
+  const recRefus=(receptions||[]).filter(r=>r.conformite==='refuse').length;
+  const recReserve=(receptions||[]).filter(r=>r.conformite==='accepte_reserve').length;
+  const recOk=(receptions||[]).filter(r=>r.conformite==='conforme').length;
+
+  // HACCP par salarié aujourd'hui
+  const byUser={};
+  (completions||[]).forEach(c=>{byUser[c.user_id]=(byUser[c.user_id]||0)+1;});
+  const usersWithCompletion=(users||[]).map(u=>({
+    name:u.name,role:u.role,
+    done:byUser[u.id]||0,
+    total:tc,
+    pct:tc>0?Math.round(((byUser[u.id]||0)/tc)*100):0,
+  })).sort((a,b)=>b.pct-a.pct);
+
+  // Température manquante aujourd'hui
+  const hour=new Date().getHours();
+  const slot14Done=new Set((temps||[]).filter(r=>new Date(r.read_at).getHours()>=13&&new Date(r.read_at).getHours()<18).map(r=>r.zone_name));
+  const slot21Done=new Set((temps||[]).filter(r=>new Date(r.read_at).getHours()>=18).map(r=>r.zone_name));
+  const allZones=['Meuble A','Meuble B','Meuble C','Meuble D','Meuble E','Meuble F','Meuble G','Meuble H','Meuble I'];
+  const missing14=allZones.filter(z=>!slot14Done.has(z));
+  const missing21=allZones.filter(z=>!slot21Done.has(z));
+
+  el.innerHTML=`
+  <!-- KPIs principaux -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+    <div class="kpi ${haccpPct===100?'ok':haccpPct>50?'warn':'danger'}">
+      <div class="kpi-ico" style="background:${haccpPct===100?'rgba(45,212,160,0.12)':haccpPct>50?'rgba(245,158,11,0.12)':'rgba(248,113,113,0.12)'}">
+        <svg viewBox="0 0 24 24" stroke="${haccpPct===100?'var(--teal)':haccpPct>50?'var(--amber)':'var(--red)'}"><path d="M9 12l2 2 4-4M12 2L4 6v6c0 5.5 3.5 10.7 8 12 4.5-1.3 8-6.5 8-12V6L12 2z"/></svg>
+      </div>
+      <div class="kpi-val">${haccpPct}<span style="font-size:16px;color:var(--muted)">%</span></div>
+      <div class="kpi-label">HACCP aujourd'hui</div>
+    </div>
+    <div class="kpi ${tempKo>0?'danger':'ok'}">
+      <div class="kpi-ico" style="background:${tempKo>0?'rgba(248,113,113,0.12)':'rgba(45,212,160,0.12)'}">
+        <svg viewBox="0 0 24 24" stroke="${tempKo>0?'var(--red)':'var(--teal)'}"><rect x="9" y="2" width="6" height="12" rx="3"/><circle cx="12" cy="17" r="4"/></svg>
+      </div>
+      <div class="kpi-val">${tempKo>0?tempKo:tempTotal}</div>
+      <div class="kpi-label">${tempKo>0?'Anomalies temp.':'Relevés temp.'}</div>
+    </div>
+    <div class="kpi ${dlcExpired>0?'danger':dlcSoon>0?'warn':'ok'}">
+      <div class="kpi-ico" style="background:${dlcExpired>0?'rgba(248,113,113,0.12)':dlcSoon>0?'rgba(245,158,11,0.12)':'rgba(45,212,160,0.12)'}">
+        <svg viewBox="0 0 24 24" stroke="${dlcExpired>0?'var(--red)':dlcSoon>0?'var(--amber)':'var(--teal)'}"><path d="M12 8v4l3 3M12 2a10 10 0 100 20A10 10 0 0012 2z"/></svg>
+      </div>
+      <div class="kpi-val">${dlcExpired+dlcSoon}</div>
+      <div class="kpi-label">Alertes DLC</div>
+    </div>
+    <div class="kpi ${incCrit>0?'danger':incMaj>0?'warn':'ok'}">
+      <div class="kpi-ico" style="background:${incCrit>0?'rgba(248,113,113,0.12)':incMaj>0?'rgba(245,158,11,0.12)':'rgba(45,212,160,0.12)'}">
+        <svg viewBox="0 0 24 24" stroke="${incCrit>0?'var(--red)':incMaj>0?'var(--amber)':'var(--teal)'}"><path d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+      </div>
+      <div class="kpi-val">${incCrit+incMaj+incMin}</div>
+      <div class="kpi-label">Incidents ouverts</div>
+    </div>
+  </div>
+
+  <!-- Alertes actives -->
+  ${(incCrit>0||dlcExpired>0||tempKo>0)?`
+  <div class="card" style="margin-bottom:14px;border-color:rgba(248,113,113,0.3)">
+    <div class="card-header" style="border-color:rgba(248,113,113,0.2)"><div class="card-title" style="color:var(--red)">🚨 Alertes à traiter</div></div>
+    <div class="card-body" style="padding:8px 0;display:flex;flex-direction:column;gap:0">
+      ${incCrit>0?`<div class="act-row"><div class="act-ico" style="background:rgba(248,113,113,0.12)">🔴</div><div class="act-info"><div class="act-title">${incCrit} incident${incCrit>1?'s':''} critique${incCrit>1?'s':''}</div><div class="act-sub">Intervention immédiate requise</div></div><button class="btn-sm danger" onclick="goPageMore('incidents')">Voir</button></div>`:''}
+      ${dlcExpired>0?`<div class="act-row"><div class="act-ico" style="background:rgba(248,113,113,0.12)">⏰</div><div class="act-info"><div class="act-title">${dlcExpired} DLC dépassée${dlcExpired>1?'s':''}</div><div class="act-sub">Retirer immédiatement</div></div><button class="btn-sm danger" onclick="goPage('labels',document.getElementById('nav-labels'))">Voir</button></div>`:''}
+      ${tempKo>0?`<div class="act-row"><div class="act-ico" style="background:rgba(248,113,113,0.12)">🌡️</div><div class="act-info"><div class="act-title">${tempKo} température${tempKo>1?'s':''} hors seuil</div><div class="act-sub">Vérifier les meubles concernés</div></div><button class="btn-sm danger" onclick="goPage('temp',document.getElementById('nav-temp'))">Voir</button></div>`:''}
+    </div>
+  </div>`:''}
+
+  <!-- Relevés température manquants -->
+  ${(hour>=12&&missing14.length>0)||(hour>=18&&missing21.length>0)?`
+  <div class="card" style="margin-bottom:14px;border-color:rgba(245,158,11,0.3)">
+    <div class="card-header" style="border-color:rgba(245,158,11,0.2)"><div class="card-title" style="color:var(--amber)">⚠️ Relevés manquants aujourd'hui</div></div>
+    <div class="card-body" style="padding-top:10px">
+      ${hour>=12&&missing14.length>0?`<div style="font-size:12px;color:var(--muted);margin-bottom:6px">Relevé 14h — manquant : <span style="color:var(--amber);font-weight:600">${missing14.join(', ')}</span></div>`:''}
+      ${hour>=18&&missing21.length>0?`<div style="font-size:12px;color:var(--muted)">Relevé 21h — manquant : <span style="color:var(--amber);font-weight:600">${missing21.join(', ')}</span></div>`:''}
+    </div>
+  </div>`:''}
+
+  <!-- HACCP par salarié -->
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-header"><div class="card-title">✅ HACCP — Avancement aujourd'hui</div></div>
+    <div style="padding:8px 0">
+      ${usersWithCompletion.map(u=>`
+        <div class="act-row">
+          <div class="user-avatar" style="width:36px;height:36px;border-radius:50%;background:rgba(45,212,160,0.15);color:var(--teal);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">${u.name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase()}</div>
+          <div class="act-info">
+            <div class="act-title">${u.name}</div>
+            <div style="height:5px;background:var(--bg2);border-radius:3px;margin-top:5px;overflow:hidden">
+              <div style="height:100%;width:${u.pct}%;background:${u.pct===100?'var(--teal)':u.pct>50?'var(--amber)':'var(--red)'};border-radius:3px;transition:width .4s"></div>
+            </div>
+          </div>
+          <span class="pill ${u.pct===100?'ok':u.pct>50?'warn':'danger'}" style="font-size:11px">${u.done}/${u.total}</span>
+        </div>`).join('')}
+    </div>
+  </div>
+
+  <!-- Réceptions 7 derniers jours -->
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-header"><div class="card-title">📦 Réceptions — 7 derniers jours</div></div>
+    <div class="card-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center">
+        <div style="background:rgba(45,212,160,0.08);border-radius:10px;padding:10px"><div style="font-size:22px;font-weight:800;color:var(--teal)">${recOk}</div><div style="font-size:11px;color:var(--muted)">Conformes</div></div>
+        <div style="background:rgba(245,158,11,0.08);border-radius:10px;padding:10px"><div style="font-size:22px;font-weight:800;color:var(--amber)">${recReserve}</div><div style="font-size:11px;color:var(--muted)">Avec réserve</div></div>
+        <div style="background:rgba(248,113,113,0.08);border-radius:10px;padding:10px"><div style="font-size:22px;font-weight:800;color:var(--red)">${recRefus}</div><div style="font-size:11px;color:var(--muted)">Refusées</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Incidents ouverts détail -->
+  ${incidents&&incidents.length>0?`
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-header"><div class="card-title">🚨 Incidents ouverts</div><button class="btn-sm primary" onclick="goPageMore('incidents')">Voir tout</button></div>
+    <div style="padding:8px 0">
+      ${incidents.slice(0,3).map(inc=>{
+        const sevC={critique:'var(--red)',majeur:'var(--amber)',mineur:'var(--teal)'};
+        const catI={temperature:'🌡️',contamination:'🦠',nettoyage:'🧹',reception:'🚚',personnel:'🤒',materiel:'⚡',produit:'📋'};
+        return`<div class="act-row">
+          <div class="act-ico" style="background:var(--bg2)">${catI[inc.category]||'📋'}</div>
+          <div class="act-info">
+            <div class="act-title" style="color:${sevC[inc.severity]||'var(--text)'}">${inc.description.substring(0,50)}${inc.description.length>50?'...':''}</div>
+            <div class="act-sub">${new Date(inc.created_at).toLocaleDateString('fr-FR')} · ${inc.severity}</div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>`:''}
+
+  <div style="text-align:center;padding:8px 0;font-size:11px;color:var(--subtle)">
+    Mis à jour le ${new Date().toLocaleDateString('fr-FR')} à ${new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}
+    <button onclick="loadDashboard()" style="background:none;border:none;color:var(--teal);cursor:pointer;font-size:11px;margin-left:8px">🔄 Rafraîchir</button>
+  </div>`;
+}
+
 async function loadUsersList(){
   const{data}=await db.from('users').select('*').order('name');
   const el=document.getElementById('usersList');
