@@ -889,7 +889,25 @@ async function renderPdfPage(num){
   const canvas=document.createElement('canvas');
   canvas.width=viewport.width;canvas.height=viewport.height;
   canvas.style.maxWidth='100%';canvas.style.borderRadius='8px';
-  await page.render({canvasContext:canvas.getContext('2d'),viewport}).promise;
+  const ctx=canvas.getContext('2d');
+  await page.render({canvasContext:ctx,viewport}).promise;
+  // Filigrane
+  const name=currentUser?currentUser.name:'Confidentiel';
+  const date=new Date().toLocaleDateString('fr-FR');
+  const text=name+' — '+date;
+  ctx.save();
+  ctx.globalAlpha=0.18;
+  ctx.fillStyle='#ff4444';
+  ctx.font='bold '+Math.round(viewport.width/18)+'px Arial';
+  ctx.textAlign='center';
+  ctx.translate(viewport.width/2,viewport.height/2);
+  ctx.rotate(-Math.PI/5);
+  for(let y=-viewport.height;y<viewport.height;y+=120){
+    ctx.fillText(text,0,y);
+    ctx.fillText(text,-viewport.width/2,y+60);
+    ctx.fillText(text,viewport.width/2,y+60);
+  }
+  ctx.restore();
   document.getElementById('docViewerBody').innerHTML='';
   document.getElementById('docViewerBody').appendChild(canvas);
 }
