@@ -248,7 +248,7 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
       <div class="topbar-title">Hygi<span style="color:#2dd4a0">Pro</span></div>
     </div>
     <div class="topbar-right">
-      <div class="topbar-avatar" id="topbarAvatar">--</div>
+      <div class="topbar-avatar" id="topbarAvatar" onclick="openMyPinModal()" style="cursor:pointer">--</div>
       <div class="topbar-name" id="topbarName">--</div>
       <button class="logout-btn" onclick="doLogout()">Quitter</button>
     </div>
@@ -330,6 +330,8 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
 <div class="modal-overlay" id="modalStockMove"><div class="modal"><div class="modal-handle"></div><div class="modal-title" id="stockMoveTitle">Mouvement <button class="modal-close" onclick="closeModal('modalStockMove')">✕</button></div><input type="hidden" id="stockMoveProductId"><div class="form-group"><label class="form-label">Quantité</label><input class="form-input" id="stockMoveQty" type="number" placeholder="0" step="0.1"/></div><div class="form-group"><label class="form-label">Motif</label><select class="form-select" id="stockMoveReason"><option>Réception fournisseur</option><option>Utilisation cuisine</option><option>Perte / périmé</option><option>Correction inventaire</option></select></div><div class="form-row" style="margin-top:4px"><button class="btn btn-primary" onclick="saveStockMove(1)" style="background:var(--teal)">+ Entrée</button><button class="btn btn-primary" onclick="saveStockMove(-1)" style="background:var(--red)">− Sortie</button></div></div></div>
 
 <div class="modal-overlay" id="modalNewOrder"><div class="modal"><div class="modal-handle"></div><div class="modal-title">Passer une commande <button class="modal-close" onclick="closeModal('modalNewOrder')">✕</button></div><div class="form-group"><label class="form-label">Produit</label><select class="form-select" id="orderProduct"></select></div><div class="form-group"><label class="form-label">Quantité</label><input class="form-input" id="orderQty" type="number" placeholder="5" min="1"/></div><div class="form-group"><label class="form-label">Motif</label><select class="form-select" id="orderReason"><option>Stock bas — risque de rupture</option><option>Réapprovisionnement planifié</option><option>Commande urgente</option></select></div><div class="form-group"><label class="form-label">Note (optionnel)</label><textarea class="form-textarea" id="orderNote" placeholder="Précisions..."></textarea></div><button class="btn btn-primary" onclick="createOrder()">Envoyer la demande</button></div></div>
+
+<div class="modal-overlay" id="modalMyPin"><div class="modal"><div class="modal-handle"></div><div class="modal-title">Mon PIN <button class="modal-close" onclick="closeModal('modalMyPin')">✕</button></div><p style="font-size:13px;color:var(--muted);margin-bottom:16px">Choisissez un nouveau PIN à 6 chiffres pour votre compte.</p><div class="form-group"><label class="form-label">Nouveau PIN (6 chiffres)</label><input class="form-input" id="myNewPin" type="number" placeholder="Ex: 739201"/></div><div class="form-group"><label class="form-label">Confirmer le PIN</label><input class="form-input" id="myNewPinConfirm" type="number" placeholder="Répétez le PIN"/></div><button class="btn btn-primary" onclick="saveMyPin()">Enregistrer mon PIN</button></div></div>
 
 <div class="modal-overlay" id="modalChangePin"><div class="modal"><div class="modal-handle"></div><div class="modal-title">Changer le PIN — <span id="changePinUserName" style="color:var(--teal)"></span> <button class="modal-close" onclick="closeModal('modalChangePin')">✕</button></div><input type="hidden" id="changePinUserId"><div class="form-group"><label class="form-label">Nouveau PIN (6 chiffres)</label><input class="form-input" id="newPinValue" type="number" placeholder="Ex: 482910" maxlength="6"/></div><button class="btn btn-primary" onclick="saveNewPin()">Enregistrer le nouveau PIN</button></div></div>
 
@@ -647,12 +649,33 @@ async function toggleUserActive(id,cur){
   loadUsersList();loadUsers();
 }
 async function deleteUser(id,name){
-  if(!confirm('Supprimer le compte de '+name+' ? Cette action est irréversible.'))return;
-  await db.from('users').delete().eq('id',id);
-  showToast(name+' supprimé','ok',3000);
+  if(!confirm('Supprimer le compte de '+name+' ? Toutes ses données seront supprimées.'))return;
+  showToast('Suppression en cours...','info',3000);
+  await db.from('haccp_completions').delete().eq('user_id',id);
+  await db.from('temperature_readings').delete().eq('user_id',id);
+  await db.from('stock_movements').delete().eq('user_id',id);
+  await db.from('orders').delete().eq('user_id',id);
+  await db.from('labels').delete().eq('user_id',id);
+  const{error}=await db.from('users').delete().eq('id',id);
+  if(error){showToast('Erreur : '+error.message,'danger',5000);return;}
+  showToast(name+' supprimé avec succès','ok',3000);
   loadUsersList();loadUsers();
 }
-function openChangePinModal(id,name){
+function openMyPinModal(){
+  document.getElementById('myNewPin').value='';
+  document.getElementById('myNewPinConfirm').value='';
+  openModal('modalMyPin');
+}
+async function saveMyPin(){
+  const pin=String(document.getElementById('myNewPin').value).trim();
+  const confirm2=String(document.getElementById('myNewPinConfirm').value).trim();
+  if(pin.length!==6){showToast('PIN à 6 chiffres requis','warn');return;}
+  if(pin!==confirm2){showToast('Les deux PIN ne correspondent pas','danger');return;}
+  await db.from('users').update({pin}).eq('id',currentUser.id);
+  currentUser.pin=pin;localStorage.setItem('hygipro_user',JSON.stringify(currentUser));
+  closeModal('modalMyPin');
+  showToast('Ton PIN a été mis à jour !','ok',3000);
+}
   document.getElementById('changePinUserId').value=id;
   document.getElementById('changePinUserName').textContent=name;
   document.getElementById('newPinValue').value='';
