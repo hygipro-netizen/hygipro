@@ -454,7 +454,7 @@ const SUPA_URL='https://mzyrffxosabnmkcqduvc.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16eXJmZnhvc2Fibm1rY3FkdXZjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0NjkzMzYsImV4cCI6MjA5MTA0NTMzNn0.fbhCUI5EKvCO2k0014JWrOR-dqBF4XL1k6Tqdy4zIM8';
 const{createClient}=supabase;
 const db=createClient(SUPA_URL,SUPA_KEY);
-let currentUser=null,tempValues={},zoneConfigs=[],allProducts=[],photoFile=null,alertInterval=null;
+let currentUser=null,tempValues={},zoneConfigs=[],photoFile=null,alertInterval=null;
 
 function showToast(msg,type='info',dur=4000){
   const icons={danger:'🚨',warn:'⚠️',ok:'✅',info:'ℹ️'};
@@ -469,16 +469,11 @@ function setBadge(id,show){const b=document.getElementById('badge-'+id);if(b)b.c
 async function checkAlerts(){
   if(!currentUser)return;
   const alerts=[];
-  const[{data:products},{data:labels},{data:tasks},{data:done},{data:orders}]=await Promise.all([
-    db.from('products').select('*'),
+  const[{data:labels},{data:tasks},{data:done}]=await Promise.all([
     db.from('labels').select('*').order('opened_at',{ascending:false}).limit(100),
     db.from('haccp_tasks').select('id'),
     db.from('haccp_completions').select('task_id').gte('completed_at',new Date().toISOString().split('T')[0]).eq('user_id',currentUser.id),
-    currentUser.role==='admin'?db.from('orders').select('id').eq('status','pending'):Promise.resolve({data:[]})
   ]);
-  const lowStock=(products||[]).filter(p=>p.current_stock<=p.threshold_min);
-  setBadge('stock',lowStock.length>0);
-  if(lowStock.length>0)alerts.push({type:'danger',msg:'Stock critique : '+lowStock.map(p=>p.name).join(', '),page:'stock'});
   const now=new Date();
   const dlcPast=(labels||[]).filter(l=>l.dlc&&(new Date(l.dlc)-now)/86400000<0);
   const dlcSoon=(labels||[]).filter(l=>l.dlc&&(new Date(l.dlc)-now)/86400000>=0&&(new Date(l.dlc)-now)/86400000<=2);
@@ -488,7 +483,6 @@ async function checkAlerts(){
   const doneIds=new Set((done||[]).map(d=>d.task_id));
   const pending=(tasks||[]).filter(t=>!doneIds.has(t.id));
   setBadge('haccp',pending.length>0);
-  if(currentUser.role==='admin'&&(orders||[]).length>0){setBadge('orders',true);alerts.push({type:'info',msg:(orders.length)+' commande(s) en attente de validation',page:'orders'});}
   const dangerAlerts=alerts.filter(a=>a.type==='danger');
   if(dangerAlerts.length>0){document.getElementById('alertBarText').textContent=dangerAlerts[0].msg;document.getElementById('alertBar').classList.add('visible');}
   else document.getElementById('alertBar').classList.remove('visible');
@@ -691,12 +685,20 @@ async function loadLabels(){
   const{data}=await db.from('labels').select('*').order('opened_at',{ascending:false}).limit(50);
   const el=document.getElementById('labelsList');
   if(!data||!data.length){el.innerHTML='<div class="empty"><div class="empty-ico">🏷️</div><div class="empty-title">Aucune étiquette</div><div class="empty-sub">Appuyez sur + Étiquette</div></div>';return;}
+  const isAdmin=currentUser.role==='admin';
   el.innerHTML=data.map(l=>{
     const diff=l.dlc?Math.ceil((new Date(l.dlc)-new Date())/86400000):null;
     const st=diff===null?'pending':diff<0?'danger':diff<=2?'warn':'ok';
     const stTxt=diff===null?'Pas de DLC':diff<0?'DLC dépassée !':diff<=2?'DLC dans '+diff+'j':'DLC : '+l.dlc;
-    return'<div class="label-card">'+(l.photo_url?'<img src="'+l.photo_url+'" class="label-photo" onerror="this.style.display=\'none\'">':'')+'<div class="label-body"><div class="label-name">'+l.product_name+'<span class="pill '+st+'">'+stTxt+'</span></div><div class="label-grid">'+(l.lot_number?'<div class="label-field"><div class="label-key">Lot</div><div class="label-val">'+l.lot_number+'</div></div>':'')+(l.supplier?'<div class="label-field"><div class="label-key">Fournisseur</div><div class="label-val">'+l.supplier+'</div></div>':'')+(l.allergens?'<div class="label-field" style="grid-column:1/-1"><div class="label-key">Allergènes</div><div class="label-val">'+l.allergens+'</div></div>':'')+'</div></div></div>';
+    const deleteBtn=isAdmin?`<button onclick="deleteLabel('${l.id}')" style="position:absolute;top:8px;right:8px;background:rgba(248,113,113,0.15);border:1px solid rgba(248,113,113,0.3);color:#fca5a5;width:30px;height:30px;border-radius:8px;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2">🗑</button>`:'';
+    return`<div class="label-card" style="position:relative">${deleteBtn}${l.photo_url?'<img src="'+l.photo_url+'" class="label-photo" onerror="this.style.display=\'none\'">':''}<div class="label-body"><div class="label-name">${l.product_name}<span class="pill ${st}">${stTxt}</span></div><div class="label-grid">${l.lot_number?'<div class="label-field"><div class="label-key">Lot</div><div class="label-val">'+l.lot_number+'</div></div>':''}${l.supplier?'<div class="label-field"><div class="label-key">Fournisseur</div><div class="label-val">'+l.supplier+'</div></div>':''}${l.allergens?'<div class="label-field" style="grid-column:1/-1"><div class="label-key">Allergènes</div><div class="label-val">'+l.allergens+'</div></div>':''}</div></div></div>`;
   }).join('');
+}
+async function deleteLabel(id){
+  if(!confirm('Supprimer cette étiquette ?'))return;
+  await db.from('labels').delete().eq('id',id);
+  showToast('Étiquette supprimée','ok',2500);
+  loadLabels();checkAlerts();
 }
 let photoFiles={1:null,2:null};
 
@@ -736,20 +738,38 @@ async function scanAllPhotos(){
   const OCR_KEY='K82562769388957';
 
   async function ocrFile(file){
-    const toBase64=f=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(f);});
-    const b64=await toBase64(file);
+    // Resize image first to avoid size limits
+    const resized=await resizeImage(file,1200);
     const fd=new FormData();
     fd.append('apikey',OCR_KEY);
-    fd.append('base64Image','data:'+file.type+';base64,'+b64);
+    fd.append('file',resized,'image.jpg');
     fd.append('language','fre');
     fd.append('isOverlayRequired','false');
     fd.append('detectOrientation','true');
     fd.append('scale','true');
     fd.append('OCREngine','2');
     const r=await fetch('https://api.ocr.space/parse/image',{method:'POST',body:fd});
+    if(!r.ok)throw new Error('HTTP '+r.status);
     const j=await r.json();
-    if(j.IsErroredOnProcessing)throw new Error(j.ErrorMessage||'OCR error');
+    if(j.IsErroredOnProcessing)throw new Error(j.ErrorMessage[0]||'OCR error');
     return(j.ParsedResults||[]).map(p=>p.ParsedText||'').join('\n');
+  }
+
+  async function resizeImage(file,maxSize){
+    return new Promise(res=>{
+      const img=new Image();
+      const url=URL.createObjectURL(file);
+      img.onload=()=>{
+        const canvas=document.createElement('canvas');
+        let w=img.width,h=img.height;
+        if(w>maxSize||h>maxSize){const r=Math.min(maxSize/w,maxSize/h);w=Math.round(w*r);h=Math.round(h*r);}
+        canvas.width=w;canvas.height=h;
+        canvas.getContext('2d').drawImage(img,0,0,w,h);
+        URL.revokeObjectURL(url);
+        canvas.toBlob(b=>res(b),'image/jpeg',0.85);
+      };
+      img.src=url;
+    });
   }
 
   try{
@@ -818,7 +838,7 @@ async function scanAllPhotos(){
   }catch(e){
     console.error('OCR error:',e);
     spinner.style.display='none';
-    msg.textContent='⚠️ Lecture échouée — remplissez manuellement.';
+    msg.textContent='⚠️ Lecture échouée : '+e.message+' — remplissez manuellement.';
     status.style.background='rgba(245,158,11,0.1)';status.style.borderColor='rgba(245,158,11,0.3)';msg.style.color='#fcd34d';
   }
   document.getElementById('btnScanAI').disabled=false;
@@ -849,67 +869,6 @@ async function createLabel(){
   showToast('Étiquette enregistrée !','ok',3000);loadLabels();checkAlerts();
 }
 
-async function loadStock(){
-  const{data}=await db.from('products').select('*').order('name');
-  allProducts=data||[];
-  const el=document.getElementById('stockList');
-  if(!allProducts.length){el.innerHTML='<div class="empty"><div class="empty-ico">📦</div><div class="empty-title">Aucun produit</div><div class="empty-sub">Ajoutez vos matières premières</div></div>';return;}
-  el.innerHTML=allProducts.map(p=>{
-    const r=p.threshold_min>0?Math.min(100,Math.round((p.current_stock/(p.threshold_min*3))*100)):60;
-    const st=p.current_stock<=p.threshold_min?'danger':p.current_stock<=p.threshold_min*1.5?'warn':'ok';
-    return'<div class="stock-card"><div class="stock-head"><div><div class="stock-name">'+p.name+'</div><div class="stock-unit">Seuil min : '+p.threshold_min+' '+p.unit+'</div></div><div><div class="stock-qty">'+p.current_stock+'</div><div class="stock-qty-unit">'+p.unit+'</div></div></div><div class="stock-bar-wrap"><div class="stock-bar '+st+'" style="width:'+r+'%"></div></div><div style="display:flex;align-items:center;justify-content:space-between"><span class="pill '+st+'">'+(st==='danger'?'Critique':st==='warn'?'Bas':'OK')+'</span><button class="btn-sm primary" onclick="openStockMove(\''+p.id+'\',\''+p.name+'\')">Mouvement</button></div></div>';
-  }).join('');
-}
-function openStockMove(id,name){document.getElementById('stockMoveProductId').value=id;document.getElementById('stockMoveTitle').innerHTML=name+' <button class="modal-close" onclick="closeModal(\'modalStockMove\')">✕</button>';document.getElementById('stockMoveQty').value='';openModal('modalStockMove');}
-async function saveStockMove(sign){
-  const pid=document.getElementById('stockMoveProductId').value;
-  const qty=parseFloat(document.getElementById('stockMoveQty').value);
-  if(!qty||qty<=0){showToast('Entrez une quantité valide','warn');return;}
-  const delta=sign*qty,reason=document.getElementById('stockMoveReason').value;
-  await db.from('stock_movements').insert({product_id:pid,user_id:currentUser.id,delta,reason});
-  const p=allProducts.find(x=>x.id===pid);
-  const ns=Math.max(0,(p?.current_stock||0)+delta);
-  await db.from('products').update({current_stock:ns}).eq('id',pid);
-  closeModal('modalStockMove');
-  showToast(sign>0?'+'+qty+' ajouté':'-'+qty+' retiré','ok',2500);
-  if(ns<=(p?.threshold_min||0))showToast('⚠ Stock '+p?.name+' sous le seuil !','warn',5000);
-  loadStock();checkAlerts();
-}
-async function createProduct(){
-  const n=document.getElementById('productName').value.trim();if(!n)return;
-  await db.from('products').insert({name:n,unit:document.getElementById('productUnit').value,current_stock:parseFloat(document.getElementById('productStock').value)||0,threshold_min:parseFloat(document.getElementById('productMin').value)||0});
-  closeModal('modalAddProduct');document.getElementById('productName').value='';document.getElementById('productStock').value='';document.getElementById('productMin').value='';
-  showToast('Produit ajouté','ok',2500);loadStock();
-}
-
-async function loadOrders(){
-  if(!allProducts.length){const{data}=await db.from('products').select('*').order('name');allProducts=data||[];}
-  document.getElementById('orderProduct').innerHTML=allProducts.length?allProducts.map(p=>'<option value="'+p.id+'">'+p.name+' (stock: '+p.current_stock+' '+p.unit+')</option>').join(''):'<option>Aucun produit</option>';
-  let q=db.from('orders').select('*,products(name,unit),users(name)').order('created_at',{ascending:false});
-  if(currentUser.role!=='admin')q=q.eq('user_id',currentUser.id);
-  const{data}=await q;
-  const el=document.getElementById('ordersList');
-  if(!data||!data.length){el.innerHTML='<div class="empty"><div class="empty-ico">🛒</div><div class="empty-title">Aucune commande</div><div class="empty-sub">Passez une demande avec + Commander</div></div>';return;}
-  el.innerHTML=data.map(o=>{
-    const st=o.status==='pending'?'warn':o.status==='approved'?'ok':'danger';
-    const stTxt=o.status==='pending'?'En attente':o.status==='approved'?'Validée':'Refusée';
-    const adm=currentUser.role==='admin'&&o.status==='pending'?'<div style="display:flex;gap:8px;margin-top:10px"><button class="btn-sm primary" onclick="updateOrder(\''+o.id+'\',\'approved\')">✓ Valider</button><button class="btn-sm danger" onclick="updateOrder(\''+o.id+'\',\'rejected\')">✕ Refuser</button></div>':'';
-    return'<div class="order-card"><div class="order-head"><div><div class="order-name">'+(o.products?.name||'—')+'</div><div class="order-meta">'+o.quantity+' '+(o.products?.unit||'')+' · par '+(o.users?.name||'—')+'</div></div><span class="pill '+st+'">'+stTxt+'</span></div><div style="font-size:12px;color:var(--muted);margin-bottom:4px">'+(o.reason||'')+'</div>'+adm+'</div>';
-  }).join('');
-}
-async function createOrder(){
-  const pid=document.getElementById('orderProduct').value,qty=parseFloat(document.getElementById('orderQty').value);
-  if(!pid||!qty){showToast('Sélectionnez un produit et une quantité','warn');return;}
-  await db.from('orders').insert({product_id:pid,user_id:currentUser.id,quantity:qty,reason:document.getElementById('orderReason').value,status:'pending'});
-  closeModal('modalNewOrder');document.getElementById('orderQty').value='';
-  showToast('Demande envoyée à l\'admin !','ok',3000);loadOrders();
-}
-async function updateOrder(id,status){
-  await db.from('orders').update({status}).eq('id',id);
-  if(status==='approved'){const{data:o}=await db.from('orders').select('*,products(current_stock)').eq('id',id).single();if(o)await db.from('products').update({current_stock:(o.products?.current_stock||0)+o.quantity}).eq('id',o.product_id);}
-  showToast(status==='approved'?'Commande validée ✓':'Commande refusée',status==='approved'?'ok':'warn',2500);
-  loadOrders();checkAlerts();
-}
 
 let docFile=null;
 let docsFilter='Tous';
