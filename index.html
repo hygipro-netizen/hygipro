@@ -676,6 +676,7 @@ async function saveMyPin(){
   closeModal('modalMyPin');
   showToast('Ton PIN a été mis à jour !','ok',3000);
 }
+function openChangePinModal(id,name){
   document.getElementById('changePinUserId').value=id;
   document.getElementById('changePinUserName').textContent=name;
   document.getElementById('newPinValue').value='';
