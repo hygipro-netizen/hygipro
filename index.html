@@ -1401,9 +1401,10 @@ async function generateRapportPDF(){
 function adminTab(tab,el){
   ['Dashboard','Salaries','Zones','Rapports'].forEach(t=>document.getElementById('admin'+t).classList.add('hidden'));
   document.getElementById('admin'+tab).classList.remove('hidden');
-  document.querySelectorAll('.admin-tab').forEach(b=>b.classList.remove('active'));el.classList.add('active');
+  document.querySelectorAll('#page-admin .admin-tab').forEach(b=>b.classList.remove('active'));el.classList.add('active');
   if(tab==='Zones')loadZonesList();
   if(tab==='Dashboard')loadDashboard();
+  if(tab==='Salaries')loadUsersList();
 }
 async function loadDashboard(){
   const el=document.getElementById('dashboardContent');
