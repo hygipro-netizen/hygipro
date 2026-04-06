@@ -13,7 +13,7 @@
 <title>HygiPro</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/quagga@0.12.1/dist/quagga.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{--teal:#2dd4a0;--teal2:#22b589;--teal-light:rgba(45,212,160,0.15);--teal-dark:#17856a;--amber:#f59e0b;--amber-light:rgba(245,158,11,0.15);--amber-dark:#d97706;--red:#f87171;--red-light:rgba(248,113,113,0.15);--red-dark:#ef4444;--blue:#60a5fa;--blue-light:rgba(96,165,250,0.15);--bg:#060f1e;--bg2:#0d1f38;--card:#0f2240;--card2:#162d4f;--border:#1e3a5f;--border2:#254876;--text:#e8f4f0;--muted:#7ba7c4;--subtle:#4a7a9b;--nav-h:68px;--top-h:60px;--r-sm:10px;--r-md:14px;--r-lg:20px;--r-xl:24px}
@@ -431,7 +431,7 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
   </div>
 </div>
 
-<div class="modal-overlay" id="modalAddDoc"> <button class="modal-close" onclick="closeModal('modalAddDoc')">✕</button></div>
+<div class="modal-overlay" id="modalAddDoc"><div class="modal"><div class="modal-handle"></div><div class="modal-title">Nouveau document <button class="modal-close" onclick="closeModal('modalAddDoc')">✕</button></div>
 <div class="form-group"><label class="form-label">Titre du document *</label><input class="form-input" id="docTitle" placeholder="Ex: PMS 2024, Attestation Marie..."/></div>
 <div class="form-group"><label class="form-label">Catégorie</label><select class="form-select" id="docCategory"><option value="PMS">PMS</option><option value="DUERT">DUERT</option><option value="Attestation hygiène">Attestation hygiène</option><option value="Contrat dératisation">Contrat dératisation</option><option value="Analyses microbiologiques">Analyses microbiologiques</option><option value="Procédure">Procédure</option><option value="Fiche technique">Fiche technique</option><option value="Certificat">Certificat</option><option value="Autres">Autres</option></select></div>
 <div class="form-group"><label class="form-label">Fichier (PDF ou image) *</label><div class="photo-zone" onclick="document.getElementById('docFileInput').click()"><div class="photo-zone-ico"><svg viewBox="0 0 26 26"><path d="M13 3v13M8 11l5-5 5 5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 19h18" stroke-width="2" stroke-linecap="round"/></svg></div><div class="photo-zone-title" id="docFileName">Appuyez pour choisir un fichier</div><div class="photo-zone-sub">PDF, JPG, PNG acceptés</div><input type="file" id="docFileInput" accept=".pdf,image/*" style="display:none" onchange="onDocFileSelect(this)"></div></div>
@@ -1209,48 +1209,44 @@ function nextPage(){if(pdfPage<pdfTotal){pdfPage++;renderPdfPage(pdfPage);}}
 function closeDocViewer(){document.getElementById('modalDocViewer').style.display='none';pdfDoc=null;pdfPage=1;pdfTotal=0;}
 
 // ===== BARCODE SCANNER =====
-let barcodeRunning=false;
+let html5QrCode=null;
 
 function openBarcodeScanner(){
   document.getElementById('modalBarcode').style.display='flex';
   document.getElementById('barcodeStatus').textContent='Pointez la caméra vers le code barre';
   document.getElementById('barcodeStatus').style.color='#7ba7c4';
-  barcodeRunning=true;
-  Quagga.init({
-    inputStream:{
-      name:'Live',
-      type:'LiveStream',
-      target:document.getElementById('barcodeReader'),
-      constraints:{facingMode:'environment',width:{min:300},height:{min:200}}
+  document.getElementById('barcodeReader').innerHTML='';
+  html5QrCode=new Html5Qrcode('barcodeReader');
+  html5QrCode.start(
+    {facingMode:'environment'},
+    {fps:10,qrbox:{width:250,height:120},aspectRatio:1.5,
+     formatsToSupport:[
+       Html5QrcodeSupportedFormats.EAN_13,
+       Html5QrcodeSupportedFormats.EAN_8,
+       Html5QrcodeSupportedFormats.CODE_128,
+       Html5QrcodeSupportedFormats.UPC_A,
+       Html5QrcodeSupportedFormats.UPC_E
+     ]
     },
-    decoder:{readers:['ean_reader','ean_8_reader','code_128_reader','code_39_reader','upc_reader','upc_e_reader']},
-    locate:true
-  },function(err){
-    if(err){
-      document.getElementById('barcodeStatus').textContent='⚠️ Caméra indisponible — vérifiez les permissions';
-      document.getElementById('barcodeStatus').style.color='#fcd34d';
-      return;
-    }
-    Quagga.start();
+    onBarcodeDetected,
+    ()=>{}
+  ).catch(err=>{
+    document.getElementById('barcodeStatus').textContent='⚠️ Caméra indisponible — autorisez l\'accès à la caméra';
+    document.getElementById('barcodeStatus').style.color='#fcd34d';
   });
-  Quagga.onDetected(onBarcodeDetected);
 }
 
-async function onBarcodeDetected(result){
-  if(!barcodeRunning)return;
-  const code=result.codeResult.code;
-  if(!code)return;
-  barcodeRunning=false;
-  Quagga.stop();
-  document.getElementById('barcodeStatus').textContent='✅ Code détecté : '+code+' — Recherche en cours...';
-  document.getElementById('barcodeStatus').style.color='#2dd4a0';
+async function onBarcodeDetected(code){
+  if(!html5QrCode)return;
+  await closeBarcode();
+  document.getElementById('modalAddLabel').classList.add('open');
+  document.getElementById('barcodeStatus').textContent='✅ Code : '+code+' — Recherche...';
+  showToast('Code barre détecté ! Recherche du produit...','info',3000);
   try{
     const r=await fetch('https://world.openfoodfacts.org/api/v0/product/'+code+'.json');
     const j=await r.json();
     if(j.status!==1||!j.product){
-      document.getElementById('barcodeStatus').textContent='⚠️ Produit non trouvé — remplissez manuellement';
-      document.getElementById('barcodeStatus').style.color='#fcd34d';
-      setTimeout(closeBarcode,2000);
+      showToast('Produit non trouvé dans la base — remplissez manuellement','warn',4000);
       return;
     }
     const p=j.product;
@@ -1260,18 +1256,16 @@ async function onBarcodeDetected(result){
     if(name)document.getElementById('labelProduct').value=name;
     if(brand)document.getElementById('labelSupplier').value=brand;
     if(allergens)document.getElementById('labelAllergens').value=allergens;
-    document.getElementById('barcodeStatus').textContent='🎉 Produit trouvé ! Fermeture...';
-    setTimeout(closeBarcode,1200);
+    showToast('✅ Produit trouvé ! Vérifiez et ajoutez la DLC','ok',4000);
   }catch(e){
-    document.getElementById('barcodeStatus').textContent='⚠️ Erreur réseau — remplissez manuellement';
-    document.getElementById('barcodeStatus').style.color='#fcd34d';
-    setTimeout(closeBarcode,2000);
+    showToast('Erreur réseau — remplissez manuellement','warn',3000);
   }
 }
 
-function closeBarcode(){
-  barcodeRunning=false;
-  try{Quagga.stop();}catch(e){}
+async function closeBarcode(){
+  try{
+    if(html5QrCode){await html5QrCode.stop();html5QrCode=null;}
+  }catch(e){}
   document.getElementById('modalBarcode').style.display='none';
 }
 
