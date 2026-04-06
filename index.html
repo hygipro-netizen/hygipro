@@ -13,6 +13,7 @@
 <title>HygiPro</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+<script src="https://js.puter.com/v2/"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{--teal:#2dd4a0;--teal2:#22b589;--teal-light:rgba(45,212,160,0.15);--teal-dark:#17856a;--amber:#f59e0b;--amber-light:rgba(245,158,11,0.15);--amber-dark:#d97706;--red:#f87171;--red-light:rgba(248,113,113,0.15);--red-dark:#ef4444;--blue:#60a5fa;--blue-light:rgba(96,165,250,0.15);--bg:#060f1e;--bg2:#0d1f38;--card:#0f2240;--card2:#162d4f;--border:#1e3a5f;--border2:#254876;--text:#e8f4f0;--muted:#7ba7c4;--subtle:#4a7a9b;--nav-h:68px;--top-h:60px;--r-sm:10px;--r-md:14px;--r-lg:20px;--r-xl:24px}
@@ -214,6 +215,7 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
 .empty-title{font-size:15px;font-weight:600;color:var(--text);margin-bottom:6px}
 .empty-sub{font-size:13px}
 .hidden{display:none!important}
+@keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
@@ -355,7 +357,34 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
 
 <div class="modal-overlay" id="modalAddZone"><div class="modal"><div class="modal-handle"></div><div class="modal-title">Nouvelle zone <button class="modal-close" onclick="closeModal('modalAddZone')">✕</button></div><div class="form-group"><label class="form-label">Nom</label><input class="form-input" id="zoneName" placeholder="Ex: Frigo n°1, Congélateur..."/></div><div class="form-row"><div class="form-group"><label class="form-label">Seuil min (°C)</label><input class="form-input" id="zoneMin" type="number" placeholder="-18"/></div><div class="form-group"><label class="form-label">Seuil max (°C)</label><input class="form-input" id="zoneMax" type="number" placeholder="4"/></div></div><button class="btn btn-primary" onclick="createZone()">Ajouter</button></div></div>
 
-<div class="modal-overlay" id="modalAddLabel"><div class="modal"><div class="modal-handle"></div><div class="modal-title">Nouvelle étiquette <button class="modal-close" onclick="closeModal('modalAddLabel')">✕</button></div><div class="form-group"><div class="photo-zone" onclick="document.getElementById('photoInput').click()"><div class="photo-zone-ico"><svg viewBox="0 0 26 26"><circle cx="13" cy="13" r="10" stroke-width="1.5"/><circle cx="13" cy="13" r="4" stroke-width="1.5"/></svg></div><div class="photo-zone-title">Photographier l'étiquette</div><div class="photo-zone-sub">Appuyez pour ouvrir l'appareil photo</div><input type="file" id="photoInput" accept="image/*" capture="environment" style="display:none" onchange="previewPhoto(this)"></div><img id="photoPreview" class="photo-preview"></div><div class="form-group"><label class="form-label">Nom du produit *</label><input class="form-input" id="labelProduct" placeholder="Ex: Bœuf haché 5% MG"/></div><div class="form-group"><label class="form-label">DLC</label><input class="form-input" id="labelDlc" type="date"/></div><div class="form-row"><div class="form-group"><label class="form-label">N° de lot</label><input class="form-input" id="labelLot" placeholder="BH-2204"/></div><div class="form-group"><label class="form-label">Fournisseur</label><input class="form-input" id="labelSupplier" placeholder="Dupont"/></div></div><div class="form-group"><label class="form-label">Allergènes</label><input class="form-input" id="labelAllergens" placeholder="Gluten, Lait... ou Aucun"/></div><button class="btn btn-primary" id="btnSaveLabel" onclick="createLabel()">Enregistrer l'étiquette</button></div></div>
+<div class="modal-overlay" id="modalAddLabel"><div class="modal"><div class="modal-handle"></div><div class="modal-title">Nouvelle étiquette <button class="modal-close" onclick="closeModal('modalAddLabel')">✕</button></div>
+
+<div class="form-group">
+  <div class="photo-zone" onclick="document.getElementById('photoInput').click()">
+    <div class="photo-zone-ico"><svg viewBox="0 0 26 26"><circle cx="13" cy="13" r="10" stroke-width="1.5"/><circle cx="13" cy="13" r="4" stroke-width="1.5"/></svg></div>
+    <div class="photo-zone-title" id="photoZoneTitle">📸 Photographier l'étiquette</div>
+    <div class="photo-zone-sub">L'IA remplit les champs automatiquement</div>
+    <input type="file" id="photoInput" accept="image/*" capture="environment" style="display:none" onchange="previewAndScan(this)">
+  </div>
+  <img id="photoPreview" class="photo-preview">
+</div>
+
+<div id="aiScanStatus" style="display:none;background:rgba(45,212,160,0.1);border:1px solid rgba(45,212,160,0.3);border-radius:12px;padding:12px 14px;margin-bottom:12px;text-align:center">
+  <div style="display:flex;align-items:center;justify-content:center;gap:8px">
+    <div id="aiScanSpinner" style="width:16px;height:16px;border:2px solid rgba(45,212,160,0.3);border-top-color:#2dd4a0;border-radius:50%;animation:spin .8s linear infinite"></div>
+    <span id="aiScanMsg" style="font-size:13px;font-weight:600;color:#2dd4a0">🤖 IA en cours d'analyse...</span>
+  </div>
+</div>
+
+<div class="form-group"><label class="form-label">Nom du produit *</label><input class="form-input" id="labelProduct" placeholder="Ex: Bœuf haché 5% MG"/></div>
+<div class="form-group"><label class="form-label">DLC</label><input class="form-input" id="labelDlc" type="date"/></div>
+<div class="form-row">
+  <div class="form-group"><label class="form-label">N° de lot</label><input class="form-input" id="labelLot" placeholder="BH-2204"/></div>
+  <div class="form-group"><label class="form-label">Fournisseur</label><input class="form-input" id="labelSupplier" placeholder="Dupont"/></div>
+</div>
+<div class="form-group"><label class="form-label">Allergènes</label><input class="form-input" id="labelAllergens" placeholder="Gluten, Lait... ou Aucun"/></div>
+<button class="btn btn-primary" id="btnSaveLabel" onclick="createLabel()">Enregistrer l'étiquette</button>
+</div></div>
 
 <div class="modal-overlay" id="modalAddDoc"><div class="modal"><div class="modal-handle"></div><div class="modal-title">Nouveau document <button class="modal-close" onclick="closeModal('modalAddDoc')">✕</button></div>
 <div class="form-group"><label class="form-label">Titre du document *</label><input class="form-input" id="docTitle" placeholder="Ex: PMS 2024, Attestation Marie..."/></div>
@@ -625,6 +654,64 @@ async function loadLabels(){
   }).join('');
 }
 function previewPhoto(input){photoFile=input.files[0];if(photoFile){const img=document.getElementById('photoPreview');img.src=URL.createObjectURL(photoFile);img.style.display='block';}}
+
+async function previewAndScan(input){
+  photoFile=input.files[0];
+  if(!photoFile)return;
+  const img=document.getElementById('photoPreview');
+  img.src=URL.createObjectURL(photoFile);
+  img.style.display='block';
+  document.getElementById('photoZoneTitle').textContent='📸 Photo prise ✓';
+  // Start AI scan
+  const status=document.getElementById('aiScanStatus');
+  const msg=document.getElementById('aiScanMsg');
+  const spinner=document.getElementById('aiScanSpinner');
+  status.style.display='block';
+  msg.textContent='🤖 IA en cours d\'analyse...';
+  spinner.style.display='inline-block';
+  try{
+    // Convert image to base64 for Puter
+    const base64=await new Promise((res,rej)=>{
+      const r=new FileReader();
+      r.onload=()=>res(r.result);
+      r.onerror=rej;
+      r.readAsDataURL(photoFile);
+    });
+    // Use Puter AI vision to extract label info
+    const prompt=`Tu es un assistant spécialisé dans la lecture d'étiquettes alimentaires.
+Analyse cette image d'étiquette et extrait les informations suivantes en JSON UNIQUEMENT, sans texte avant ou après :
+{
+  "product_name": "nom du produit (obligatoire)",
+  "dlc": "date au format YYYY-MM-DD si trouvée, sinon null",
+  "lot": "numéro de lot si trouvé, sinon null",
+  "supplier": "nom du fournisseur/marque si trouvé, sinon null",
+  "allergens": "liste des allergènes séparés par virgule, sinon null"
+}
+Si tu ne vois pas d'étiquette alimentaire, retourne quand même le JSON avec product_name "Produit inconnu" et le reste à null.`;
+
+    const response=await puter.ai.chat(prompt,{
+      attachments:[{type:'image',content:base64}]
+    });
+    const text=typeof response==='string'?response:response?.message?.content||response?.content||'';
+    const clean=text.replace(/```json|```/g,'').trim();
+    const data=JSON.parse(clean);
+    // Fill fields
+    if(data.product_name)document.getElementById('labelProduct').value=data.product_name;
+    if(data.dlc)document.getElementById('labelDlc').value=data.dlc;
+    if(data.lot)document.getElementById('labelLot').value=data.lot;
+    if(data.supplier)document.getElementById('labelSupplier').value=data.supplier;
+    if(data.allergens)document.getElementById('labelAllergens').value=data.allergens;
+    spinner.style.display='none';
+    msg.textContent='✅ Champs remplis automatiquement ! Vérifiez et corrigez si besoin.';
+    status.style.background='rgba(45,212,160,0.1)';
+    status.style.borderColor='rgba(45,212,160,0.3)';
+  }catch(e){
+    spinner.style.display='none';
+    msg.textContent='⚠️ Analyse impossible — remplissez manuellement.';
+    status.style.background='rgba(245,158,11,0.1)';
+    status.style.borderColor='rgba(245,158,11,0.3)';
+  }
+}
 async function createLabel(){
   const product=document.getElementById('labelProduct').value.trim();if(!product){showToast('Nom du produit requis','warn');return;}
   const btn=document.getElementById('btnSaveLabel');btn.textContent='Enregistrement...';btn.disabled=true;
@@ -639,7 +726,10 @@ async function createLabel(){
   btn.textContent="Enregistrer l'étiquette";btn.disabled=false;
   closeModal('modalAddLabel');
   ['labelProduct','labelDlc','labelLot','labelSupplier','labelAllergens'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('photoPreview').style.display='none';photoFile=null;
+  document.getElementById('photoPreview').style.display='none';
+  document.getElementById('photoZoneTitle').textContent='📸 Photographier l\'étiquette';
+  document.getElementById('aiScanStatus').style.display='none';
+  photoFile=null;
   showToast('Étiquette enregistrée !','ok',3000);loadLabels();checkAlerts();
 }
 
