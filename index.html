@@ -13,7 +13,6 @@
 <title>HygiPro</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
-<script src="https://js.puter.com/v2/"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{--teal:#2dd4a0;--teal2:#22b589;--teal-light:rgba(45,212,160,0.15);--teal-dark:#17856a;--amber:#f59e0b;--amber-light:rgba(245,158,11,0.15);--amber-dark:#d97706;--red:#f87171;--red-light:rgba(248,113,113,0.15);--red-dark:#ef4444;--blue:#60a5fa;--blue-light:rgba(96,165,250,0.15);--bg:#060f1e;--bg2:#0d1f38;--card:#0f2240;--card2:#162d4f;--border:#1e3a5f;--border2:#254876;--text:#e8f4f0;--muted:#7ba7c4;--subtle:#4a7a9b;--nav-h:68px;--top-h:60px;--r-sm:10px;--r-md:14px;--r-lg:20px;--r-xl:24px}
@@ -701,56 +700,95 @@ async function scanAllPhotos(){
   spinner.style.display='inline-block';
   document.getElementById('btnScanAI').disabled=true;
   const count=(photoFiles[1]?1:0)+(photoFiles[2]?1:0);
-  msg.textContent='🤖 Analyse de '+count+' photo'+(count>1?'s':'')+'...';
+  msg.textContent='🔍 Lecture en cours...';
+
+  const OCR_KEY='K82562769388957';
+
+  async function ocrFile(file){
+    const toBase64=f=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(f);});
+    const b64=await toBase64(file);
+    const fd=new FormData();
+    fd.append('apikey',OCR_KEY);
+    fd.append('base64Image','data:'+file.type+';base64,'+b64);
+    fd.append('language','fre');
+    fd.append('isOverlayRequired','false');
+    fd.append('detectOrientation','true');
+    fd.append('scale','true');
+    fd.append('OCREngine','2');
+    const r=await fetch('https://api.ocr.space/parse/image',{method:'POST',body:fd});
+    const j=await r.json();
+    if(j.IsErroredOnProcessing)throw new Error(j.ErrorMessage||'OCR error');
+    return(j.ParsedResults||[]).map(p=>p.ParsedText||'').join('\n');
+  }
+
   try{
-    const toBase64=f=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(f);});
-    const prompt=`Tu es un expert en lecture d'étiquettes alimentaires françaises.
-Analyse ${count===2?'ces 2 photos de la même étiquette':'cette photo d\'étiquette'} et extrait toutes les informations.
-Réponds UNIQUEMENT en JSON valide, sans texte avant ni après, sans balises markdown :
-{"product_name":"nom complet du produit","dlc":"YYYY-MM-DD ou null","lot":"numéro de lot ou null","supplier":"marque/fournisseur ou null","allergens":"liste séparée par virgules ou Aucun ou null"}`;
+    let fullText='';
+    if(photoFiles[1]){msg.textContent='🔍 Analyse photo 1...';fullText+=await ocrFile(photoFiles[1])+'\n';}
+    if(photoFiles[2]){msg.textContent='🔍 Analyse photo 2...';fullText+=await ocrFile(photoFiles[2])+'\n';}
 
-    // Build message content array with images + text
-    const content=[];
-    if(photoFiles[1]){
-      const b64=await toBase64(photoFiles[1]);
-      content.push({type:'image_url',image_url:{url:b64}});
+    // Smart parsing
+    const lines=fullText.split('\n').map(l=>l.trim()).filter(Boolean);
+    const allText=fullText.toUpperCase();
+
+    // --- DLC ---
+    let dlc=null;
+    const dlcPatterns=[
+      /(?:dlc|à consommer avant(?: le)?|cons(?:ommer)?\s*avant|use by|best before)[^\d]*(\d{1,2})[\/\.\-](\d{1,2})[\/\.\-](\d{2,4})/i,
+      /(\d{1,2})[\/\.\-](\d{1,2})[\/\.\-](20\d{2})/,
+      /(\d{1,2})[\/\.\-](\d{1,2})[\/\.\-](\d{2})\b/,
+      /(20\d{2})[\/\.\-](\d{1,2})[\/\.\-](\d{1,2})/,
+    ];
+    for(const p of dlcPatterns){
+      const m=fullText.match(p);
+      if(m){
+        let d,mo,y;
+        if(p===dlcPatterns[3]){y=m[1];mo=m[2];d=m[3];}
+        else{d=m[1];mo=m[2];y=m[3];}
+        if(y.length===2)y='20'+y;
+        if(parseInt(mo)<=12&&parseInt(d)<=31){dlc=y+'-'+mo.padStart(2,'0')+'-'+d.padStart(2,'0');break;}
+      }
     }
-    if(photoFiles[2]){
-      const b64=await toBase64(photoFiles[2]);
-      content.push({type:'image_url',image_url:{url:b64}});
+
+    // --- LOT ---
+    let lot=null;
+    const lotM=fullText.match(/(?:lot|n°\s*lot|batch|lot\s*n°|lot\s*:)\s*([A-Z0-9\-\/\.]{3,20})/i);
+    if(lotM)lot=lotM[1].trim();
+
+    // --- ALLERGENES ---
+    let allergens=null;
+    const allergenList=['gluten','blé','seigle','orge','avoine','lait','œuf','oeuf','arachide','soja','noix','céleri','moutarde','sésame','lupin','mollusque','crustacé','poisson','sulfite','anhydride sulfureux'];
+    const found=allergenList.filter(a=>allText.includes(a.toUpperCase()));
+    if(found.length>0)allergens=found.map(a=>a.charAt(0).toUpperCase()+a.slice(1)).join(', ');
+    else if(allText.includes('SANS ALLERGÈNE')||allText.includes('SANS ALLERGENE'))allergens='Aucun';
+
+    // --- NOM PRODUIT ---
+    let productName=null;
+    const stopWords=['ingredients','ingrédients','conservation','conserver','valeur','energie','matières','pour 100','allergènes','allergenes','lot','dlc','fabriqué','produit en','société','tél','www','@'];
+    const candidates=lines.filter(l=>l.length>3&&l.length<80&&!stopWords.some(s=>l.toLowerCase().includes(s))&&!/^\d+[\.,]\d+$/.test(l)&&!/^\d{1,2}[\/\.\-]\d{1,2}/.test(l));
+    if(candidates.length>0){
+      const scored=candidates.map(l=>({l,s:l.replace(/[^a-zA-ZÀ-ÿ]/g,'').length}));
+      scored.sort((a,b)=>b.s-a.s);
+      productName=scored[0].l.replace(/[*#+|\\]/g,'').trim();
     }
-    content.push({type:'text',text:prompt});
 
-    const response=await puter.ai.chat([{role:'user',content}],{model:'gpt-4o'});
+    if(productName)document.getElementById('labelProduct').value=productName;
+    if(dlc)document.getElementById('labelDlc').value=dlc;
+    if(lot)document.getElementById('labelLot').value=lot;
+    if(allergens)document.getElementById('labelAllergens').value=allergens;
 
-    // Parse response — Puter returns response.message.content or string
-    let text='';
-    if(typeof response==='string')text=response;
-    else if(response?.message?.content)text=typeof response.message.content==='string'?response.message.content:response.message.content.map(c=>c.text||'').join('');
-    else if(response?.content)text=response.content;
-    else text=JSON.stringify(response);
-
-    const clean=text.replace(/```json|```/g,'').trim();
-    // Find JSON in response even if there's surrounding text
-    const match=clean.match(/\{[\s\S]*\}/);
-    if(!match)throw new Error('No JSON found');
-    const data=JSON.parse(match[0]);
-
-    if(data.product_name&&data.product_name!=='null')document.getElementById('labelProduct').value=data.product_name;
-    if(data.dlc&&data.dlc!=='null')document.getElementById('labelDlc').value=data.dlc;
-    if(data.lot&&data.lot!=='null')document.getElementById('labelLot').value=data.lot;
-    if(data.supplier&&data.supplier!=='null')document.getElementById('labelSupplier').value=data.supplier;
-    if(data.allergens&&data.allergens!=='null')document.getElementById('labelAllergens').value=data.allergens;
-
+    const filled=[productName,dlc,lot,allergens].filter(Boolean).length;
     spinner.style.display='none';
-    msg.textContent='✅ '+(count>1?'2 photos analysées':'Photo analysée')+' — vérifiez et corrigez si besoin';
+    if(filled===0){
+      msg.textContent='⚠️ Texte peu lisible — essayez une photo plus nette ou remplissez manuellement.';
+      status.style.background='rgba(245,158,11,0.1)';status.style.borderColor='rgba(245,158,11,0.3)';msg.style.color='#fcd34d';
+    }else{
+      msg.textContent='✅ '+filled+' champ'+(filled>1?'s':'')+' rempli'+(filled>1?'s':'')+' — vérifiez et corrigez si besoin';
+    }
   }catch(e){
-    console.error('Scan error:',e);
+    console.error('OCR error:',e);
     spinner.style.display='none';
-    msg.textContent='⚠️ Analyse échouée — remplissez manuellement. ('+e.message+')';
-    status.style.background='rgba(245,158,11,0.1)';
-    status.style.borderColor='rgba(245,158,11,0.3)';
-    msg.style.color='#fcd34d';
+    msg.textContent='⚠️ Lecture échouée — remplissez manuellement.';
+    status.style.background='rgba(245,158,11,0.1)';status.style.borderColor='rgba(245,158,11,0.3)';msg.style.color='#fcd34d';
   }
   document.getElementById('btnScanAI').disabled=false;
 }
