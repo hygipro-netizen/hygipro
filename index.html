@@ -283,9 +283,6 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
       <div class="section-head"><div class="section-title">Étiquetage</div><button class="btn-sm primary" onclick="openModal('modalAddLabel')">+ Étiquette</button></div>
       <div id="labelsList"><div class="empty"><div class="empty-ico">🏷️</div><div class="empty-sub">Chargement...</div></div></div>
     </div>
-    <button class="btn-sm primary" onclick="openModal('modalNewOrder')">+ Commander</button></div>
-      <div id="ordersList"><div class="empty"><div class="empty-ico">🛒</div><div class="empty-sub">Chargement...</div></div></div>
-    </div>
     <div class="page" id="page-docs">
       <div class="section-head"><div class="section-title">Documents</div><button class="btn-sm primary" id="btnAddDoc" onclick="openModal('modalAddDoc')" style="display:none">+ Document</button></div>
       <div id="docsCats" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px"></div>
@@ -320,12 +317,6 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
 
   <div id="moreMenu" style="display:none;position:fixed;bottom:calc(72px + env(safe-area-inset-bottom));left:0;right:0;z-index:200;padding:0 12px 8px">
     <div style="background:#0d1f38;border:1px solid #254876;border-radius:20px;overflow:hidden;box-shadow:0 -8px 40px rgba(0,0,0,0.5)">
-      <div style="flex:1"><div style="font-size:14px;font-weight:600;color:#e8f4f0">Stock matières</div><div style="font-size:11px;color:#7ba7c4">Gestion des stocks</div></div>
-        <div class="alert-badge" id="badge-stock" style="position:static;width:20px;height:20px;display:none">!</div>
-      </div>
-      <div style="flex:1"><div style="font-size:14px;font-weight:600;color:#e8f4f0">Commandes</div><div style="font-size:11px;color:#7ba7c4">Demandes de réapprovisionnement</div></div>
-        <div class="alert-badge" id="badge-orders" style="position:static;width:20px;height:20px;display:none">!</div>
-      </div>
       <div id="more-docs" onclick="goPageMore('docs')" style="display:flex;align-items:center;gap:14px;padding:14px 18px;border-bottom:1px solid #1e3a5f;cursor:pointer">
         <div style="width:38px;height:38px;border-radius:10px;background:rgba(96,165,250,0.1);display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#60a5fa" stroke-width="1.8" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>
         <div style="flex:1"><div style="font-size:14px;font-weight:600;color:#e8f4f0">Documents</div><div style="font-size:11px;color:#7ba7c4">PMS, DUERT, Attestations...</div></div>
@@ -365,10 +356,6 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
 <div class="modal-overlay" id="modalAddZone"><div class="modal"><div class="modal-handle"></div><div class="modal-title">Nouvelle zone <button class="modal-close" onclick="closeModal('modalAddZone')">✕</button></div><div class="form-group"><label class="form-label">Nom</label><input class="form-input" id="zoneName" placeholder="Ex: Frigo n°1, Congélateur..."/></div><div class="form-row"><div class="form-group"><label class="form-label">Seuil min (°C)</label><input class="form-input" id="zoneMin" type="number" placeholder="-18"/></div><div class="form-group"><label class="form-label">Seuil max (°C)</label><input class="form-input" id="zoneMax" type="number" placeholder="4"/></div></div><button class="btn btn-primary" onclick="createZone()">Ajouter</button></div></div>
 
 <div class="modal-overlay" id="modalAddLabel"><div class="modal"><div class="modal-handle"></div><div class="modal-title">Nouvelle étiquette <button class="modal-close" onclick="closeModal('modalAddLabel')">✕</button></div><div class="form-group"><div class="photo-zone" onclick="document.getElementById('photoInput').click()"><div class="photo-zone-ico"><svg viewBox="0 0 26 26"><circle cx="13" cy="13" r="10" stroke-width="1.5"/><circle cx="13" cy="13" r="4" stroke-width="1.5"/></svg></div><div class="photo-zone-title">Photographier l'étiquette</div><div class="photo-zone-sub">Appuyez pour ouvrir l'appareil photo</div><input type="file" id="photoInput" accept="image/*" capture="environment" style="display:none" onchange="previewPhoto(this)"></div><img id="photoPreview" class="photo-preview"></div><div class="form-group"><label class="form-label">Nom du produit *</label><input class="form-input" id="labelProduct" placeholder="Ex: Bœuf haché 5% MG"/></div><div class="form-group"><label class="form-label">DLC</label><input class="form-input" id="labelDlc" type="date"/></div><div class="form-row"><div class="form-group"><label class="form-label">N° de lot</label><input class="form-input" id="labelLot" placeholder="BH-2204"/></div><div class="form-group"><label class="form-label">Fournisseur</label><input class="form-input" id="labelSupplier" placeholder="Dupont"/></div></div><div class="form-group"><label class="form-label">Allergènes</label><input class="form-input" id="labelAllergens" placeholder="Gluten, Lait... ou Aucun"/></div><button class="btn btn-primary" id="btnSaveLabel" onclick="createLabel()">Enregistrer l'étiquette</button></div></div>
-
-<div class="form-group"><label class="form-label">Seuil d'alerte minimum</label><input class="form-input" id="productMin" type="number" placeholder="5" min="0"/></div><button class="btn btn-primary" onclick="createProduct()">Ajouter le produit</button></div></div>
-
-</div>
 
 <div class="modal-overlay" id="modalAddDoc"><div class="modal"><div class="modal-handle"></div><div class="modal-title">Nouveau document <button class="modal-close" onclick="closeModal('modalAddDoc')">✕</button></div>
 <div class="form-group"><label class="form-label">Titre du document *</label><input class="form-input" id="docTitle" placeholder="Ex: PMS 2024, Attestation Marie..."/></div>
