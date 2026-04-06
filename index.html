@@ -13,6 +13,7 @@
 <title>HygiPro</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/quagga@0.12.1/dist/quagga.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{--teal:#2dd4a0;--teal2:#22b589;--teal-light:rgba(45,212,160,0.15);--teal-dark:#17856a;--amber:#f59e0b;--amber-light:rgba(245,158,11,0.15);--amber-dark:#d97706;--red:#f87171;--red-light:rgba(248,113,113,0.15);--red-dark:#ef4444;--blue:#60a5fa;--blue-light:rgba(96,165,250,0.15);--bg:#060f1e;--bg2:#0d1f38;--card:#0f2240;--card2:#162d4f;--border:#1e3a5f;--border2:#254876;--text:#e8f4f0;--muted:#7ba7c4;--subtle:#4a7a9b;--nav-h:68px;--top-h:60px;--r-sm:10px;--r-md:14px;--r-lg:20px;--r-xl:24px}
@@ -358,6 +359,18 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
 
 <div class="modal-overlay" id="modalAddLabel"><div class="modal"><div class="modal-handle"></div><div class="modal-title">Nouvelle étiquette <button class="modal-close" onclick="closeModal('modalAddLabel')">✕</button></div>
 
+<!-- Scan code barre -->
+<button onclick="openBarcodeScanner()" style="width:100%;padding:13px;border-radius:var(--r-md);border:1.5px solid rgba(45,212,160,0.4);background:rgba(45,212,160,0.08);color:var(--teal);font-size:14px;font-weight:700;cursor:pointer;margin-bottom:12px;display:flex;align-items:center;justify-content:center;gap:8px">
+  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="4" width="4" height="16"/><rect x="8" y="4" width="2" height="16"/><rect x="12" y="4" width="3" height="16"/><rect x="17" y="4" width="2" height="16"/><rect x="21" y="4" width="1" height="16"/></svg>
+  Scanner le code barre
+</button>
+
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+  <div style="flex:1;height:1px;background:var(--border)"></div>
+  <span style="font-size:11px;color:var(--subtle);font-weight:600">OU PHOTO DE L'ÉTIQUETTE</span>
+  <div style="flex:1;height:1px;background:var(--border)"></div>
+</div>
+
 <!-- Photos -->
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
   <!-- Photo 1 -->
@@ -400,7 +413,25 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
 <button class="btn btn-primary" id="btnSaveLabel" onclick="createLabel()">Enregistrer l'étiquette</button>
 </div></div>
 
-<div class="modal-overlay" id="modalAddDoc"><div class="modal"><div class="modal-handle"></div><div class="modal-title">Nouveau document <button class="modal-close" onclick="closeModal('modalAddDoc')">✕</button></div>
+<!-- Barcode Scanner Modal -->
+<div id="modalBarcode" style="display:none;position:fixed;inset:0;z-index:500;background:#060f1e;flex-direction:column">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:#0d1f38;border-bottom:1px solid #1e3a5f;flex-shrink:0">
+    <div style="font-size:15px;font-weight:700;color:#e8f4f0">📷 Scanner le code barre</div>
+    <button onclick="closeBarcode()" style="background:rgba(248,113,113,0.15);border:1px solid rgba(248,113,113,0.3);color:#fca5a5;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">✕ Fermer</button>
+  </div>
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;gap:16px">
+    <div style="position:relative;width:100%;max-width:360px;border-radius:16px;overflow:hidden;background:#000">
+      <div id="barcodeReader" style="width:100%;min-height:240px"></div>
+      <div style="position:absolute;inset:0;pointer-events:none;display:flex;align-items:center;justify-content:center">
+        <div style="width:70%;height:2px;background:rgba(45,212,160,0.8);box-shadow:0 0 10px rgba(45,212,160,0.6)"></div>
+      </div>
+    </div>
+    <div id="barcodeStatus" style="font-size:13px;color:#7ba7c4;text-align:center;font-weight:500">Pointez la caméra vers le code barre</div>
+    <div style="font-size:11px;color:#4a7a9b;text-align:center">Tenez l'appareil stable · Bonne lumière recommandée</div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalAddDoc"> <button class="modal-close" onclick="closeModal('modalAddDoc')">✕</button></div>
 <div class="form-group"><label class="form-label">Titre du document *</label><input class="form-input" id="docTitle" placeholder="Ex: PMS 2024, Attestation Marie..."/></div>
 <div class="form-group"><label class="form-label">Catégorie</label><select class="form-select" id="docCategory"><option value="PMS">PMS</option><option value="DUERT">DUERT</option><option value="Attestation hygiène">Attestation hygiène</option><option value="Contrat dératisation">Contrat dératisation</option><option value="Analyses microbiologiques">Analyses microbiologiques</option><option value="Procédure">Procédure</option><option value="Fiche technique">Fiche technique</option><option value="Certificat">Certificat</option><option value="Autres">Autres</option></select></div>
 <div class="form-group"><label class="form-label">Fichier (PDF ou image) *</label><div class="photo-zone" onclick="document.getElementById('docFileInput').click()"><div class="photo-zone-ico"><svg viewBox="0 0 26 26"><path d="M13 3v13M8 11l5-5 5 5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 19h18" stroke-width="2" stroke-linecap="round"/></svg></div><div class="photo-zone-title" id="docFileName">Appuyez pour choisir un fichier</div><div class="photo-zone-sub">PDF, JPG, PNG acceptés</div><input type="file" id="docFileInput" accept=".pdf,image/*" style="display:none" onchange="onDocFileSelect(this)"></div></div>
@@ -1176,6 +1207,73 @@ async function renderPdfPage(num){
 function prevPage(){if(pdfPage>1){pdfPage--;renderPdfPage(pdfPage);}}
 function nextPage(){if(pdfPage<pdfTotal){pdfPage++;renderPdfPage(pdfPage);}}
 function closeDocViewer(){document.getElementById('modalDocViewer').style.display='none';pdfDoc=null;pdfPage=1;pdfTotal=0;}
+
+// ===== BARCODE SCANNER =====
+let barcodeRunning=false;
+
+function openBarcodeScanner(){
+  document.getElementById('modalBarcode').style.display='flex';
+  document.getElementById('barcodeStatus').textContent='Pointez la caméra vers le code barre';
+  document.getElementById('barcodeStatus').style.color='#7ba7c4';
+  barcodeRunning=true;
+  Quagga.init({
+    inputStream:{
+      name:'Live',
+      type:'LiveStream',
+      target:document.getElementById('barcodeReader'),
+      constraints:{facingMode:'environment',width:{min:300},height:{min:200}}
+    },
+    decoder:{readers:['ean_reader','ean_8_reader','code_128_reader','code_39_reader','upc_reader','upc_e_reader']},
+    locate:true
+  },function(err){
+    if(err){
+      document.getElementById('barcodeStatus').textContent='⚠️ Caméra indisponible — vérifiez les permissions';
+      document.getElementById('barcodeStatus').style.color='#fcd34d';
+      return;
+    }
+    Quagga.start();
+  });
+  Quagga.onDetected(onBarcodeDetected);
+}
+
+async function onBarcodeDetected(result){
+  if(!barcodeRunning)return;
+  const code=result.codeResult.code;
+  if(!code)return;
+  barcodeRunning=false;
+  Quagga.stop();
+  document.getElementById('barcodeStatus').textContent='✅ Code détecté : '+code+' — Recherche en cours...';
+  document.getElementById('barcodeStatus').style.color='#2dd4a0';
+  try{
+    const r=await fetch('https://world.openfoodfacts.org/api/v0/product/'+code+'.json');
+    const j=await r.json();
+    if(j.status!==1||!j.product){
+      document.getElementById('barcodeStatus').textContent='⚠️ Produit non trouvé — remplissez manuellement';
+      document.getElementById('barcodeStatus').style.color='#fcd34d';
+      setTimeout(closeBarcode,2000);
+      return;
+    }
+    const p=j.product;
+    const name=p.product_name_fr||p.product_name||p.generic_name_fr||p.generic_name||'';
+    const brand=p.brands||'';
+    const allergens=(p.allergens_tags||[]).map(a=>a.replace('en:','').replace(/-/g,' ')).map(a=>a.charAt(0).toUpperCase()+a.slice(1)).join(', ');
+    if(name)document.getElementById('labelProduct').value=name;
+    if(brand)document.getElementById('labelSupplier').value=brand;
+    if(allergens)document.getElementById('labelAllergens').value=allergens;
+    document.getElementById('barcodeStatus').textContent='🎉 Produit trouvé ! Fermeture...';
+    setTimeout(closeBarcode,1200);
+  }catch(e){
+    document.getElementById('barcodeStatus').textContent='⚠️ Erreur réseau — remplissez manuellement';
+    document.getElementById('barcodeStatus').style.color='#fcd34d';
+    setTimeout(closeBarcode,2000);
+  }
+}
+
+function closeBarcode(){
+  barcodeRunning=false;
+  try{Quagga.stop();}catch(e){}
+  document.getElementById('modalBarcode').style.display='none';
+}
 
 init();
 </script>
