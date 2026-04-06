@@ -330,6 +330,17 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
       <div class="section-head"><div class="section-title">Réception livraisons</div><button class="btn-sm primary" onclick="openModal('modalAddReception')">+ Réception</button></div>
       <div id="receptionList"><div class="empty"><div class="empty-ico">📦</div><div class="empty-sub">Chargement...</div></div></div>
     </div>
+    <div class="page" id="page-incidents">
+      <div class="section-head"><div class="section-title">Registre incidents</div><button class="btn-sm primary" onclick="openModal('modalAddIncident')">+ Signaler</button></div>
+      <!-- Filtres statut -->
+      <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">
+        <button class="btn-sm primary" id="incFilterAll" onclick="filterIncidents('all',this)">Tous</button>
+        <button class="btn-sm" id="incFilterOuvert" onclick="filterIncidents('ouvert',this)">🔴 Ouverts</button>
+        <button class="btn-sm" id="incFilterEnCours" onclick="filterIncidents('en_cours',this)">🟡 En cours</button>
+        <button class="btn-sm" id="incFilterClos" onclick="filterIncidents('clos',this)">🟢 Clôturés</button>
+      </div>
+      <div id="incidentsList"><div class="empty"><div class="empty-ico">🚨</div><div class="empty-sub">Chargement...</div></div></div>
+    </div>
     <div class="page" id="page-admin">
       <div class="section-title" style="margin-bottom:14px">Administration</div>
       <div class="admin-tabs">
@@ -366,6 +377,11 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
       <div onclick="goPageMore('reception')" style="display:flex;align-items:center;gap:14px;padding:14px 18px;border-bottom:1px solid #1e3a5f;cursor:pointer">
         <div style="width:38px;height:38px;border-radius:10px;background:rgba(245,158,11,0.1);display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#f59e0b" stroke-width="1.8" stroke-linecap="round"><path d="M5 8h14M5 8a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v0a2 2 0 01-2 2M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8"/><path d="M10 12h4"/></svg></div>
         <div style="flex:1"><div style="font-size:14px;font-weight:600;color:#e8f4f0">Réception livraisons</div><div style="font-size:11px;color:#7ba7c4">Contrôle qualité à réception</div></div>
+      </div>
+      <div onclick="goPageMore('incidents')" style="display:flex;align-items:center;gap:14px;padding:14px 18px;border-bottom:1px solid #1e3a5f;cursor:pointer">
+        <div style="width:38px;height:38px;border-radius:10px;background:rgba(248,113,113,0.1);display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#f87171" stroke-width="1.8" stroke-linecap="round"><path d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg></div>
+        <div style="flex:1"><div style="font-size:14px;font-weight:600;color:#e8f4f0">Registre incidents</div><div style="font-size:11px;color:#7ba7c4">Signalement HACCP</div></div>
+        <div class="alert-badge hidden" id="badge-incidents" style="position:static;width:20px;height:20px">!</div>
       </div>
       <div id="more-admin" onclick="goPageMore('admin')" style="display:none;align-items:center;gap:14px;padding:14px 18px;cursor:pointer">
         <div style="width:38px;height:38px;border-radius:10px;background:rgba(167,139,250,0.1);display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#a78bfa" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></div>
@@ -561,6 +577,83 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
 <button class="btn btn-primary" id="btnSaveReception" onclick="saveReception()" style="margin-top:8px">✅ Valider la réception</button>
 </div></div>
 
+<!-- MODAL SIGNALEMENT INCIDENT -->
+<div class="modal-overlay" id="modalAddIncident"><div class="modal"><div class="modal-handle"></div>
+<div class="modal-title">🚨 Signaler un incident <button class="modal-close" onclick="closeModal('modalAddIncident')">✕</button></div>
+
+<div class="form-group"><label class="form-label">Catégorie *</label>
+<select class="form-select" id="incCategory">
+  <option value="temperature">🌡️ Non-conformité température (frigo/congélateur hors seuil)</option>
+  <option value="contamination">🦠 Contamination croisée (produit cru/cuit, surface)</option>
+  <option value="nettoyage">🧹 Défaut nettoyage/désinfection (nuisible, surface)</option>
+  <option value="reception">🚚 Non-conformité réception (produit refusé, DLC)</option>
+  <option value="personnel">🤒 Problème personnel (maladie, blessure, hygiène)</option>
+  <option value="materiel">⚡ Panne équipement (four, frigo, chambre froide)</option>
+  <option value="produit">📋 Non-conformité produit fini (corps étranger, suspect)</option>
+</select></div>
+
+<div class="form-group"><label class="form-label">Gravité *</label>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
+  <label style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px;border-radius:8px;cursor:pointer;border:1.5px solid rgba(45,212,160,0.3);background:rgba(45,212,160,0.08);text-align:center">
+    <input type="radio" name="incSeverity" value="mineur" checked style="display:none">
+    <span style="font-size:16px">🟢</span><span style="font-size:11px;font-weight:600;color:var(--teal)">Mineur</span>
+    <span style="font-size:10px;color:var(--muted)">Peu d'impact</span>
+  </label>
+  <label style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px;border-radius:8px;cursor:pointer;border:1.5px solid rgba(245,158,11,0.3);background:rgba(245,158,11,0.08);text-align:center">
+    <input type="radio" name="incSeverity" value="majeur" style="display:none">
+    <span style="font-size:16px">🟡</span><span style="font-size:11px;font-weight:600;color:var(--amber)">Majeur</span>
+    <span style="font-size:10px;color:var(--muted)">Action requise</span>
+  </label>
+  <label style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px;border-radius:8px;cursor:pointer;border:1.5px solid rgba(248,113,113,0.3);background:rgba(248,113,113,0.08);text-align:center">
+    <input type="radio" name="incSeverity" value="critique" style="display:none">
+    <span style="font-size:16px">🔴</span><span style="font-size:11px;font-weight:600;color:var(--red)">Critique</span>
+    <span style="font-size:10px;color:var(--muted)">Urgence</span>
+  </label>
+</div></div>
+
+<div class="form-group"><label class="form-label">Lieu</label>
+<input class="form-input" id="incLocation" placeholder="Ex: Chambre froide, Plan de travail, Zone cuisson..."/></div>
+
+<div class="form-group"><label class="form-label">Description *</label>
+<textarea class="form-textarea" id="incDescription" placeholder="Décrivez précisément ce que vous avez observé..." style="height:90px"></textarea></div>
+
+<div class="form-group"><label class="form-label">Action immédiate prise</label>
+<textarea class="form-textarea" id="incActionImmediate" placeholder="Ex: Produit mis en quarantaine, frigo éteint, responsable prévenu..." style="height:70px"></textarea></div>
+
+<div class="form-group">
+  <label class="form-label">Photo</label>
+  <div class="photo-zone" onclick="document.getElementById('incPhotoInput').click()">
+    <div class="photo-zone-ico"><svg viewBox="0 0 26 26"><circle cx="13" cy="13" r="10" stroke-width="1.5"/><circle cx="13" cy="13" r="4" stroke-width="1.5"/></svg></div>
+    <div class="photo-zone-title" id="incPhotoTitle">📸 Photo de l'incident</div>
+    <div class="photo-zone-sub">Facultatif mais recommandé</div>
+    <input type="file" id="incPhotoInput" accept="image/*" capture="environment" style="display:none" onchange="previewIncPhoto(this)">
+  </div>
+  <img id="incPhotoPreview" class="photo-preview">
+</div>
+
+<div class="form-group">
+  <label class="form-label">Signature</label>
+  <canvas id="incSigCanvas" style="width:100%;height:110px;border-radius:10px;border:1.5px solid #254876;touch-action:none;display:block;background:#0d1f38"></canvas>
+  <button class="btn-sm" onclick="clearIncSig()" style="margin-top:6px">🗑 Effacer</button>
+</div>
+
+<button class="btn btn-primary" id="btnSaveIncident" onclick="saveIncident()" style="margin-top:8px">🚨 Enregistrer l'incident</button>
+</div></div>
+
+<!-- MODAL ACTION CORRECTIVE (admin) -->
+<div class="modal-overlay" id="modalCloseIncident"><div class="modal"><div class="modal-handle"></div>
+<div class="modal-title">✅ Clôturer l'incident <button class="modal-close" onclick="closeModal('modalCloseIncident')">✕</button></div>
+<input type="hidden" id="closeIncidentId">
+<div class="form-group"><label class="form-label">Action corrective menée *</label>
+<textarea class="form-textarea" id="closeIncidentAction" placeholder="Décrivez les mesures correctives prises pour éviter la récidive..." style="height:100px"></textarea></div>
+<div class="form-group"><label class="form-label">Statut</label>
+<select class="form-select" id="closeIncidentStatus">
+  <option value="en_cours">🟡 En cours de traitement</option>
+  <option value="clos">🟢 Clôturé — Résolu</option>
+</select></div>
+<button class="btn btn-primary" onclick="closeIncident()">Enregistrer</button>
+</div></div>
+
 <div class="modal-overlay" id="modalMyPin"><div class="modal"><div class="modal-handle"></div><div class="modal-title">Mon PIN <button class="modal-close" onclick="closeModal('modalMyPin')">✕</button></div><p style="font-size:13px;color:var(--muted);margin-bottom:16px">Choisissez un nouveau PIN à 6 chiffres pour votre compte.</p><div class="form-group"><label class="form-label">Nouveau PIN (6 chiffres)</label><input class="form-input" id="myNewPin" type="number" placeholder="Ex: 739201"/></div><div class="form-group"><label class="form-label">Confirmer le PIN</label><input class="form-input" id="myNewPinConfirm" type="number" placeholder="Répétez le PIN"/></div><button class="btn btn-primary" onclick="saveMyPin()">Enregistrer mon PIN</button></div></div>
 
 <div class="modal-overlay" id="modalChangePin"><div class="modal"><div class="modal-handle"></div><div class="modal-title">Changer le PIN — <span id="changePinUserName" style="color:var(--teal)"></span> <button class="modal-close" onclick="closeModal('modalChangePin')">✕</button></div><input type="hidden" id="changePinUserId"><div class="form-group"><label class="form-label">Nouveau PIN (6 chiffres)</label><input class="form-input" id="newPinValue" type="number" placeholder="Ex: 482910" maxlength="6"/></div><button class="btn btn-primary" onclick="saveNewPin()">Enregistrer le nouveau PIN</button></div></div>
@@ -601,6 +694,11 @@ async function checkAlerts(){
   const doneIds=new Set((done||[]).map(d=>d.task_id));
   const pending=(tasks||[]).filter(t=>!doneIds.has(t.id));
   setBadge('haccp',pending.length>0);
+  // Incidents ouverts critiques/majeurs
+  const{data:openInc}=await db.from('incidents').select('id,severity').eq('status','ouvert');
+  const critInc=(openInc||[]).filter(i=>i.severity==='critique'||i.severity==='majeur').length;
+  setBadge('incidents',critInc>0);
+  if(critInc>0)alerts.push({type:'danger',msg:critInc+' incident'+(critInc>1?'s':'')+' ouvert'+(critInc>1?'s':'')+' non traité'+(critInc>1?'s':''),page:'incidents'});
   const dangerAlerts=alerts.filter(a=>a.type==='danger');
   if(dangerAlerts.length>0){document.getElementById('alertBarText').textContent=dangerAlerts[0].msg;document.getElementById('alertBar').classList.add('visible');}
   else document.getElementById('alertBar').classList.remove('visible');
@@ -663,7 +761,7 @@ function goPage(id,el){
   document.getElementById('page-'+id).classList.add('active');
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   if(el)el.classList.add('active');
-  const loaders={home:loadHome,haccp:loadHaccp,temp:loadTemp,labels:loadLabels,admin:loadAdmin,docs:loadDocs,reception:loadReception};
+  const loaders={home:loadHome,haccp:loadHaccp,temp:loadTemp,labels:loadLabels,admin:loadAdmin,docs:loadDocs,reception:loadReception,incidents:loadIncidents};
   if(loaders[id])loaders[id]();
 }
 
@@ -1413,10 +1511,8 @@ async function exportCSV(type){
 
 function openModal(id){
   document.getElementById(id).classList.add('open');
-  if(id==='modalAddReception'){
-    resetReceptionForm();
-    setTimeout(initRecSig,100);
-  }
+  if(id==='modalAddReception'){resetReceptionForm();setTimeout(initRecSig,100);}
+  if(id==='modalAddIncident'){resetIncidentForm();setTimeout(initIncSig,100);}
 }
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');}));
@@ -1612,6 +1708,185 @@ async function deleteReception(id){
   if(!confirm('Supprimer cette réception ?'))return;
   await db.from('receptions').delete().eq('id',id);
   showToast('Réception supprimée','ok',2500);loadReception();
+}
+
+// ===== REGISTRE INCIDENTS =====
+let incPhotoFile=null;
+let incSigDrawing=false,incSigLX=0,incSigLY=0;
+let incFilter='all';
+
+const INC_CATS={
+  temperature:{ico:'🌡️',label:'Température',color:'var(--blue)'},
+  contamination:{ico:'🦠',label:'Contamination',color:'var(--red)'},
+  nettoyage:{ico:'🧹',label:'Nettoyage',color:'var(--amber)'},
+  reception:{ico:'🚚',label:'Réception',color:'var(--amber)'},
+  personnel:{ico:'🤒',label:'Personnel',color:'var(--teal)'},
+  materiel:{ico:'⚡',label:'Matériel',color:'var(--blue)'},
+  produit:{ico:'📋',label:'Produit fini',color:'var(--red)'},
+};
+const INC_SEV={
+  mineur:{ico:'🟢',label:'Mineur',cls:'ok'},
+  majeur:{ico:'🟡',label:'Majeur',cls:'warn'},
+  critique:{ico:'🔴',label:'Critique',cls:'danger'},
+};
+const INC_STATUS={
+  ouvert:{ico:'🔴',label:'Ouvert',cls:'danger'},
+  en_cours:{ico:'🟡',label:'En cours',cls:'warn'},
+  clos:{ico:'🟢',label:'Clôturé',cls:'ok'},
+};
+
+function previewIncPhoto(input){
+  incPhotoFile=input.files[0];
+  if(incPhotoFile){
+    const img=document.getElementById('incPhotoPreview');
+    img.src=URL.createObjectURL(incPhotoFile);img.style.display='block';
+    document.getElementById('incPhotoTitle').textContent='✓ Photo ajoutée';
+  }
+}
+function clearIncSig(){
+  const c=document.getElementById('incSigCanvas');
+  if(!c)return;
+  const ctx=c.getContext('2d');
+  ctx.fillStyle='#0d1f38';ctx.fillRect(0,0,c.width,c.height);
+  ctx.strokeStyle='rgba(45,212,160,0.2)';ctx.setLineDash([4,8]);
+  ctx.beginPath();ctx.moveTo(20,c.height*0.7);ctx.lineTo(c.width-20,c.height*0.7);ctx.stroke();
+  ctx.setLineDash([]);ctx.fillStyle='#4a7a9b';ctx.font='11px Arial';ctx.textAlign='center';
+  ctx.fillText('Signez ici',c.width/2,c.height*0.85);
+}
+function initIncSig(){
+  const c=document.getElementById('incSigCanvas');
+  if(!c)return;
+  c.width=c.offsetWidth||320;c.height=110;clearIncSig();
+  const getPos=(e,r)=>{const t=e.touches?e.touches[0]:e;return{x:t.clientX-r.left,y:t.clientY-r.top};};
+  c.addEventListener('mousedown',e=>{incSigDrawing=true;const r=c.getBoundingClientRect(),p=getPos(e,r);incSigLX=p.x;incSigLY=p.y;});
+  c.addEventListener('mousemove',e=>{if(!incSigDrawing)return;const r=c.getBoundingClientRect(),p=getPos(e,r),ctx=c.getContext('2d');ctx.strokeStyle='#2dd4a0';ctx.lineWidth=2;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(incSigLX,incSigLY);ctx.lineTo(p.x,p.y);ctx.stroke();incSigLX=p.x;incSigLY=p.y;});
+  c.addEventListener('mouseup',()=>incSigDrawing=false);
+  c.addEventListener('touchstart',e=>{incSigDrawing=true;e.preventDefault();const r=c.getBoundingClientRect(),p=getPos(e,r);incSigLX=p.x;incSigLY=p.y;},{passive:false});
+  c.addEventListener('touchmove',e=>{if(!incSigDrawing)return;e.preventDefault();const r=c.getBoundingClientRect(),p=getPos(e,r),ctx=c.getContext('2d');ctx.strokeStyle='#2dd4a0';ctx.lineWidth=2;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(incSigLX,incSigLY);ctx.lineTo(p.x,p.y);ctx.stroke();incSigLX=p.x;incSigLY=p.y;},{passive:false});
+  c.addEventListener('touchend',()=>incSigDrawing=false);
+}
+
+async function saveIncident(){
+  const desc=document.getElementById('incDescription').value.trim();
+  if(!desc){showToast('Description requise','warn');return;}
+  const btn=document.getElementById('btnSaveIncident');btn.textContent='Enregistrement...';btn.disabled=true;
+  const c=document.getElementById('incSigCanvas');
+  const pixels=c.getContext('2d').getImageData(0,0,c.width,c.height).data;
+  let signed=false;for(let i=0;i<pixels.length;i+=4){if(pixels[i+1]>180&&pixels[i]<100){signed=true;break;}}
+  let photoUrl=null;
+  if(incPhotoFile){
+    const ext=incPhotoFile.name.split('.').pop()||'jpg';
+    const{error,data:up}=await db.storage.from('hygipro-photos').upload('incidents/'+Date.now()+'.'+ext,incPhotoFile,{upsert:true,contentType:incPhotoFile.type});
+    if(!error){const{data:u}=db.storage.from('hygipro-photos').getPublicUrl(up.path);photoUrl=u.publicUrl;}
+  }
+  const sev=document.querySelector('input[name="incSeverity"]:checked')?.value||'mineur';
+  await db.from('incidents').insert({
+    category:document.getElementById('incCategory').value,
+    severity:sev,
+    description:desc,
+    location:document.getElementById('incLocation').value||null,
+    action_corrective:document.getElementById('incActionImmediate').value||null,
+    photo_url:photoUrl,
+    signature:signed?c.toDataURL('image/png'):null,
+    status:'ouvert',
+    reported_by:currentUser.id,
+  });
+  btn.textContent='🚨 Enregistrer l\'incident';btn.disabled=false;
+  closeModal('modalAddIncident');
+  resetIncidentForm();
+  showToast('Incident signalé !',sev==='critique'?'danger':sev==='majeur'?'warn':'info',4000);
+  loadIncidents();
+  checkAlerts();
+}
+
+function resetIncidentForm(){
+  document.getElementById('incDescription').value='';
+  document.getElementById('incLocation').value='';
+  document.getElementById('incActionImmediate').value='';
+  document.getElementById('incCategory').value='temperature';
+  document.querySelector('input[name="incSeverity"][value="mineur"]').checked=true;
+  document.getElementById('incPhotoPreview').style.display='none';
+  document.getElementById('incPhotoTitle').textContent='📸 Photo de l\'incident';
+  incPhotoFile=null;
+  clearIncSig();
+}
+
+function filterIncidents(filter,btn){
+  incFilter=filter;
+  document.querySelectorAll('#page-incidents .btn-sm').forEach(b=>b.classList.remove('primary'));
+  if(btn)btn.classList.add('primary');
+  loadIncidents();
+}
+
+async function loadIncidents(){
+  let q=db.from('incidents').select('*,reported_by_user:reported_by(name),closed_by_user:closed_by(name)').order('created_at',{ascending:false});
+  const{data}=await q;
+  const all=data||[];
+  const filtered=incFilter==='all'?all:all.filter(i=>i.status===incFilter);
+  const el=document.getElementById('incidentsList');
+  if(!filtered.length){
+    el.innerHTML='<div class="empty"><div class="empty-ico">✅</div><div class="empty-title">'+(incFilter==='all'?'Aucun incident':'Aucun incident '+incFilter)+'</div></div>';
+    return;
+  }
+  el.innerHTML=filtered.map(inc=>{
+    const cat=INC_CATS[inc.category]||{ico:'📋',label:inc.category,color:'var(--muted)'};
+    const sev=INC_SEV[inc.severity]||INC_SEV.mineur;
+    const st=INC_STATUS[inc.status]||INC_STATUS.ouvert;
+    const isAdmin=currentUser.role==='admin'||currentUser.role==='responsable';
+    return`<div class="card" style="border-left:3px solid ${inc.severity==='critique'?'var(--red)':inc.severity==='majeur'?'var(--amber)':'var(--teal)'}">
+      <div class="card-header">
+        <div style="display:flex;align-items:center;gap:10px;flex:1">
+          <div style="width:40px;height:40px;border-radius:10px;background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">${cat.ico}</div>
+          <div>
+            <div style="font-size:13px;font-weight:700;color:var(--text)">${cat.label}</div>
+            <div style="font-size:11px;color:var(--muted)">${new Date(inc.created_at).toLocaleDateString('fr-FR')} ${new Date(inc.created_at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})} · ${inc.reported_by_user?.name||'—'}</div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end">
+          <span class="pill ${sev.cls}">${sev.ico} ${sev.label}</span>
+          <span class="pill ${st.cls}" style="font-size:10px">${st.ico} ${st.label}</span>
+        </div>
+      </div>
+      <div class="card-body" style="padding-top:8px">
+        ${inc.location?`<div style="font-size:12px;color:var(--muted);margin-bottom:6px">📍 ${inc.location}</div>`:''}
+        <div style="font-size:13px;color:var(--text);margin-bottom:8px">${inc.description}</div>
+        ${inc.action_corrective&&inc.status==='ouvert'?`<div style="font-size:12px;color:var(--teal);background:rgba(45,212,160,0.08);border-radius:6px;padding:6px 8px;margin-bottom:8px">⚡ Action immédiate : ${inc.action_corrective}</div>`:''}
+        ${inc.status!=='ouvert'&&inc.action_corrective?`<div style="font-size:12px;color:var(--amber);background:rgba(245,158,11,0.08);border-radius:6px;padding:6px 8px;margin-bottom:8px">📋 Action corrective : ${inc.action_corrective}</div>`:''}
+        ${inc.photo_url?`<img src="${inc.photo_url}" style="width:100%;max-height:160px;object-fit:cover;border-radius:8px;margin-bottom:8px" onerror="this.style.display='none'">`:''}
+        ${inc.signature?`<div style="font-size:11px;color:var(--subtle);margin-bottom:6px">✍️ Signé</div>`:''}
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          ${isAdmin&&inc.status!=='clos'?`<button class="btn-sm primary" onclick="openCloseIncident('${inc.id}')">✅ Traiter</button>`:''}
+          ${isAdmin?`<button class="btn-sm danger" onclick="deleteIncident('${inc.id}')">🗑</button>`:''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  // Badge
+  const openCount=all.filter(i=>i.status==='ouvert'&&(i.severity==='majeur'||i.severity==='critique')).length;
+  setBadge('incidents',openCount>0);
+}
+
+function openCloseIncident(id){
+  document.getElementById('closeIncidentId').value=id;
+  document.getElementById('closeIncidentAction').value='';
+  document.getElementById('closeIncidentStatus').value='clos';
+  openModal('modalCloseIncident');
+}
+async function closeIncident(){
+  const id=document.getElementById('closeIncidentId').value;
+  const action=document.getElementById('closeIncidentAction').value.trim();
+  if(!action){showToast('Action corrective requise','warn');return;}
+  const status=document.getElementById('closeIncidentStatus').value;
+  await db.from('incidents').update({action_corrective:action,status,closed_by:currentUser.id,closed_at:new Date().toISOString()}).eq('id',id);
+  closeModal('modalCloseIncident');
+  showToast(status==='clos'?'✅ Incident clôturé':'Incident mis à jour','ok',3000);
+  loadIncidents();checkAlerts();
+}
+async function deleteIncident(id){
+  if(!confirm('Supprimer cet incident ?'))return;
+  await db.from('incidents').delete().eq('id',id);
+  showToast('Incident supprimé','ok',2500);
+  loadIncidents();checkAlerts();
 }
 
 // ===== BARCODE SCANNER =====
