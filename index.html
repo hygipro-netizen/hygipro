@@ -793,6 +793,8 @@ function initSignatureCanvas(){
   c.addEventListener('touchstart',sigStart,{passive:false});c.addEventListener('touchmove',sigMove,{passive:false});c.addEventListener('touchend',sigEnd);
 }
 
+async function loadAdmin(){loadUsersList();}
+
 async function generateRapportPDF(){
   const today=new Date().toISOString().split('T')[0];
   const dateStr=new Date().toLocaleDateString('fr-FR',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
