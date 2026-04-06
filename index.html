@@ -273,7 +273,7 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
       </div>
     </div>
     <div class="page" id="page-haccp">
-      <div class="section-head"><div class="section-title">HACCP &amp; Hygiène</div><button class="btn-sm primary" id="btnAddTask" onclick="openModal('modalAddTask')">+ Tâche</button></div>
+      <div class="section-head"><div class="section-title">Hygiène</div><button class="btn-sm primary" id="btnAddTask" onclick="openModal('modalAddTask')">+ Tâche</button></div>
       <div id="haccpList"><div class="empty"><div class="empty-ico">✅</div><div class="empty-sub">Chargement...</div></div></div>
     </div>
     <div class="page" id="page-temp">
@@ -318,7 +318,7 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
       </div>
     </div>
     <div class="page" id="page-labels">
-      <div class="section-head"><div class="section-title">Étiquetage</div><button class="btn-sm primary" onclick="openModal('modalAddLabel')">+ Étiquette</button></div>
+      <div class="section-head"><div class="section-title">Traçabilité</div><button class="btn-sm primary" onclick="openModal('modalAddLabel')">+ Traçabilité</button></div>
       <div id="labelsList"><div class="empty"><div class="empty-ico">🏷️</div><div class="empty-sub">Chargement...</div></div></div>
     </div>
     <div class="page" id="page-docs">
@@ -358,17 +358,17 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
       <div id="adminRapports" class="hidden"><div class="card"><div class="card-body" style="display:flex;flex-direction:column;gap:10px">
         <div style="font-size:13px;color:var(--muted);margin-bottom:4px">Téléchargez vos données pour les contrôles sanitaires.</div>
         <button class="btn btn-primary" onclick="generateRapportPDF()">📋 Rapport hygiène journalier (HTML)</button>
-        <button class="btn btn-outline" onclick="exportCSV('haccp')">📊 Exporter HACCP (CSV)</button>
+        <button class="btn btn-outline" onclick="exportCSV('haccp')">📊 Exporter Hygiène (CSV)</button>
         <button class="btn btn-outline" onclick="exportCSV('temperatures')">🌡️ Exporter Températures (CSV)</button>
-        <button class="btn btn-outline" onclick="exportCSV('labels')">🏷️ Exporter Étiquettes (CSV)</button>
+        <button class="btn btn-outline" onclick="exportCSV('labels')">🏷️ Exporter Traçabilité (CSV)</button>
       </div></div></div>
     </div>
   </div>
   <nav class="bottom-nav" id="bottomNav">
     <button class="nav-item active" onclick="goPage('home',this)" id="nav-home"><div class="nav-ico"><svg viewBox="0 0 24 24"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/></svg></div><span class="nav-lbl">Accueil</span></button>
-    <button class="nav-item" id="nav-haccp" onclick="goPage('haccp',this)"><div class="nav-ico" style="position:relative"><svg viewBox="0 0 24 24"><path d="M12 2L4 6v6c0 5.5 3.5 10.7 8 12 4.5-1.3 8-6.5 8-12V6L12 2z"/></svg><div class="alert-badge hidden" id="badge-haccp">!</div></div><span class="nav-lbl">HACCP</span></button>
+    <button class="nav-item" id="nav-haccp" onclick="goPage('haccp',this)"><div class="nav-ico" style="position:relative"><svg viewBox="0 0 24 24"><path d="M12 2L4 6v6c0 5.5 3.5 10.7 8 12 4.5-1.3 8-6.5 8-12V6L12 2z"/></svg><div class="alert-badge hidden" id="badge-haccp">!</div></div><span class="nav-lbl">Hygiène/span></button>
     <button class="nav-item" id="nav-temp" onclick="goPage('temp',this)"><div class="nav-ico" style="position:relative"><svg viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><circle cx="12" cy="17" r="4"/></svg><div class="alert-badge hidden" id="badge-temp">!</div></div><span class="nav-lbl">Temp.</span></button>
-    <button class="nav-item" id="nav-labels" onclick="goPage('labels',this)"><div class="nav-ico" style="position:relative"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/></svg><div class="alert-badge hidden" id="badge-labels">!</div></div><span class="nav-lbl">Étiquettes</span></button>
+    <button class="nav-item" id="nav-labels" onclick="goPage('labels',this)"><div class="nav-ico" style="position:relative"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/></svg><div class="alert-badge hidden" id="badge-labels">!</div></div><span class="nav-lbl">Traçabilité</span></button>
     <button class="nav-item" id="nav-more" onclick="toggleMore()"><div class="nav-ico" style="position:relative"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="5" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="19" cy="12" r="1.5" fill="currentColor"/></svg><div class="alert-badge hidden" id="badge-more">!</div></div><span class="nav-lbl">Plus</span></button>
   </nav>
 </div>
@@ -379,13 +379,13 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
         <div style="width:38px;height:38px;border-radius:10px;background:rgba(96,165,250,0.1);display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#60a5fa" stroke-width="1.8" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>
         <div style="flex:1"><div style="font-size:14px;font-weight:600;color:#e8f4f0">Documents</div><div style="font-size:11px;color:#7ba7c4">PMS, DUERT, Attestations...</div></div>
       </div>
-      <div onclick="goPageMore('reception')" style="display:flex;align-items:center;gap:14px;padding:14px 18px;border-bottom:1px solid #1e3a5f;cursor:pointer">
+      <div id="more-reception" onclick="goPageMore('reception')" style="display:flex;align-items:center;gap:14px;padding:14px 18px;border-bottom:1px solid #1e3a5f;cursor:pointer">
         <div style="width:38px;height:38px;border-radius:10px;background:rgba(245,158,11,0.1);display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#f59e0b" stroke-width="1.8" stroke-linecap="round"><path d="M5 8h14M5 8a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v0a2 2 0 01-2 2M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8"/><path d="M10 12h4"/></svg></div>
         <div style="flex:1"><div style="font-size:14px;font-weight:600;color:#e8f4f0">Réception livraisons</div><div style="font-size:11px;color:#7ba7c4">Contrôle qualité à réception</div></div>
       </div>
-      <div onclick="goPageMore('incidents')" style="display:flex;align-items:center;gap:14px;padding:14px 18px;border-bottom:1px solid #1e3a5f;cursor:pointer">
+      <div id="more-incidents" onclick="goPageMore('incidents')" style="display:flex;align-items:center;gap:14px;padding:14px 18px;border-bottom:1px solid #1e3a5f;cursor:pointer">
         <div style="width:38px;height:38px;border-radius:10px;background:rgba(248,113,113,0.1);display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#f87171" stroke-width="1.8" stroke-linecap="round"><path d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg></div>
-        <div style="flex:1"><div style="font-size:14px;font-weight:600;color:#e8f4f0">Registre incidents</div><div style="font-size:11px;color:#7ba7c4">Signalement HACCP</div></div>
+        <div style="flex:1"><div style="font-size:14px;font-weight:600;color:#e8f4f0">Registre incidents</div><div style="font-size:11px;color:#7ba7c4">Signalement</div></div>
         <div class="alert-badge hidden" id="badge-incidents" style="position:static;width:20px;height:20px">!</div>
       </div>
       <div id="more-admin" onclick="goPageMore('admin')" style="display:none;align-items:center;gap:14px;padding:14px 18px;cursor:pointer">
@@ -418,7 +418,7 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
 </div>
 </div></div>
 
-<div class="modal-overlay" id="modalAddTask"><div class="modal"><div class="modal-handle"></div><div class="modal-title">Nouvelle tâche HACCP <button class="modal-close" onclick="closeModal('modalAddTask')">✕</button></div><div class="form-group"><label class="form-label">Titre</label><input class="form-input" id="taskTitle" placeholder="Ex: Nettoyage plan de travail"/></div><div class="form-group"><label class="form-label">Zone</label><input class="form-input" id="taskZone" placeholder="Ex: Cuisine, Frigo n°1..."/></div><div class="form-group"><label class="form-label">Fréquence</label><select class="form-select" id="taskFreq"><option value="daily">Quotidienne</option><option value="weekly">Hebdomadaire</option><option value="monthly">Mensuelle</option></select></div><button class="btn btn-primary" onclick="createTask()">Créer la tâche</button></div></div>
+<div class="modal-overlay" id="modalAddTask"><div class="modal"><div class="modal-handle"></div><div class="modal-title">Nouvelle tâche <button class="modal-close" onclick="closeModal('modalAddTask')">✕</button></div><div class="form-group"><label class="form-label">Titre</label><input class="form-input" id="taskTitle" placeholder="Ex: Nettoyage plan de travail"/></div><div class="form-group"><label class="form-label">Zone</label><input class="form-input" id="taskZone" placeholder="Ex: Cuisine, Frigo n°1..."/></div><div class="form-group"><label class="form-label">Fréquence</label><select class="form-select" id="taskFreq"><option value="daily">Quotidienne</option><option value="weekly">Hebdomadaire</option><option value="monthly">Mensuelle</option></select></div><button class="btn btn-primary" onclick="createTask()">Créer la tâche</button></div></div>
 
 <div class="modal-overlay" id="modalAddZoneAdmin"><div class="modal"><div class="modal-handle"></div>
 <div class="modal-title">➕ Nouveau meuble <button class="modal-close" onclick="closeModal('modalAddZoneAdmin')">✕</button></div>
@@ -455,7 +455,7 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
 
 <div class="modal-overlay" id="modalAddZone"><div class="modal"><div class="modal-handle"></div><div class="modal-title">Configurer les seuils <button class="modal-close" onclick="closeModal('modalAddZone')">✕</button></div><div class="form-group"><label class="form-label">Nom du meuble (ex: Meuble A)</label><input class="form-input" id="zoneName" placeholder="Ex: Meuble A, Meuble F..."/></div><div class="form-row"><div class="form-group"><label class="form-label">Seuil min (°C)</label><input class="form-input" id="zoneMin" type="number" placeholder="-18"/></div><div class="form-group"><label class="form-label">Seuil max (°C)</label><input class="form-input" id="zoneMax" type="number" placeholder="4"/></div></div><button class="btn btn-primary" onclick="createZone()">Enregistrer</button></div></div>
 
-<div class="modal-overlay" id="modalAddLabel"><div class="modal"><div class="modal-handle"></div><div class="modal-title">Nouvelle étiquette <button class="modal-close" onclick="closeModal('modalAddLabel')">✕</button></div>
+<div class="modal-overlay" id="modalAddLabel"><div class="modal"><div class="modal-handle"></div><div class="modal-title">Nouvelle traçabilité <button class="modal-close" onclick="closeModal('modalAddLabel')">✕</button></div>
 
 <!-- Scan code barre -->
 <button onclick="openBarcodeScanner()" style="width:100%;padding:13px;border-radius:var(--r-md);border:1.5px solid rgba(45,212,160,0.4);background:rgba(45,212,160,0.08);color:var(--teal);font-size:14px;font-weight:700;cursor:pointer;margin-bottom:12px;display:flex;align-items:center;justify-content:center;gap:8px">
@@ -508,7 +508,7 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
   <div class="form-group"><label class="form-label">Fournisseur</label><input class="form-input" id="labelSupplier" placeholder="Dupont"/></div>
 </div>
 <div class="form-group"><label class="form-label">Allergènes</label><input class="form-input" id="labelAllergens" placeholder="Gluten, Lait... ou Aucun"/></div>
-<button class="btn btn-primary" id="btnSaveLabel" onclick="createLabel()">Enregistrer l'étiquette</button>
+<button class="btn btn-primary" id="btnSaveLabel" onclick="createLabel()">Enregistrer la traçabilité</button>
 </div></div>
 
 <!-- Barcode Scanner Modal -->
@@ -692,11 +692,26 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
 <button class="btn btn-primary" onclick="closeIncident()">Enregistrer</button>
 </div></div>
 
+<!-- MODAL EDIT PERMISSIONS -->
+<div class="modal-overlay" id="modalEditPerms"><div class="modal"><div class="modal-handle"></div>
+<div class="modal-title">⚙️ Permissions — <span id="editPermsName" style="color:var(--teal)"></span> <button class="modal-close" onclick="closeModal('modalEditPerms')">✕</button></div>
+<input type="hidden" id="editPermsId">
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px">
+  <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--text);background:var(--bg2);border:1px solid var(--border2);padding:10px 12px;border-radius:8px;cursor:pointer"><input type="checkbox" id="ep-haccp"> 🛡 Hygiène</label>
+  <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--text);background:var(--bg2);border:1px solid var(--border2);padding:10px 12px;border-radius:8px;cursor:pointer"><input type="checkbox" id="ep-temperatures"> 🌡️ Températures</label>
+  <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--text);background:var(--bg2);border:1px solid var(--border2);padding:10px 12px;border-radius:8px;cursor:pointer"><input type="checkbox" id="ep-labels"> 🏷️ Traçabilité</label>
+  <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--text);background:var(--bg2);border:1px solid var(--border2);padding:10px 12px;border-radius:8px;cursor:pointer"><input type="checkbox" id="ep-documents"> 📄 Documents</label>
+  <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--text);background:var(--bg2);border:1px solid var(--border2);padding:10px 12px;border-radius:8px;cursor:pointer"><input type="checkbox" id="ep-reception"> 📦 Réception</label>
+  <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--text);background:var(--bg2);border:1px solid var(--border2);padding:10px 12px;border-radius:8px;cursor:pointer"><input type="checkbox" id="ep-incidents"> 🚨 Incidents</label>
+</div>
+<button class="btn btn-primary" onclick="saveEditPerms()">💾 Enregistrer</button>
+</div></div>
+
 <div class="modal-overlay" id="modalMyPin"><div class="modal"><div class="modal-handle"></div><div class="modal-title">Mon PIN <button class="modal-close" onclick="closeModal('modalMyPin')">✕</button></div><p style="font-size:13px;color:var(--muted);margin-bottom:16px">Choisissez un nouveau PIN à 6 chiffres pour votre compte.</p><div class="form-group"><label class="form-label">Nouveau PIN (6 chiffres)</label><input class="form-input" id="myNewPin" type="number" placeholder="Ex: 739201"/></div><div class="form-group"><label class="form-label">Confirmer le PIN</label><input class="form-input" id="myNewPinConfirm" type="number" placeholder="Répétez le PIN"/></div><button class="btn btn-primary" onclick="saveMyPin()">Enregistrer mon PIN</button></div></div>
 
 <div class="modal-overlay" id="modalChangePin"><div class="modal"><div class="modal-handle"></div><div class="modal-title">Changer le PIN — <span id="changePinUserName" style="color:var(--teal)"></span> <button class="modal-close" onclick="closeModal('modalChangePin')">✕</button></div><input type="hidden" id="changePinUserId"><div class="form-group"><label class="form-label">Nouveau PIN (6 chiffres)</label><input class="form-input" id="newPinValue" type="number" placeholder="Ex: 482910" maxlength="6"/></div><button class="btn btn-primary" onclick="saveNewPin()">Enregistrer le nouveau PIN</button></div></div>
 
-<div class="modal-overlay" id="modalCreateUser"><div class="modal"><div class="modal-handle"></div><div class="modal-title">Nouveau salarié <button class="modal-close" onclick="closeModal('modalCreateUser')">✕</button></div><div class="form-group"><label class="form-label">Prénom et nom</label><input class="form-input" id="newUserName" placeholder="Ex: Marie Lemoine"/></div><div class="form-row"><div class="form-group"><label class="form-label">Rôle</label><select class="form-select" id="newUserRole"><option value="patissier">Pâtissier</option><option value="boulanger">Boulanger</option><option value="vendeuse">Vendeuse</option><option value="responsable">Responsable</option><option value="admin">Administrateur</option></select></div><div class="form-group"><label class="form-label">PIN (6 chiffres)</label><input class="form-input" id="newUserPin" type="number" placeholder="123456"/></div></div><div style="font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:10px">Permissions</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px"><label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--text)"><input type="checkbox" id="perm-haccp" checked> HACCP</label><label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--text)"><input type="checkbox" id="perm-temperatures" checked> Températures</label><label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--text)"><input type="checkbox" id="perm-labels" checked> Étiquettes</label><label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--text)"><input type="checkbox" id="perm-stock"> Stock</label><label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--text)"><input type="checkbox" id="perm-orders" checked> Commandes</label><label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--text)"><input type="checkbox" id="perm-documents"> Documents</label></div><button class="btn btn-primary" onclick="createUser()">Créer le compte</button></div></div>
+<div class="modal-overlay" id="modalCreateUser"><div class="modal"><div class="modal-handle"></div><div class="modal-title">Nouveau salarié <button class="modal-close" onclick="closeModal('modalCreateUser')">✕</button></div><div class="form-group"><label class="form-label">Prénom et nom</label><input class="form-input" id="newUserName" placeholder="Ex: Marie Lemoine"/></div><div class="form-row"><div class="form-group"><label class="form-label">Rôle</label><select class="form-select" id="newUserRole"><option value="patissier">Pâtissier</option><option value="boulanger">Boulanger</option><option value="vendeuse">Vendeuse</option><option value="responsable">Responsable</option><option value="admin">Administrateur</option></select></div><div class="form-group"><label class="form-label">PIN (6 chiffres)</label><input class="form-input" id="newUserPin" type="number" placeholder="123456"/></div></div><div style="font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:10px">Permissions</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px"><label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--text)"><input type="checkbox" id="perm-haccp" checked> 🛡 Hygiène</label><label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--text)"><input type="checkbox" id="perm-temperatures" checked> 🌡️ Températures</label><label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--text)"><input type="checkbox" id="perm-labels" checked> 🏷️ Traçabilité</label><label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--text)"><input type="checkbox" id="perm-documents" checked> 📄 Documents</label><label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--text)"><input type="checkbox" id="perm-reception" checked> 📦 Réception</label><label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--text)"><input type="checkbox" id="perm-incidents" checked> 🚨 Incidents</label></div><button class="btn btn-primary" onclick="createUser()">Créer le compte</button></div></div>
 
 <script>
 const SUPA_URL='https://mzyrffxosabnmkcqduvc.supabase.co';
@@ -778,14 +793,19 @@ function showApp(){
   document.getElementById('topbarAvatar').textContent=ini;
   document.getElementById('topbarName').textContent=currentUser.name;
   const p=currentUser.permissions||{};
-  if(!p.haccp&&currentUser.role!=='admin'){const el=document.getElementById('nav-haccp');if(el)el.classList.add('hidden');}
-  if(!p.temperatures&&currentUser.role!=='admin'){const el=document.getElementById('nav-temp');if(el)el.classList.add('hidden');}
-  if(!p.labels&&currentUser.role!=='admin'){const el=document.getElementById('nav-labels');if(el)el.classList.add('hidden');}
-  if(currentUser.role==='admin'){
+  const isAdmin=currentUser.role==='admin';
+  // Nav bar permissions
+  if(!p.haccp&&!isAdmin){const el=document.getElementById('nav-haccp');if(el)el.classList.add('hidden');}
+  if(!p.temperatures&&!isAdmin){const el=document.getElementById('nav-temp');if(el)el.classList.add('hidden');}
+  if(!p.labels&&!isAdmin){const el=document.getElementById('nav-labels');if(el)el.classList.add('hidden');}
+  // More menu permissions
+  if(isAdmin){
     const a=document.getElementById('more-admin');if(a)a.style.display='flex';
     const b=document.getElementById('btnAddDoc');if(b)b.style.display='block';
   }
-  if(!p.documents&&currentUser.role!=='admin'){const el=document.getElementById('more-docs');if(el)el.style.display='none';}
+  if(!p.documents&&!isAdmin){const el=document.getElementById('more-docs');if(el)el.style.display='none';}
+  if(!p.reception&&!isAdmin){const el=document.getElementById('more-reception');if(el)el.style.display='none';}
+  if(!p.incidents&&!isAdmin){const el=document.getElementById('more-incidents');if(el)el.style.display='none';}
   const h=new Date().getHours();
   document.getElementById('greetingTime').textContent=(h<12?'Bonjour':h<18?'Bon après-midi':'Bonsoir')+' 👋';
   document.getElementById('greetingName').textContent=currentUser.name.split(' ')[0];
@@ -815,10 +835,10 @@ async function loadHome(){
   const dlcAlert=(lb.data||[]).filter(l=>l.dlc&&Math.ceil((new Date(l.dlc)-new Date())/86400000)<=2).length;
   const tempOk=(temps.data||[]).length>0;
   document.getElementById('kpiGrid').innerHTML=
-    '<div class="kpi '+(dc===tc&&tc>0?'ok':'warn')+'"><div class="kpi-ico" style="background:'+(dc===tc&&tc>0?'rgba(45,212,160,0.12)':'rgba(245,158,11,0.12)')+'"><svg viewBox="0 0 24 24" stroke="'+(dc===tc&&tc>0?'var(--teal)':'var(--amber)')+'"><path d="M9 12l2 2 4-4M12 2L4 6v6c0 5.5 3.5 10.7 8 12 4.5-1.3 8-6.5 8-12V6L12 2z"/></svg></div><div class="kpi-val">'+dc+'<span style="font-size:16px;color:var(--muted)">/'+tc+'</span></div><div class="kpi-label">Tâches HACCP</div></div>'+
+    '<div class="kpi '+(dc===tc&&tc>0?'ok':'warn')+'"><div class="kpi-ico" style="background:'+(dc===tc&&tc>0?'rgba(45,212,160,0.12)':'rgba(245,158,11,0.12)')+'"><svg viewBox="0 0 24 24" stroke="'+(dc===tc&&tc>0?'var(--teal)':'var(--amber)')+'"><path d="M9 12l2 2 4-4M12 2L4 6v6c0 5.5 3.5 10.7 8 12 4.5-1.3 8-6.5 8-12V6L12 2z"/></svg></div><div class="kpi-val">'+dc+'<span style="font-size:16px;color:var(--muted)">/'+tc+'</span></div><div class="kpi-label">Tâches Hygiène</div></div>'+
     '<div class="kpi '+(tempOk?'ok':'warn')+'"><div class="kpi-ico" style="background:'+(tempOk?'rgba(45,212,160,0.12)':'rgba(245,158,11,0.12)')+'"><svg viewBox="0 0 24 24" stroke="'+(tempOk?'var(--teal)':'var(--amber)')+'"><rect x="9" y="2" width="6" height="12" rx="3"/><circle cx="12" cy="17" r="4"/></svg></div><div class="kpi-val">'+(temps.data?.length||0)+'</div><div class="kpi-label">Relevés temp.</div></div>'+
     '<div class="kpi '+(dlcAlert>0?'danger':'ok')+'"><div class="kpi-ico" style="background:'+(dlcAlert>0?'rgba(248,113,113,0.12)':'rgba(45,212,160,0.12)')+'"><svg viewBox="0 0 24 24" stroke="'+(dlcAlert>0?'var(--red)':'var(--teal)')+'"><path d="M12 8v4l3 3M12 2a10 10 0 100 20A10 10 0 0012 2z"/></svg></div><div class="kpi-val">'+dlcAlert+'</div><div class="kpi-label">DLC alertes</div></div>'+
-    '<div class="kpi info"><div class="kpi-ico" style="background:rgba(96,165,250,0.12)"><svg viewBox="0 0 24 24" stroke="var(--blue)"><rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/></svg></div><div class="kpi-val">'+lbc+'</div><div class="kpi-label">Étiquettes</div></div>';
+    '<div class="kpi info"><div class="kpi-ico" style="background:rgba(96,165,250,0.12)"><svg viewBox="0 0 24 24" stroke="var(--blue)"><rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/></svg></div><div class="kpi-val">'+lbc+'</div><div class="kpi-label">Traçabilité</div></div>';
   const actEl=document.getElementById('recentActivity');
   if(lb.data&&lb.data.length>0){
     actEl.innerHTML=lb.data.map(l=>{
@@ -827,7 +847,7 @@ async function loadHome(){
       const stTxt=diff===null?'Sans DLC':diff<0?'DLC dépassée':diff<=2?'DLC '+diff+'j':'DLC OK';
       return'<div class="act-row"><div class="act-ico">📦</div><div class="act-info"><div class="act-title">'+l.product_name+'</div><div class="act-sub">'+(l.supplier||'—')+' · Lot '+(l.lot_number||'—')+'</div></div><span class="pill '+st+'">'+stTxt+'</span></div>';
     }).join('');
-  }else{actEl.innerHTML='<div class="empty"><div class="empty-ico">📋</div><div class="empty-title">Pas encore d\'activité</div><div class="empty-sub">Les étiquettes apparaîtront ici</div></div>';}
+  }else{actEl.innerHTML='<div class="empty"><div class="empty-ico">📋</div><div class="empty-title">Pas encore d\'activité</div><div class="empty-sub">Les traçabilités apparaîtront ici</div></div>';}
   await checkAlerts();
 }
 
@@ -1111,7 +1131,7 @@ function initNotifications(){
 async function loadLabels(){
   const{data}=await db.from('labels').select('*').order('opened_at',{ascending:false}).limit(50);
   const el=document.getElementById('labelsList');
-  if(!data||!data.length){el.innerHTML='<div class="empty"><div class="empty-ico">🏷️</div><div class="empty-title">Aucune étiquette</div><div class="empty-sub">Appuyez sur + Étiquette</div></div>';return;}
+  if(!data||!data.length){el.innerHTML='<div class="empty"><div class="empty-ico">🏷️</div><div class="empty-title">Aucune traçabilité</div><div class="empty-sub">Appuyez sur + Traçabilité</div></div>';return;}
   const isAdmin=currentUser.role==='admin';
   el.innerHTML=data.map(l=>{
     const diff=l.dlc?Math.ceil((new Date(l.dlc)-new Date())/86400000):null;
@@ -1122,9 +1142,9 @@ async function loadLabels(){
   }).join('');
 }
 async function deleteLabel(id){
-  if(!confirm('Supprimer cette étiquette ?'))return;
+  if(!confirm('Supprimer cette traçabilité ?'))return;
   await db.from('labels').delete().eq('id',id);
-  showToast('Étiquette supprimée','ok',2500);
+  showToast('Traçabilité supprimée','ok',2500);
   loadLabels();checkAlerts();
 }
 let photoFiles={1:null,2:null};
@@ -1281,7 +1301,7 @@ async function createLabel(){
     if(!error){const{data:u}=db.storage.from('hygipro-photos').getPublicUrl(path);photoUrl=u.publicUrl;}
   }
   await db.from('labels').insert({product_name:product,dlc:document.getElementById('labelDlc').value||null,lot_number:document.getElementById('labelLot').value||null,supplier:document.getElementById('labelSupplier').value||null,allergens:document.getElementById('labelAllergens').value||null,photo_url:photoUrl,user_id:currentUser.id});
-  btn.textContent="Enregistrer l'étiquette";btn.disabled=false;
+  btn.textContent="Enregistrer la traçabilité";btn.disabled=false;
   closeModal('modalAddLabel');
   ['labelProduct','labelDlc','labelLot','labelSupplier','labelAllergens'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('photoThumb1Wrap').style.display='none';
@@ -1293,7 +1313,7 @@ async function createLabel(){
   document.getElementById('aiScanStatus').style.display='none';
   document.getElementById('btnScanAI').style.display='none';
   photoFile=null;photoFiles={1:null,2:null};
-  showToast('Étiquette enregistrée !','ok',3000);loadLabels();checkAlerts();
+  showToast('Traçabilité enregistrée !','ok',3000);loadLabels();checkAlerts();
 }
 
 
@@ -1405,14 +1425,14 @@ async function generateRapportPDF(){
   <h1>📋 Rapport d'hygiène journalier</h1>
   <p><strong>Date :</strong> ${dateStr}<br><strong>Établissement :</strong> HygiPro<br><strong>Généré par :</strong> ${currentUser.name}</p>
 
-  <h2>✅ Tâches HACCP (${done.length}/${(tasks.data||[]).length})</h2>
+  <h2>✅ Tâches Hygiène (${done.length}/${(tasks.data||[]).length})</h2>
   ${done.length===0?'<p style="color:#888">Aucune tâche validée aujourd\'hui.</p>':'<table><tr><th>Tâche</th><th>Zone</th><th>Validée par</th><th>Heure</th></tr>'+done.map(t=>{const c=(completions.data||[]).find(c=>c.task_id===t.id);return'<tr><td>'+t.title+'</td><td>'+(t.zone||'—')+'</td><td>'+(c?.users?.name||'—')+'</td><td>'+(c?new Date(c.completed_at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}):'—')+'</td></tr>';}).join('')+'</table>'}
   ${todo.length>0?'<p class="danger">⚠ Tâches non effectuées ('+todo.length+') : '+todo.map(t=>t.title).join(', ')+'</p>':'<p class="ok">✓ Toutes les tâches ont été effectuées.</p>'}
 
   <h2>🌡️ Températures du jour (${(temps.data||[]).length} relevés)</h2>
   ${(temps.data||[]).length===0?'<p style="color:#888">Aucun relevé aujourd\'hui.</p>':'<table><tr><th>Zone</th><th>Température</th><th>Seuils</th><th>Statut</th><th>Salarié</th></tr>'+(temps.data||[]).map(r=>{const ok=(r.threshold_min===null||r.value_celsius>=r.threshold_min)&&(r.threshold_max===null||r.value_celsius<=r.threshold_max);return'<tr><td>'+r.zone_name+'</td><td><strong>'+(r.value_celsius>=0?'+':'')+r.value_celsius+'°C</strong></td><td>'+(r.threshold_min!==null?r.threshold_min+'°C':'-')+' → '+(r.threshold_max!==null?r.threshold_max+'°C':'-')+'</td><td class="'+(ok?'ok':'danger')+'">'+(ok?'✓ OK':'✗ Hors seuil')+'</td><td>'+(r.users?.name||'—')+'</td></tr>';}).join('')+'</table>'}
 
-  <h2>🏷️ Étiquettes récentes (${(labels.data||[]).length})</h2>
+  <h2>🏷️ Traçabilités récentes (${(labels.data||[]).length})</h2>
   ${dlcAlert.length>0?'<p class="warn">⚠ DLC proches ou dépassées : '+dlcAlert.map(l=>l.product_name+' ('+l.dlc+')').join(', ')+'</p>':''}
   <table><tr><th>Produit</th><th>DLC</th><th>Lot</th><th>Fournisseur</th><th>Statut</th></tr>${(labels.data||[]).map(l=>{const diff=l.dlc?Math.ceil((new Date(l.dlc)-new Date())/86400000):null;const st=diff===null?'pending':diff<0?'danger':diff<=2?'warn':'ok';const stTxt=diff===null?'Sans DLC':diff<0?'Dépassée':diff<=2?'DLC dans '+diff+'j':'OK';return'<tr><td>'+l.product_name+'</td><td>'+(l.dlc||'—')+'</td><td>'+(l.lot_number||'—')+'</td><td>'+(l.supplier||'—')+'</td><td class="'+st+'">'+stTxt+'</td></tr>';}).join('')}</table>
 
@@ -1500,7 +1520,7 @@ async function loadDashboard(){
         <svg viewBox="0 0 24 24" stroke="${haccpPct===100?'var(--teal)':haccpPct>50?'var(--amber)':'var(--red)'}"><path d="M9 12l2 2 4-4M12 2L4 6v6c0 5.5 3.5 10.7 8 12 4.5-1.3 8-6.5 8-12V6L12 2z"/></svg>
       </div>
       <div class="kpi-val">${haccpPct}<span style="font-size:16px;color:var(--muted)">%</span></div>
-      <div class="kpi-label">HACCP aujourd'hui</div>
+      <div class="kpi-label">Hygiène aujourd'hui</div>
     </div>
     <div class="kpi ${tempKo>0?'danger':'ok'}">
       <div class="kpi-ico" style="background:${tempKo>0?'rgba(248,113,113,0.12)':'rgba(45,212,160,0.12)'}">
@@ -1608,10 +1628,33 @@ async function loadUsersList(){
   const colors={admin:'#2dd4a0',patissier:'#60a5fa',boulanger:'#f59e0b',vendeuse:'#f472b6',responsable:'#34d399'};
   const bgs={admin:'rgba(45,212,160,0.15)',patissier:'rgba(96,165,250,0.15)',boulanger:'rgba(245,158,11,0.15)',vendeuse:'rgba(244,114,182,0.15)',responsable:'rgba(52,211,153,0.15)'};
   const roleLabel={admin:'Administrateur',patissier:'Pâtissier',boulanger:'Boulanger',vendeuse:'Vendeuse',responsable:'Responsable'};
+  const permLabels={haccp:'Hygiène',temperatures:'Temp.',labels:'Traçabilité',documents:'Docs',reception:'Réception',incidents:'Incidents'};
   el.innerHTML=data.map(u=>{
     const ini=u.name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
-    const isAdmin=u.role==='admin';
-    return'<div class="user-card"><div class="user-avatar" style="background:'+(bgs[u.role]||'rgba(255,255,255,0.1)')+';color:'+(colors[u.role]||'#e8f4f0')+'">'+ini+'</div><div class="user-info"><div class="user-name">'+u.name+'</div><div class="user-role">'+(roleLabel[u.role]||u.role)+'</div><div class="user-pin">PIN : '+u.pin+'</div></div><div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end"><span class="pill '+(u.active?'ok':'danger')+'">'+(u.active?'Actif':'Inactif')+'</span><button class="btn-sm primary" onclick="openChangePinModal(\''+u.id+'\',\''+u.name+'\')">✏️ PIN</button>'+(isAdmin?'':'<button class="btn-sm '+(u.active?'danger':'primary')+'" onclick="toggleUserActive(\''+u.id+'\','+u.active+')">'+(u.active?'Désactiver':'Activer')+'</button><button class="btn-sm danger" onclick="deleteUser(\''+u.id+'\',\''+u.name+'\')">🗑 Suppr.</button>')+'</div></div>';
+    const isAdm=u.role==='admin';
+    const p=u.permissions||{};
+    const permTags=Object.entries(permLabels).map(([k,v])=>`<span class="pill ${p[k]!==false?'ok':'pending'}" style="font-size:9px;padding:2px 6px">${v}</span>`).join('');
+    return`<div class="user-card" style="flex-direction:column;align-items:stretch;gap:10px">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div class="user-avatar" style="background:${bgs[u.role]||'rgba(255,255,255,0.1)'};color:${colors[u.role]||'#e8f4f0'}">${ini}</div>
+        <div class="user-info">
+          <div class="user-name">${u.name}</div>
+          <div class="user-role">${roleLabel[u.role]||u.role}</div>
+          <div class="user-pin">PIN : ${u.pin}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end;margin-left:auto">
+          <span class="pill ${u.active?'ok':'danger'}">${u.active?'Actif':'Inactif'}</span>
+          <button class="btn-sm primary" onclick="openChangePinModal('${u.id}','${u.name}')">✏️ PIN</button>
+          ${!isAdm?`<button class="btn-sm ${u.active?'danger':'primary'}" onclick="toggleUserActive('${u.id}',${u.active})">${u.active?'Désactiver':'Activer'}</button>
+          <button class="btn-sm danger" onclick="deleteUser('${u.id}','${u.name}')">🗑</button>`:''}
+        </div>
+      </div>
+      ${!isAdm?`<div>
+        <div style="font-size:10px;font-weight:600;color:var(--subtle);text-transform:uppercase;margin-bottom:5px">Permissions</div>
+        <div style="display:flex;flex-wrap:wrap;gap:4px">${permTags}</div>
+        <button class="btn-sm primary" onclick="openEditPerms('${u.id}','${u.name}',${JSON.stringify(p).replace(/"/g,"'")})" style="margin-top:6px;font-size:11px">⚙️ Modifier permissions</button>
+      </div>`:''}
+    </div>`;
   }).join('');
 }
 async function loadZonesList(){
@@ -1740,6 +1783,31 @@ async function saveMyPin(){
   closeModal('modalMyPin');
   showToast('Ton PIN a été mis à jour !','ok',3000);
 }
+function openEditPerms(id,name,perms){
+  document.getElementById('editPermsId').value=id;
+  document.getElementById('editPermsName').textContent=name;
+  const p=typeof perms==='string'?JSON.parse(perms.replace(/'/g,'"')):perms;
+  ['haccp','temperatures','labels','documents','reception','incidents'].forEach(k=>{
+    const el=document.getElementById('ep-'+k);
+    if(el)el.checked=p[k]!==false;
+  });
+  openModal('modalEditPerms');
+}
+async function saveEditPerms(){
+  const id=document.getElementById('editPermsId').value;
+  const perms={
+    haccp:document.getElementById('ep-haccp').checked,
+    temperatures:document.getElementById('ep-temperatures').checked,
+    labels:document.getElementById('ep-labels').checked,
+    documents:document.getElementById('ep-documents').checked,
+    reception:document.getElementById('ep-reception').checked,
+    incidents:document.getElementById('ep-incidents').checked,
+  };
+  await db.from('users').update({permissions:perms}).eq('id',id);
+  closeModal('modalEditPerms');
+  showToast('Permissions mises à jour !','ok',3000);
+  loadUsersList();
+}
 function openChangePinModal(id,name){
   document.getElementById('changePinUserId').value=id;
   document.getElementById('changePinUserName').textContent=name;
@@ -1759,7 +1827,7 @@ async function saveNewPin(){
 async function createUser(){
   const n=document.getElementById('newUserName').value.trim(),pin=String(document.getElementById('newUserPin').value).trim();
   if(!n||pin.length!==6){showToast('Nom et PIN à 6 chiffres requis','warn');return;}
-  const perms={haccp:document.getElementById('perm-haccp').checked,temperatures:document.getElementById('perm-temperatures').checked,labels:document.getElementById('perm-labels').checked,stock:document.getElementById('perm-stock').checked,orders:document.getElementById('perm-orders').checked,documents:document.getElementById('perm-documents').checked};
+  const perms={haccp:document.getElementById('perm-haccp').checked,temperatures:document.getElementById('perm-temperatures').checked,labels:document.getElementById('perm-labels').checked,documents:document.getElementById('perm-documents').checked,reception:document.getElementById('perm-reception').checked,incidents:document.getElementById('perm-incidents').checked};
   await db.from('users').insert({name:n,role:document.getElementById('newUserRole').value,pin,permissions:perms});
   closeModal('modalCreateUser');document.getElementById('newUserName').value='';document.getElementById('newUserPin').value='';
   showToast('Compte créé pour '+n+' · PIN : '+pin,'ok',5000);
