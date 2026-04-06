@@ -359,15 +359,30 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
 
 <div class="modal-overlay" id="modalAddLabel"><div class="modal"><div class="modal-handle"></div><div class="modal-title">Nouvelle étiquette <button class="modal-close" onclick="closeModal('modalAddLabel')">✕</button></div>
 
-<div class="form-group">
-  <div class="photo-zone" onclick="document.getElementById('photoInput').click()">
-    <div class="photo-zone-ico"><svg viewBox="0 0 26 26"><circle cx="13" cy="13" r="10" stroke-width="1.5"/><circle cx="13" cy="13" r="4" stroke-width="1.5"/></svg></div>
-    <div class="photo-zone-title" id="photoZoneTitle">📸 Photographier l'étiquette</div>
-    <div class="photo-zone-sub">L'IA remplit les champs automatiquement</div>
-    <input type="file" id="photoInput" accept="image/*" capture="environment" style="display:none" onchange="previewAndScan(this)">
+<!-- Photos -->
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+  <!-- Photo 1 -->
+  <div onclick="document.getElementById('photoInput1').click()" style="border:2px dashed var(--border2);border-radius:var(--r-md);padding:14px 8px;text-align:center;cursor:pointer;background:var(--bg2);transition:all .15s;position:relative" id="photoZone1">
+    <div id="photoThumb1Wrap" style="display:none;position:relative">
+      <img id="photoThumb1" style="width:100%;height:70px;object-fit:cover;border-radius:8px">
+      <div style="position:absolute;top:2px;right:2px;background:rgba(45,212,160,0.9);border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:10px">✓</div>
+    </div>
+    <div id="photoZone1Lbl" style="font-size:12px;font-weight:600;color:var(--muted);margin-top:4px">📸 Photo 1<br><span style="font-size:10px;font-weight:400">Produit / Lot</span></div>
+    <input type="file" id="photoInput1" accept="image/*" capture="environment" style="display:none" onchange="addPhoto(this,1)">
   </div>
-  <img id="photoPreview" class="photo-preview">
+  <!-- Photo 2 -->
+  <div onclick="document.getElementById('photoInput2').click()" style="border:2px dashed var(--border2);border-radius:var(--r-md);padding:14px 8px;text-align:center;cursor:pointer;background:var(--bg2);transition:all .15s;position:relative" id="photoZone2">
+    <div id="photoThumb2Wrap" style="display:none;position:relative">
+      <img id="photoThumb2" style="width:100%;height:70px;object-fit:cover;border-radius:8px">
+      <div style="position:absolute;top:2px;right:2px;background:rgba(45,212,160,0.9);border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:10px">✓</div>
+    </div>
+    <div id="photoZone2Lbl" style="font-size:12px;font-weight:600;color:var(--muted);margin-top:4px">📸 Photo 2<br><span style="font-size:10px;font-weight:400">DLC / Allergènes</span></div>
+    <input type="file" id="photoInput2" accept="image/*" capture="environment" style="display:none" onchange="addPhoto(this,2)">
+  </div>
 </div>
+
+<!-- Bouton analyser -->
+<button id="btnScanAI" onclick="scanAllPhotos()" style="display:none;width:100%;padding:12px;border-radius:var(--r-md);border:none;background:linear-gradient(135deg,#1a4a8a,#2dd4a0);color:white;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:12px">🤖 Analyser avec l'IA</button>
 
 <div id="aiScanStatus" style="display:none;background:rgba(45,212,160,0.1);border:1px solid rgba(45,212,160,0.3);border-radius:12px;padding:12px 14px;margin-bottom:12px;text-align:center">
   <div style="display:flex;align-items:center;justify-content:center;gap:8px">
@@ -653,64 +668,75 @@ async function loadLabels(){
     return'<div class="label-card">'+(l.photo_url?'<img src="'+l.photo_url+'" class="label-photo" onerror="this.style.display=\'none\'">':'')+'<div class="label-body"><div class="label-name">'+l.product_name+'<span class="pill '+st+'">'+stTxt+'</span></div><div class="label-grid">'+(l.lot_number?'<div class="label-field"><div class="label-key">Lot</div><div class="label-val">'+l.lot_number+'</div></div>':'')+(l.supplier?'<div class="label-field"><div class="label-key">Fournisseur</div><div class="label-val">'+l.supplier+'</div></div>':'')+(l.allergens?'<div class="label-field" style="grid-column:1/-1"><div class="label-key">Allergènes</div><div class="label-val">'+l.allergens+'</div></div>':'')+'</div></div></div>';
   }).join('');
 }
-function previewPhoto(input){photoFile=input.files[0];if(photoFile){const img=document.getElementById('photoPreview');img.src=URL.createObjectURL(photoFile);img.style.display='block';}}
+let photoFiles={1:null,2:null};
 
-async function previewAndScan(input){
-  photoFile=input.files[0];
-  if(!photoFile)return;
-  const img=document.getElementById('photoPreview');
-  img.src=URL.createObjectURL(photoFile);
-  img.style.display='block';
-  document.getElementById('photoZoneTitle').textContent='📸 Photo prise ✓';
-  // Start AI scan
+function addPhoto(input,num){
+  const file=input.files[0];
+  if(!file)return;
+  photoFiles[num]=file;
+  // Show thumbnail
+  const thumb=document.getElementById('photoThumb'+num);
+  const wrap=document.getElementById('photoThumb'+num+'Wrap');
+  const lbl=document.getElementById('photoZone'+num+'Lbl');
+  thumb.src=URL.createObjectURL(file);
+  wrap.style.display='block';
+  lbl.textContent='✓ Photo '+num+' prête';
+  lbl.style.color='var(--teal)';
+  // Show scan button if at least 1 photo
+  if(photoFiles[1]||photoFiles[2]){
+    document.getElementById('btnScanAI').style.display='block';
+  }
+  // Keep first photo as the main photo for saving
+  if(num===1)photoFile=file;
+}
+
+async function scanAllPhotos(){
   const status=document.getElementById('aiScanStatus');
   const msg=document.getElementById('aiScanMsg');
   const spinner=document.getElementById('aiScanSpinner');
   status.style.display='block';
-  msg.textContent='🤖 IA en cours d\'analyse...';
+  status.style.background='rgba(45,212,160,0.1)';
+  status.style.borderColor='rgba(45,212,160,0.3)';
+  msg.style.color='#2dd4a0';
   spinner.style.display='inline-block';
+  document.getElementById('btnScanAI').disabled=true;
+  const count=(photoFiles[1]?1:0)+(photoFiles[2]?1:0);
+  msg.textContent='🤖 Analyse de '+count+' photo'+(count>1?'s':'')+'...';
   try{
-    // Convert image to base64 for Puter
-    const base64=await new Promise((res,rej)=>{
-      const r=new FileReader();
-      r.onload=()=>res(r.result);
-      r.onerror=rej;
-      r.readAsDataURL(photoFile);
-    });
-    // Use Puter AI vision to extract label info
-    const prompt=`Tu es un assistant spécialisé dans la lecture d'étiquettes alimentaires.
-Analyse cette image d'étiquette et extrait les informations suivantes en JSON UNIQUEMENT, sans texte avant ou après :
+    // Convert all photos to base64
+    const toBase64=f=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(f);});
+    const attachments=[];
+    if(photoFiles[1])attachments.push({type:'image',content:await toBase64(photoFiles[1])});
+    if(photoFiles[2])attachments.push({type:'image',content:await toBase64(photoFiles[2])});
+    const prompt=`Tu es un expert en lecture d'étiquettes alimentaires françaises.
+Analyse ${attachments.length===2?'ces 2 photos de la même étiquette':'cette photo d\'étiquette'} et extrait toutes les informations disponibles.
+Réponds UNIQUEMENT en JSON valide, sans texte avant ou après, sans balises markdown :
 {
-  "product_name": "nom du produit (obligatoire)",
-  "dlc": "date au format YYYY-MM-DD si trouvée, sinon null",
-  "lot": "numéro de lot si trouvé, sinon null",
-  "supplier": "nom du fournisseur/marque si trouvé, sinon null",
-  "allergens": "liste des allergènes séparés par virgule, sinon null"
-}
-Si tu ne vois pas d'étiquette alimentaire, retourne quand même le JSON avec product_name "Produit inconnu" et le reste à null.`;
-
-    const response=await puter.ai.chat(prompt,{
-      attachments:[{type:'image',content:base64}]
-    });
+  "product_name": "nom complet du produit",
+  "dlc": "date limite en format YYYY-MM-DD, ou null si absente",
+  "lot": "numéro de lot exact, ou null",
+  "supplier": "marque ou fournisseur, ou null",
+  "allergens": "liste allergènes séparés par virgule (ex: Gluten, Lait, Œufs), ou 'Aucun' si aucun, ou null si pas visible"
+}`;
+    const response=await puter.ai.chat(prompt,{attachments});
     const text=typeof response==='string'?response:response?.message?.content||response?.content||'';
     const clean=text.replace(/```json|```/g,'').trim();
     const data=JSON.parse(clean);
-    // Fill fields
     if(data.product_name)document.getElementById('labelProduct').value=data.product_name;
     if(data.dlc)document.getElementById('labelDlc').value=data.dlc;
     if(data.lot)document.getElementById('labelLot').value=data.lot;
     if(data.supplier)document.getElementById('labelSupplier').value=data.supplier;
     if(data.allergens)document.getElementById('labelAllergens').value=data.allergens;
     spinner.style.display='none';
-    msg.textContent='✅ Champs remplis automatiquement ! Vérifiez et corrigez si besoin.';
-    status.style.background='rgba(45,212,160,0.1)';
-    status.style.borderColor='rgba(45,212,160,0.3)';
+    msg.textContent='✅ '+(count>1?'2 photos analysées':'Photo analysée')+' — vérifiez et corrigez si besoin';
   }catch(e){
     spinner.style.display='none';
-    msg.textContent='⚠️ Analyse impossible — remplissez manuellement.';
+    msg.textContent='⚠️ Analyse échouée — remplissez manuellement.';
     status.style.background='rgba(245,158,11,0.1)';
     status.style.borderColor='rgba(245,158,11,0.3)';
+    msg.style.color='#fcd34d';
   }
+  document.getElementById('btnScanAI').disabled=false;
 }
 async function createLabel(){
   const product=document.getElementById('labelProduct').value.trim();if(!product){showToast('Nom du produit requis','warn');return;}
@@ -726,10 +752,15 @@ async function createLabel(){
   btn.textContent="Enregistrer l'étiquette";btn.disabled=false;
   closeModal('modalAddLabel');
   ['labelProduct','labelDlc','labelLot','labelSupplier','labelAllergens'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('photoPreview').style.display='none';
-  document.getElementById('photoZoneTitle').textContent='📸 Photographier l\'étiquette';
+  document.getElementById('photoThumb1Wrap').style.display='none';
+  document.getElementById('photoThumb2Wrap').style.display='none';
+  document.getElementById('photoZone1Lbl').textContent='📸 Photo 1\nProduit / Lot';
+  document.getElementById('photoZone1Lbl').style.color='var(--muted)';
+  document.getElementById('photoZone2Lbl').textContent='📸 Photo 2\nDLC / Allergènes';
+  document.getElementById('photoZone2Lbl').style.color='var(--muted)';
   document.getElementById('aiScanStatus').style.display='none';
-  photoFile=null;
+  document.getElementById('btnScanAI').style.display='none';
+  photoFile=null;photoFiles={1:null,2:null};
   showToast('Étiquette enregistrée !','ok',3000);loadLabels();checkAlerts();
 }
 
