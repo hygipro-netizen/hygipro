@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>HygiPro</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --teal:#1D9E75;--teal-light:#E1F5EE;--teal-dark:#0F6E56;
+  --amber:#EF9F27;--amber-light:#FAEEDA;
+  --red:#E24B4A;--red-light:#FCEBEB;
+  --bg:#F8F9FA;--card:#fff;--border:#E5E7EB;
+  --text:#1A1A1A;--muted:#6B7280;--subtle:#9CA3AF;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+/* LOGIN */
+.login-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:24px;background:var(--bg)}
+.login-logo{width:72px;height:72px;background:var(--teal);border-radius:20px;display:flex;align-items:center;justify-content:center;margin-bottom:16px}
+.login-logo svg{width:40px;height:40px}
+.login-title{font-size:28px;font-weight:700;color:var(--text);margin-bottom:4px}
+.login-sub{font-size:14px;color:var(--muted);margin-bottom:32px}
+.login-card{background:var(--card);border-radius:16px;padding:24px;width:100%;max-width:360px;border:1px solid var(--border)}
+.field-label{font-size:13px;font-weight:500;color:var(--muted);margin-bottom:6px}
+.field-input{width:100%;border:1.5px solid var(--border);border-radius:10px;padding:12px 14px;font-size:15px;color:var(--text);background:var(--card);outline:none;transition:border 0.15s}
+.field-input:focus{border-color:var(--teal)}
+.field-group{margin-bottom:16px}
+.pin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:16px 0}
+.pin-btn{height:58px;border-radius:12px;border:1.5px solid var(--border);background:var(--card);font-size:22px;font-weight:500;cursor:pointer;transition:all 0.1s;color:var(--text)}
+.pin-btn:active{background:var(--teal-light);border-color:var(--teal);transform:scale(0.95)}
+.pin-display{display:flex;gap:10px;justify-content:center;margin:16px 0}
+.pin-dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--border);background:transparent;transition:all 0.15s}
+.pin-dot.filled{background:var(--teal);border-color:var(--teal)}
+.btn{width:100%;padding:14px;border-radius:12px;border:none;font-size:15px;font-weight:600;cursor:pointer;transition:all 0.15s}
+.btn-primary{background:var(--teal);color:white}
+.btn-primary:active{background:var(--teal-dark)}
+.btn-danger{background:var(--red-light);color:var(--red)}
+.btn-outline{background:transparent;border:1.5px solid var(--border);color:var(--text)}
+.error-msg{background:var(--red-light);color:var(--red);padding:10px 14px;border-radius:10px;font-size:13px;margin-bottom:12px;text-align:center}
+.success-msg{background:var(--teal-light);color:var(--teal-dark);padding:10px 14px;border-radius:10px;font-size:13px;margin-bottom:12px;text-align:center}
+
+/* APP SHELL */
+.app{display:none;flex-direction:column;min-height:100vh}
+.app.visible{display:flex}
+.topbar{background:var(--teal);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.topbar-title{font-size:17px;font-weight:700;color:white}
+.topbar-user{display:flex;align-items:center;gap:8px}
+.topbar-avatar{width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.25);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:white}
+.topbar-name{font-size:13px;color:rgba(255,255,255,0.9)}
+.logout-btn{background:rgba(255,255,255,0.2);border:none;color:white;padding:6px 10px;border-radius:8px;font-size:12px;cursor:pointer}
+
+/* BOTTOM NAV */
+.bottom-nav{background:var(--card);border-top:1px solid var(--border);display:flex;position:sticky;bottom:0;z-index:100}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 4px 12px;cursor:pointer;border:none;background:transparent}
+.nav-item svg{width:22px;height:22px;stroke:var(--subtle);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.nav-item span{font-size:10px;color:var(--subtle);font-weight:500}
+.nav-item.active svg{stroke:var(--teal)}
+.nav-item.active span{color:var(--teal)}
+
+/* CONTENT */
+.content{flex:1;overflow-y:auto;padding:16px}
+.page{display:none}
+.page.active{display:block}
+
+/* CARDS */
+.card{background:var(--card);border-radius:14px;border:1px solid var(--border);margin-bottom:14px;overflow:hidden}
+.card-header{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.card-title{font-size:14px;font-weight:600;color:var(--text)}
+.card-body{padding:14px 16px}
+
+/* KPI */
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.kpi{background:var(--card);border-radius:12px;border:1px solid var(--border);padding:14px}
+.kpi-label{font-size:11px;color:var(--muted);margin-bottom:4px;font-weight:500}
+.kpi-value{font-size:26px;font-weight:700;color:var(--text)}
+.kpi-value.danger{color:var(--red)}
+.kpi-value.warn{color:var(--amber)}
+.kpi-value.ok{color:var(--teal)}
+
+/* ALERTS */
+.alert{padding:12px 14px;border-radius:10px;font-size:13px;margin-bottom:10px;display:flex;gap:10px;align-items:flex-start}
+.alert.warn{background:var(--amber-light);color:#633806}
+.alert.danger{background:var(--red-light);color:#7F1D1D}
+.alert.ok{background:var(--teal-light);color:var(--teal-dark)}
+.alert-icon{font-size:16px;flex-shrink:0}
+
+/* PILLS */
+.pill{font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px}
+.pill.ok{background:var(--teal-light);color:var(--teal-dark)}
+.pill.warn{background:var(--amber-light);color:#854F0B}
+.pill.danger{background:var(--red-light);color:#991B1B}
+.pill.pending{background:#F3F4F6;color:var(--muted)}
+
+/* ROWS */
+.list-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
+.list-row:last-child{border-bottom:none}
+.row-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px}
+.row-info{flex:1;min-width:0}
+.row-title{font-size:13px;font-weight:500;color:var(--text)}
+.row-sub{font-size:11px;color:var(--muted);margin-top:2px}
+
+/* FORMS */
+.form-group{margin-bottom:14px}
+.form-label{font-size:12px;font-weight:500;color:var(--muted);margin-bottom:6px;display:block}
+.form-input{width:100%;border:1.5px solid var(--border);border-radius:10px;padding:11px 13px;font-size:14px;color:var(--text);background:var(--card);outline:none}
+.form-input:focus{border-color:var(--teal)}
+.form-select{width:100%;border:1.5px solid var(--border);border-radius:10px;padding:11px 13px;font-size:14px;color:var(--text);background:var(--card);outline:none;appearance:none}
+.form-textarea{width:100%;border:1.5px solid var(--border);border-radius:10px;padding:11px 13px;font-size:14px;color:var(--text);background:var(--card);outline:none;resize:none;height:80px}
+.btn-sm{padding:8px 14px;border-radius:9px;border:1.5px solid var(--border);background:transparent;font-size:12px;font-weight:600;cursor:pointer;color:var(--text)}
+.btn-sm.primary{background:var(--teal);color:white;border-color:var(--teal)}
+.btn-sm.danger{background:var(--red-light);color:var(--red);border-color:var(--red-light)}
+
+/* TEMP */
+.temp-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px}
+.temp-zone{font-size:13px;font-weight:600;color:var(--text);margin-bottom:10px}
+.temp-controls{display:flex;align-items:center;gap:12px}
+.temp-val{font-size:32px;font-weight:700;min-width:100px}
+.temp-val.ok{color:var(--teal)}
+.temp-val.danger{color:var(--red)}
+.temp-adjbtn{width:44px;height:44px;border-radius:10px;border:1.5px solid var(--border);background:var(--bg);font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:600}
+.temp-seuil{font-size:11px;color:var(--muted);margin-top:4px}
+
+/* STOCK BAR */
+.stock-bar-wrap{flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden}
+.stock-bar{height:100%;border-radius:3px;transition:width 0.3s}
+.stock-bar.ok{background:var(--teal)}
+.stock-bar.warn{background:var(--amber)}
+.stock-bar.danger{background:var(--red)}
+
+/* CHECKLIST */
+.check-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
+.check-item:last-child{border-bottom:none}
+.check-box{width:24px;height:24px;border-radius:7px;border:2px solid var(--border);flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s}
+.check-box.checked{background:var(--teal);border-color:var(--teal)}
+.check-box.checked::after{content:'';width:12px;height:7px;border-left:2.5px solid white;border-bottom:2.5px solid white;transform:rotate(-45deg) translateY(-1px)}
+.check-label{font-size:13px;color:var(--text);flex:1}
+.check-label.done{text-decoration:line-through;color:var(--muted)}
+
+/* PHOTO UPLOAD */
+.photo-zone{border:2px dashed var(--border);border-radius:12px;padding:28px 20px;text-align:center;cursor:pointer;transition:all 0.15s;background:var(--bg)}
+.photo-zone:hover{border-color:var(--teal);background:var(--teal-light)}
+.photo-preview{width:100%;border-radius:12px;margin-top:12px;max-height:200px;object-fit:cover}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;align-items:flex-end;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--card);border-radius:20px 20px 0 0;padding:20px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto}
+.modal-title{font-size:16px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between}
+.modal-close{background:var(--bg);border:none;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center}
+
+/* SECTION HEADER */
+.section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.section-title{font-size:16px;font-weight:700;color:var(--text)}
+
+/* ADMIN */
+.admin-tab-bar{display:flex;gap:4px;margin-bottom:16px;overflow-x:auto;padding-bottom:2px}
+.admin-tab{padding:8px 14px;border-radius:20px;font-size:13px;font-weight:500;cursor:pointer;border:none;background:var(--bg);color:var(--muted);white-space:nowrap}
+.admin-tab.active{background:var(--teal);color:white}
+
+.hidden{display:none}
+.spinner{display:inline-block;width:20px;height:20px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:spin 0.7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.fab{position:fixed;bottom:80px;right:16px;width:52px;height:52px;border-radius:16px;background:var(--teal);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:50;box-shadow:0 4px 12px rgba(29,158,117,0.4)}
+.fab svg{width:24px;height:24px;stroke:white;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen" class="login-screen">
+  <div class="login-logo">
+    <svg viewBox="0 0 40 40" fill="none">
+      <path d="M20 4L5 12v8c0 9 6 17.4 15 19.5C29 37.4 35 29 35 20v-8L20 4z" fill="white" fill-opacity="0.9"/>
+      <path d="M13 20l5 5 9-9" stroke="#1D9E75" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </div>
+  <div class="login-title">HygiPro</div>
+  <div class="login-sub">Hygiène & HACCP professionnel</div>
+  <div class="login-card">
+    <div id="loginError" class="error-msg hidden"></div>
+    <div class="field-group">
+      <div class="field-label">Votre nom</div>
+      <select id="userSelect" class="field-input">
+        <option value="">Chargement...</option>
+      </select>
+    </div>
+    <div class="field-label">Code PIN</div>
+    <div class="pin-display">
+      <div class="pin-dot" id="pd0"></div>
+      <div class="pin-dot" id="pd1"></div>
+      <div class="pin-dot" id="pd2"></div>
+      <div class="pin-dot" id="pd3"></div>
+    </div>
+    <div class="pin-grid">
+      <button class="pin-btn" onclick="pinPress('1')">1</button>
+      <button class="pin-btn" onclick="pinPress('2')">2</button>
+      <button class="pin-btn" onclick="pinPress('3')">3</button>
+      <button class="pin-btn" onclick="pinPress('4')">4</button>
+      <button class="pin-btn" onclick="pinPress('5')">5</button>
+      <button class="pin-btn" onclick="pinPress('6')">6</button>
+      <button class="pin-btn" onclick="pinPress('7')">7</button>
+      <button class="pin-btn" onclick="pinPress('8')">8</button>
+      <button class="pin-btn" onclick="pinPress('9')">9</button>
+      <button class="pin-btn" onclick="pinPress('')" style="font-size:13px;color:var(--muted)">⌫</button>
+      <button class="pin-btn" onclick="pinPress('0')">0</button>
+      <button class="pin-btn" onclick="doLogin()" style="background:var(--teal);color:white;border-color:var(--teal);font-size:13px">OK</button>
+    </div>
+    <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:8px">Admin par défaut : PIN 0000</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" class="app">
+  <div class="topbar">
+    <div class="topbar-title">HygiPro</div>
+    <div class="topbar-user">
+      <div class="topbar-avatar" id="topbarAvatar">--</div>
+      <div class="topbar-name" id="topbarName">--</div>
+      <button class="logout-btn" onclick="doLogout()">Quitter</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ACCUEIL -->
+    <div class="page active" id="page-home">
+      <div class="kpi-grid">
+        <div class="kpi"><div class="kpi-label">Tâches HACCP</div><div class="kpi-value ok" id="kpi-haccp">--</div></div>
+        <div class="kpi"><div class="kpi-label">Alertes stock</div><div class="kpi-value danger" id="kpi-stock">--</div></div>
+        <div class="kpi"><div class="kpi-label">Commandes</div><div class="kpi-value warn" id="kpi-orders">--</div></div>
+        <div class="kpi"><div class="kpi-label">Étiquettes</div><div class="kpi-value" id="kpi-labels">--</div></div>
+      </div>
+      <div id="homeAlerts"></div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">Activité récente</div></div>
+        <div class="card-body" id="recentActivity">
+          <div style="text-align:center;color:var(--muted);font-size:13px;padding:20px 0">Chargement...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HACCP -->
+    <div class="page" id="page-haccp">
+      <div class="section-head">
+        <div class="section-title">HACCP & Hygiène</div>
+        <button class="btn-sm primary" onclick="openModal('modalAddTask')" id="btnAddTask">+ Tâche</button>
+      </div>
+      <div id="haccpList">
+        <div style="text-align:center;color:var(--muted);font-size:13px;padding:40px 0">Chargement...</div>
+      </div>
+    </div>
+
+    <!-- TEMPÉRATURES -->
+    <div class="page" id="page-temp">
+      <div class="section-head">
+        <div class="section-title">Températures</div>
+        <button class="btn-sm primary" onclick="openModal('modalAddZone')">+ Zone</button>
+      </div>
+      <div id="tempSuccess" class="success-msg hidden">Relevé enregistré !</div>
+      <div id="tempList">
+        <div style="text-align:center;color:var(--muted);font-size:13px;padding:40px 0">Chargement...</div>
+      </div>
+      <button class="btn btn-primary" onclick="saveAllTemps()" style="margin-top:8px">Enregistrer tous les relevés</button>
+    </div>
+
+    <!-- ÉTIQUETTES -->
+    <div class="page" id="page-labels">
+      <div class="section-head">
+        <div class="section-title">Étiquetage</div>
+        <button class="btn-sm primary" onclick="openModal('modalAddLabel')">+ Étiquette</button>
+      </div>
+      <div id="labelsList">
+        <div style="text-align:center;color:var(--muted);font-size:13px;padding:40px 0">Chargement...</div>
+      </div>
+    </div>
+
+    <!-- STOCK -->
+    <div class="page" id="page-stock">
+      <div class="section-head">
+        <div class="section-title">Stock matières</div>
+        <button class="btn-sm primary" onclick="openModal('modalAddProduct')">+ Produit</button>
+      </div>
+      <div id="stockList">
+        <div style="text-align:center;color:var(--muted);font-size:13px;padding:40px 0">Chargement...</div>
+      </div>
+    </div>
+
+    <!-- COMMANDES -->
+    <div class="page" id="page-orders">
+      <div class="section-head">
+        <div class="section-title">Commandes</div>
+        <button class="btn-sm primary" onclick="openModal('modalNewOrder')">+ Commander</button>
+      </div>
+      <div id="ordersList">
+        <div style="text-align:center;color:var(--muted);font-size:13px;padding:40px 0">Chargement...</div>
+      </div>
+    </div>
+
+    <!-- ADMIN -->
+    <div class="page" id="page-admin">
+      <div class="section-title" style="margin-bottom:14px">Administration</div>
+      <div class="admin-tab-bar">
+        <button class="admin-tab active" onclick="adminTab('salaries',this)">Salariés</button>
+        <button class="admin-tab" onclick="adminTab('zones',this)">Zones temp.</button>
+        <button class="admin-tab" onclick="adminTab('rapports',this)">Rapports</button>
+      </div>
+      <div id="adminSalaries">
+        <div class="section-head">
+          <div class="card-title">Comptes salariés</div>
+          <button class="btn-sm primary" onclick="openModal('modalCreateUser')">+ Salarié</button>
+        </div>
+        <div id="usersList"></div>
+      </div>
+      <div id="adminZones" class="hidden">
+        <div class="card-title" style="margin-bottom:12px">Zones de température configurées</div>
+        <div id="zonesList"></div>
+      </div>
+      <div id="adminRapports" class="hidden">
+        <div class="card">
+          <div class="card-body">
+            <div style="font-size:13px;color:var(--muted);margin-bottom:16px">Exportez vos données HACCP pour les contrôles sanitaires.</div>
+            <button class="btn btn-outline" onclick="exportCSV('haccp')" style="margin-bottom:10px">Exporter HACCP (CSV)</button>
+            <button class="btn btn-outline" onclick="exportCSV('temperatures')" style="margin-bottom:10px">Exporter Températures (CSV)</button>
+            <button class="btn btn-outline" onclick="exportCSV('labels')">Exporter Étiquettes (CSV)</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav" id="bottomNav">
+    <button class="nav-item active" onclick="goPage('home',this)">
+      <svg viewBox="0 0 24 24"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/></svg>
+      <span>Accueil</span>
+    </button>
+    <button class="nav-item" onclick="goPage('haccp',this)" id="nav-haccp">
+      <svg viewBox="0 0 24 24"><path d="M12 2L4 6v6c0 5.5 3.5 10.7 8 12 4.5-1.3 8-6.5 8-12V6L12 2z"/></svg>
+      <span>HACCP</span>
+    </button>
+    <button class="nav-item" onclick="goPage('temp',this)" id="nav-temp">
+      <svg viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><circle cx="12" cy="17" r="4"/></svg>
+      <span>Temp.</span>
+    </button>
+    <button class="nav-item" onclick="goPage('labels',this)" id="nav-labels">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      <span>Étiquettes</span>
+    </button>
+    <button class="nav-item" onclick="goPage('stock',this)" id="nav-stock">
+      <svg viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+      <span>Stock</span>
+    </button>
+    <button class="nav-item" onclick="goPage('orders',this)" id="nav-orders">
+      <svg viewBox="0 0 24 24"><path d="M4 4h16l-2 10H6L4 4z"/><circle cx="9" cy="20" r="1.5"/><circle cx="16" cy="20" r="1.5"/></svg>
+      <span>Commandes</span>
+    </button>
+    <button class="nav-item" id="nav-admin" onclick="goPage('admin',this)" style="display:none">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+      <span>Admin</span>
+    </button>
+  </nav>
+</div>
+
+<!-- MODALS -->
+
+<!-- Add HACCP Task -->
+<div class="modal-overlay" id="modalAddTask">
+  <div class="modal">
+    <div class="modal-title">Nouvelle tâche HACCP <button class="modal-close" onclick="closeModal('modalAddTask')">✕</button></div>
+    <div class="form-group"><label class="form-label">Titre de la tâche</label><input class="form-input" id="taskTitle" placeholder="Ex: Nettoyage plan de travail"/></div>
+    <div class="form-group"><label class="form-label">Zone</label><input class="form-input" id="taskZone" placeholder="Ex: Cuisine, Frigo n°1..."/></div>
+    <div class="form-group"><label class="form-label">Fréquence</label>
+      <select class="form-select" id="taskFreq">
+        <option value="daily">Quotidienne</option>
+        <option value="weekly">Hebdomadaire</option>
+        <option value="monthly">Mensuelle</option>
+      </select>
+    </div>
+    <button class="btn btn-primary" onclick="createTask()">Créer la tâche</button>
+  </div>
+</div>
+
+<!-- Add Temperature Zone -->
+<div class="modal-overlay" id="modalAddZone">
+  <div class="modal">
+    <div class="modal-title">Nouvelle zone <button class="modal-close" onclick="closeModal('modalAddZone')">✕</button></div>
+    <div class="form-group"><label class="form-label">Nom de la zone</label><input class="form-input" id="zoneName" placeholder="Ex: Frigo n°1, Congélateur..."/></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="form-group"><label class="form-label">Seuil min (°C)</label><input class="form-input" id="zoneMin" type="number" placeholder="-18"/></div>
+      <div class="form-group"><label class="form-label">Seuil max (°C)</label><input class="form-input" id="zoneMax" type="number" placeholder="4"/></div>
+    </div>
+    <button class="btn btn-primary" onclick="createZone()">Ajouter la zone</button>
+  </div>
+</div>
+
+<!-- Add Label -->
+<div class="modal-overlay" id="modalAddLabel">
+  <div class="modal">
+    <div class="modal-title">Nouvelle étiquette <button class="modal-close" onclick="closeModal('modalAddLabel')">✕</button></div>
+    <div class="form-group">
+      <label class="form-label">Photo de l'étiquette (optionnel)</label>
+      <div class="photo-zone" onclick="document.getElementById('photoInput').click()">
+        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" style="margin:0 auto 8px;display:block"><circle cx="16" cy="16" r="14" stroke="#9CA3AF" stroke-width="1.5"/><path d="M10 20l4-4 3 3 2-2 3 3" stroke="#9CA3AF" stroke-width="1.5" stroke-linecap="round"/><circle cx="20" cy="12" r="2" stroke="#9CA3AF" stroke-width="1.5"/></svg>
+        <div style="font-size:13px;color:var(--muted)">Appuyer pour photographier</div>
+        <input type="file" id="photoInput" accept="image/*" capture="environment" style="display:none" onchange="previewPhoto(this)">
+      </div>
+      <img id="photoPreview" class="photo-preview hidden">
+    </div>
+    <div class="form-group"><label class="form-label">Nom du produit</label><input class="form-input" id="labelProduct" placeholder="Ex: Bœuf haché 5% MG"/></div>
+    <div class="form-group"><label class="form-label">Date limite de consommation (DLC)</label><input class="form-input" id="labelDlc" type="date"/></div>
+    <div class="form-group"><label class="form-label">Numéro de lot</label><input class="form-input" id="labelLot" placeholder="Ex: BH-2204"/></div>
+    <div class="form-group"><label class="form-label">Fournisseur</label><input class="form-input" id="labelSupplier" placeholder="Ex: Maison Dupont"/></div>
+    <div class="form-group"><label class="form-label">Allergènes</label><input class="form-input" id="labelAllergens" placeholder="Ex: Gluten, Lait... ou Aucun"/></div>
+    <button class="btn btn-primary" onclick="createLabel()">Enregistrer l'étiquette</button>
+  </div>
+</div>
+
+<!-- Add Product -->
+<div class="modal-overlay" id="modalAddProduct">
+  <div class="modal">
+    <div class="modal-title">Nouveau produit <button class="modal-close" onclick="closeModal('modalAddProduct')">✕</button></div>
+    <div class="form-group"><label class="form-label">Nom du produit</label><input class="form-input" id="productName" placeholder="Ex: Farine de blé T55"/></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="form-group"><label class="form-label">Unité</label>
+        <select class="form-select" id="productUnit">
+          <option value="kg">kg</option>
+          <option value="L">L</option>
+          <option value="unités">unités</option>
+          <option value="boîtes">boîtes</option>
+          <option value="g">g</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Stock initial</label><input class="form-input" id="productStock" type="number" placeholder="0" min="0"/></div>
+    </div>
+    <div class="form-group"><label class="form-label">Seuil d'alerte minimum</label><input class="form-input" id="productMin" type="number" placeholder="5" min="0"/></div>
+    <button class="btn btn-primary" onclick="createProduct()">Ajouter le produit</button>
+  </div>
+</div>
+
+<!-- Stock Movement -->
+<div class="modal-overlay" id="modalStockMove">
+  <div class="modal">
+    <div class="modal-title" id="stockMoveTitle">Mouvement de stock <button class="modal-close" onclick="closeModal('modalStockMove')">✕</button></div>
+    <input type="hidden" id="stockMoveProductId">
+    <div class="form-group"><label class="form-label">Quantité</label><input class="form-input" id="stockMoveQty" type="number" placeholder="0" step="0.1"/></div>
+    <div class="form-group"><label class="form-label">Motif</label>
+      <select class="form-select" id="stockMoveReason">
+        <option value="Réception fournisseur">Réception fournisseur</option>
+        <option value="Utilisation cuisine">Utilisation cuisine</option>
+        <option value="Perte / périmé">Perte / périmé</option>
+        <option value="Inventaire">Correction inventaire</option>
+      </select>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <button class="btn btn-primary" onclick="saveStockMove(1)">+ Entrée</button>
+      <button class="btn btn-danger" onclick="saveStockMove(-1)">− Sortie</button>
+    </div>
+  </div>
+</div>
+
+<!-- New Order -->
+<div class="modal-overlay" id="modalNewOrder">
+  <div class="modal">
+    <div class="modal-title">Passer une commande <button class="modal-close" onclick="closeModal('modalNewOrder')">✕</button></div>
+    <div class="form-group"><label class="form-label">Produit</label>
+      <select class="form-select" id="orderProduct"></select>
+    </div>
+    <div class="form-group"><label class="form-label">Quantité</label><input class="form-input" id="orderQty" type="number" placeholder="5" min="1"/></div>
+    <div class="form-group"><label class="form-label">Motif</label>
+      <select class="form-select" id="orderReason">
+        <option value="Stock bas — risque de rupture">Stock bas — risque de rupture</option>
+        <option value="Réapprovisionnement planifié">Réapprovisionnement planifié</option>
+        <option value="Commande urgente">Commande urgente</option>
+      </select>
+    </div>
+    <div class="form-group"><label class="form-label">Note (optionnel)</label><textarea class="form-textarea" id="orderNote" placeholder="Précisions..."></textarea></div>
+    <button class="btn btn-primary" onclick="createOrder()">Envoyer la demande</button>
+  </div>
+</div>
+
+<!-- Create User -->
+<div class="modal-overlay" id="modalCreateUser">
+  <div class="modal">
+    <div class="modal-title">Nouveau salarié <button class="modal-close" onclick="closeModal('modalCreateUser')">✕</button></div>
+    <div class="form-group"><label class="form-label">Prénom et nom</label><input class="form-input" id="newUserName" placeholder="Ex: Marie Lemoine"/></div>
+    <div class="form-group"><label class="form-label">Rôle</label>
+      <select class="form-select" id="newUserRole">
+        <option value="employe">Employé</option>
+        <option value="chef">Chef de partie</option>
+        <option value="admin">Administrateur</option>
+      </select>
+    </div>
+    <div class="form-group"><label class="form-label">Code PIN (4 chiffres)</label><input class="form-input" id="newUserPin" type="number" placeholder="1234" maxlength="4"/></div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Permissions :</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px"><input type="checkbox" id="perm-haccp" checked> HACCP</label>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px"><input type="checkbox" id="perm-temperatures" checked> Températures</label>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px"><input type="checkbox" id="perm-labels" checked> Étiquettes</label>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px"><input type="checkbox" id="perm-stock"> Stock</label>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px"><input type="checkbox" id="perm-orders" checked> Commandes</label>
+    </div>
+    <button class="btn btn-primary" onclick="createUser()">Créer le compte</button>
+  </div>
+</div>
+
+<script>
+const SUPA_URL = 'https://mzyrffxosabnmkcqduvc.supabase.co';
+const SUPA_KEY = 'sb_publishable_hEMwMOhLR06ZoCRR7cLifA_o8UUQCce';
+const { createClient } = supabase;
+const db = createClient(SUPA_URL, SUPA_KEY);
+
+let currentUser = null;
+let tempValues = {};
+let zoneConfigs = [];
+let allProducts = [];
+let photoFile = null;
+
+// ── INIT ──
+async function init() {
+  const saved = localStorage.getItem('hygipro_user');
+  if (saved) {
+    currentUser = JSON.parse(saved);
+    showApp();
+  }
+  await loadUsers();
+}
+
+async function loadUsers() {
+  const { data } = await db.from('users').select('*').eq('active', true).order('name');
+  const sel = document.getElementById('userSelect');
+  sel.innerHTML = '<option value="">Sélectionner...</option>';
+  if (data) data.forEach(u => {
+    const o = document.createElement('option');
+    o.value = u.id;
+    o.textContent = u.name + (u.role === 'admin' ? ' (Admin)' : '');
+    sel.appendChild(o);
+  });
+}
+
+// ── LOGIN ──
+let pinValue = '';
+function pinPress(v) {
+  if (v === '') { pinValue = pinValue.slice(0, -1); }
+  else if (pinValue.length < 4) { pinValue += v; }
+  updatePinDisplay();
+  if (pinValue.length === 4) setTimeout(doLogin, 200);
+}
+function updatePinDisplay() {
+  for (let i = 0; i < 4; i++) {
+    document.getElementById('pd' + i).classList.toggle('filled', i < pinValue.length);
+  }
+}
+async function doLogin() {
+  const userId = document.getElementById('userSelect').value;
+  if (!userId) { showError('Sélectionnez un utilisateur'); return; }
+  if (pinValue.length !== 4) { showError('Entrez votre PIN à 4 chiffres'); return; }
+  const { data } = await db.from('users').select('*').eq('id', userId).eq('pin', pinValue).single();
+  if (!data) { showError('PIN incorrect'); pinValue = ''; updatePinDisplay(); return; }
+  currentUser = data;
+  localStorage.setItem('hygipro_user', JSON.stringify(data));
+  showApp();
+}
+function showError(msg) {
+  const el = document.getElementById('loginError');
+  el.textContent = msg;
+  el.classList.remove('hidden');
+  setTimeout(() => el.classList.add('hidden'), 3000);
+}
+function doLogout() {
+  currentUser = null;
+  localStorage.removeItem('hygipro_user');
+  document.getElementById('app').classList.remove('visible');
+  document.getElementById('loginScreen').style.display = 'flex';
+  pinValue = '';
+  updatePinDisplay();
+}
+
+// ── APP SHELL ──
+function showApp() {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('app').classList.add('visible');
+  const initials = currentUser.name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+  document.getElementById('topbarAvatar').textContent = initials;
+  document.getElementById('topbarName').textContent = currentUser.name;
+  const p = currentUser.permissions || {};
+  if (currentUser.role === 'admin') {
+    document.getElementById('nav-admin').style.display = 'flex';
+  }
+  // hide nav items based on permissions
+  if (!p.haccp && currentUser.role !== 'admin') document.getElementById('nav-haccp').style.display = 'none';
+  if (!p.temperatures && currentUser.role !== 'admin') document.getElementById('nav-temp').style.display = 'none';
+  if (!p.labels && currentUser.role !== 'admin') document.getElementById('nav-labels').style.display = 'none';
+  if (!p.stock && currentUser.role !== 'admin') document.getElementById('nav-stock').style.display = 'none';
+  if (!p.orders && currentUser.role !== 'admin') document.getElementById('nav-orders').style.display = 'none';
+  loadHome();
+}
+
+function goPage(id, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  if (el) el.classList.add('active');
+  if (id === 'home') loadHome();
+  if (id === 'haccp') loadHaccp();
+  if (id === 'temp') loadTemp();
+  if (id === 'labels') loadLabels();
+  if (id === 'stock') loadStock();
+  if (id === 'orders') loadOrders();
+  if (id === 'admin') loadAdmin();
+}
+
+// ── HOME ──
+async function loadHome() {
+  const today = new Date().toISOString().split('T')[0];
+  const [tasks, completions, products, pendingOrders, labels] = await Promise.all([
+    db.from('haccp_tasks').select('id'),
+    db.from('haccp_completions').select('id').gte('completed_at', today),
+    db.from('products').select('*'),
+    db.from('orders').select('id').eq('status', 'pending'),
+    db.from('labels').select('*').order('opened_at', { ascending: false }).limit(5)
+  ]);
+  const taskCount = tasks.data?.length || 0;
+  const doneCount = completions.data?.length || 0;
+  document.getElementById('kpi-haccp').textContent = doneCount + '/' + taskCount;
+  const lowStock = (products.data || []).filter(p => p.current_stock <= p.threshold_min).length;
+  document.getElementById('kpi-stock').textContent = lowStock;
+  document.getElementById('kpi-stock').className = 'kpi-value ' + (lowStock > 0 ? 'danger' : 'ok');
+  document.getElementById('kpi-orders').textContent = pendingOrders.data?.length || 0;
+  document.getElementById('kpi-labels').textContent = labels.data?.length || 0;
+
+  // Alerts
+  const alertsEl = document.getElementById('homeAlerts');
+  alertsEl.innerHTML = '';
+  if (lowStock > 0) {
+    const names = (products.data || []).filter(p => p.current_stock <= p.threshold_min).map(p => p.name).join(', ');
+    alertsEl.innerHTML += `<div class="alert danger"><span class="alert-icon">⚠</span><div><b>Stock critique :</b> ${names}</div></div>`;
+  }
+  const dlcSoon = (labels.data || []).filter(l => {
+    if (!l.dlc) return false;
+    const diff = (new Date(l.dlc) - new Date()) / 86400000;
+    return diff >= 0 && diff <= 2;
+  });
+  if (dlcSoon.length > 0) {
+    alertsEl.innerHTML += `<div class="alert warn"><span class="alert-icon">📅</span><div><b>DLC proche :</b> ${dlcSoon.map(l => l.product_name).join(', ')}</div></div>`;
+  }
+
+  // Recent activity
+  const recentEl = document.getElementById('recentActivity');
+  if (labels.data && labels.data.length > 0) {
+    recentEl.innerHTML = labels.data.map(l => {
+      const dlcDate = l.dlc ? new Date(l.dlc) : null;
+      const now = new Date();
+      const diff = dlcDate ? Math.ceil((dlcDate - now) / 86400000) : null;
+      const status = diff === null ? 'pending' : diff < 0 ? 'danger' : diff <= 2 ? 'warn' : 'ok';
+      const statusText = diff === null ? 'Pas de DLC' : diff < 0 ? 'DLC dépassée' : diff <= 2 ? `DLC dans ${diff}j` : `DLC OK`;
+      return `<div class="list-row"><div class="row-icon" style="background:#F3F4F6">📦</div><div class="row-info"><div class="row-title">${l.product_name}</div><div class="row-sub">Lot : ${l.lot_number || '—'} · ${l.supplier || '—'}</div></div><span class="pill ${status}">${statusText}</span></div>`;
+    }).join('');
+  } else {
+    recentEl.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:13px;padding:20px 0">Aucune activité récente</div>';
+  }
+}
+
+// ── HACCP ──
+async function loadHaccp() {
+  const today = new Date().toISOString().split('T')[0];
+  const [tasks, completions] = await Promise.all([
+    db.from('haccp_tasks').select('*').order('created_at'),
+    db.from('haccp_completions').select('*').gte('completed_at', today).eq('user_id', currentUser.id)
+  ]);
+  const doneIds = new Set((completions.data || []).map(c => c.task_id));
+  const el = document.getElementById('haccpList');
+  if (!tasks.data || tasks.data.length === 0) {
+    el.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:13px;padding:40px 0">Aucune tâche configurée.<br>L\'admin peut en créer.</div>';
+    return;
+  }
+  el.innerHTML = `<div class="card"><div class="card-body">${tasks.data.map(t => {
+    const done = doneIds.has(t.id);
+    return `<div class="check-item">
+      <div class="check-box ${done ? 'checked' : ''}" id="chk-${t.id}" onclick="toggleTask('${t.id}', ${done})"></div>
+      <div class="check-label ${done ? 'done' : ''}" id="lbl-${t.id}">${t.title}${t.zone ? ` <span style="color:var(--muted);font-size:11px">· ${t.zone}</span>` : ''}</div>
+      <span class="pill ${done ? 'ok' : 'pending'}">${done ? 'Fait' : t.frequency === 'daily' ? 'Quotidien' : t.frequency === 'weekly' ? 'Hebdo' : 'Mensuel'}</span>
+    </div>`;
+  }).join('')}</div></div>`;
+  if (currentUser.role !== 'admin') document.getElementById('btnAddTask').style.display = 'none';
+}
+
+async function toggleTask(taskId, wasDone) {
+  if (wasDone) return;
+  await db.from('haccp_completions').insert({ task_id: taskId, user_id: currentUser.id });
+  document.getElementById('chk-' + taskId).classList.add('checked');
+  document.getElementById('lbl-' + taskId).classList.add('done');
+}
+
+async function createTask() {
+  const title = document.getElementById('taskTitle').value.trim();
+  if (!title) return;
+  await db.from('haccp_tasks').insert({ title, zone: document.getElementById('taskZone').value, frequency: document.getElementById('taskFreq').value });
+  closeModal('modalAddTask');
+  document.getElementById('taskTitle').value = '';
+  document.getElementById('taskZone').value = '';
+  loadHaccp();
+}
+
+// ── TEMPERATURES ──
+async function loadTemp() {
+  const { data } = await db.from('temperature_readings').select('zone_name, threshold_min, threshold_max').order('read_at', { ascending: false });
+  // Get unique zones from past readings + default zones
+  const zonesFromDB = [...new Set((data || []).map(r => r.zone_name))];
+  if (zonesFromDB.length === 0) zonesFromDB.push('Frigo n°1', 'Congélateur', 'Chambre froide');
+  zoneConfigs = zonesFromDB.map(z => {
+    const last = (data || []).find(r => r.zone_name === z);
+    return { name: z, min: last?.threshold_min ?? null, max: last?.threshold_max ?? null };
+  });
+  if (!tempValues || Object.keys(tempValues).length === 0) {
+    zoneConfigs.forEach(z => tempValues[z.name] = z.max ? z.max - 1 : 3);
+  }
+  renderTempList();
+}
+
+function renderTempList() {
+  const el = document.getElementById('tempList');
+  el.innerHTML = zoneConfigs.map(z => {
+    const v = tempValues[z.name] !== undefined ? tempValues[z.name] : 3;
+    const isOk = (z.min === null || v >= z.min) && (z.max === null || v <= z.max);
+    const display = (v >= 0 ? '+' : '') + v.toFixed(1) + '°C';
+    const seuil = z.min !== null && z.max !== null ? `Seuil : ${z.min}°C / ${z.max}°C` : z.max !== null ? `Seuil max : ${z.max}°C` : 'Aucun seuil défini';
+    return `<div class="temp-card">
+      <div class="temp-zone">${z.name}</div>
+      <div class="temp-controls">
+        <div><div class="temp-val ${isOk ? 'ok' : 'danger'}" id="tv-${z.name.replace(/\s/g,'_')}">${display}</div><div class="temp-seuil">${seuil}${!isOk ? ' ⚠ HORS SEUIL' : ''}</div></div>
+        <div style="margin-left:auto;display:flex;gap:8px">
+          <div class="temp-adjbtn" onclick="adjTemp('${z.name}', -0.1)">−</div>
+          <div class="temp-adjbtn" onclick="adjTemp('${z.name}', 0.1)">+</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function adjTemp(zone, delta) {
+  tempValues[zone] = Math.round(((tempValues[zone] || 3) + delta) * 10) / 10;
+  renderTempList();
+}
+
+async function saveAllTemps() {
+  const rows = zoneConfigs.map(z => ({
+    zone_name: z.name,
+    value_celsius: tempValues[z.name],
+    threshold_min: z.min,
+    threshold_max: z.max,
+    user_id: currentUser.id
+  }));
+  await db.from('temperature_readings').insert(rows);
+  const s = document.getElementById('tempSuccess');
+  s.classList.remove('hidden');
+  setTimeout(() => s.classList.add('hidden'), 3000);
+}
+
+async function createZone() {
+  const name = document.getElementById('zoneName').value.trim();
+  if (!name) return;
+  const min = parseFloat(document.getElementById('zoneMin').value) || null;
+  const max = parseFloat(document.getElementById('zoneMax').value) || null;
+  zoneConfigs.push({ name, min, max });
+  tempValues[name] = max ? max - 1 : 3;
+  closeModal('modalAddZone');
+  document.getElementById('zoneName').value = '';
+  renderTempList();
+}
+
+// ── LABELS ──
+async function loadLabels() {
+  const { data } = await db.from('labels').select('*').order('opened_at', { ascending: false }).limit(50);
+  const el = document.getElementById('labelsList');
+  if (!data || data.length === 0) {
+    el.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:13px;padding:40px 0">Aucune étiquette enregistrée</div>';
+    return;
+  }
+  el.innerHTML = data.map(l => {
+    const dlcDate = l.dlc ? new Date(l.dlc) : null;
+    const now = new Date();
+    const diff = dlcDate ? Math.ceil((dlcDate - now) / 86400000) : null;
+    const status = diff === null ? 'pending' : diff < 0 ? 'danger' : diff <= 2 ? 'warn' : 'ok';
+    const statusText = diff === null ? 'Pas de DLC' : diff < 0 ? 'DLC dépassée' : diff <= 2 ? `DLC dans ${diff}j` : `DLC: ${l.dlc}`;
+    return `<div class="card"><div class="card-body">
+      ${l.photo_url ? `<img src="${l.photo_url}" style="width:100%;border-radius:10px;margin-bottom:12px;max-height:140px;object-fit:cover">` : ''}
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px">
+        <div style="font-size:14px;font-weight:600">${l.product_name}</div>
+        <span class="pill ${status}">${statusText}</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px;color:var(--muted)">
+        ${l.lot_number ? `<div>Lot : <b style="color:var(--text)">${l.lot_number}</b></div>` : ''}
+        ${l.supplier ? `<div>Fourn. : <b style="color:var(--text)">${l.supplier}</b></div>` : ''}
+        ${l.allergens ? `<div style="grid-column:1/-1">Allergènes : <b style="color:var(--text)">${l.allergens}</b></div>` : ''}
+      </div>
+    </div></div>`;
+  }).join('');
+}
+
+function previewPhoto(input) {
+  photoFile = input.files[0];
+  if (photoFile) {
+    const url = URL.createObjectURL(photoFile);
+    const img = document.getElementById('photoPreview');
+    img.src = url;
+    img.classList.remove('hidden');
+  }
+}
+
+async function createLabel() {
+  const product = document.getElementById('labelProduct').value.trim();
+  if (!product) return;
+  let photoUrl = null;
+  if (photoFile) {
+    const ext = photoFile.name.split('.').pop();
+    const path = `labels/${Date.now()}.${ext}`;
+    const { data: upload, error } = await db.storage.from('hygipro-photos').upload(path, photoFile, { upsert: true });
+    if (!error) {
+      const { data: urlData } = db.storage.from('hygipro-photos').getPublicUrl(path);
+      photoUrl = urlData.publicUrl;
+    }
+  }
+  await db.from('labels').insert({
+    product_name: product,
+    dlc: document.getElementById('labelDlc').value || null,
+    lot_number: document.getElementById('labelLot').value || null,
+    supplier: document.getElementById('labelSupplier').value || null,
+    allergens: document.getElementById('labelAllergens').value || null,
+    photo_url: photoUrl,
+    user_id: currentUser.id
+  });
+  closeModal('modalAddLabel');
+  document.getElementById('labelProduct').value = '';
+  document.getElementById('labelDlc').value = '';
+  document.getElementById('labelLot').value = '';
+  document.getElementById('labelSupplier').value = '';
+  document.getElementById('labelAllergens').value = '';
+  document.getElementById('photoPreview').classList.add('hidden');
+  photoFile = null;
+  loadLabels();
+}
+
+// ── STOCK ──
+async function loadStock() {
+  const { data } = await db.from('products').select('*').order('name');
+  allProducts = data || [];
+  const el = document.getElementById('stockList');
+  if (!data || data.length === 0) {
+    el.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:13px;padding:40px 0">Aucun produit configuré</div>';
+    return;
+  }
+  el.innerHTML = data.map(p => {
+    const pct = p.threshold_min > 0 ? Math.min(100, Math.round((p.current_stock / (p.threshold_min * 3)) * 100)) : 60;
+    const status = p.current_stock <= p.threshold_min ? 'danger' : p.current_stock <= p.threshold_min * 1.5 ? 'warn' : 'ok';
+    const statusText = p.current_stock <= p.threshold_min ? 'Critique' : p.current_stock <= p.threshold_min * 1.5 ? 'Bas' : 'OK';
+    return `<div class="card"><div class="card-body">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <div style="flex:1"><div style="font-size:13px;font-weight:600">${p.name}</div><div style="font-size:11px;color:var(--muted)">Seuil min : ${p.threshold_min} ${p.unit}</div></div>
+        <div style="font-size:18px;font-weight:700;color:var(--text)">${p.current_stock} <span style="font-size:12px;color:var(--muted)">${p.unit}</span></div>
+        <span class="pill ${status}">${statusText}</span>
+      </div>
+      <div class="stock-bar-wrap"><div class="stock-bar ${status}" style="width:${pct}%"></div></div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button class="btn-sm primary" onclick="openStockMove('${p.id}','${p.name}')">Mouvement</button>
+      </div>
+    </div></div>`;
+  }).join('');
+}
+
+function openStockMove(id, name) {
+  document.getElementById('stockMoveProductId').value = id;
+  document.getElementById('stockMoveTitle').innerHTML = `Stock : ${name} <button class="modal-close" onclick="closeModal('modalStockMove')">✕</button>`;
+  document.getElementById('stockMoveQty').value = '';
+  openModal('modalStockMove');
+}
+
+async function saveStockMove(sign) {
+  const productId = document.getElementById('stockMoveProductId').value;
+  const qty = parseFloat(document.getElementById('stockMoveQty').value);
+  if (!qty || qty <= 0) return;
+  const delta = sign * qty;
+  const reason = document.getElementById('stockMoveReason').value;
+  await db.from('stock_movements').insert({ product_id: productId, user_id: currentUser.id, delta, reason });
+  const product = allProducts.find(p => p.id === productId);
+  const newStock = Math.max(0, (product?.current_stock || 0) + delta);
+  await db.from('products').update({ current_stock: newStock }).eq('id', productId);
+  closeModal('modalStockMove');
+  loadStock();
+}
+
+async function createProduct() {
+  const name = document.getElementById('productName').value.trim();
+  if (!name) return;
+  await db.from('products').insert({
+    name,
+    unit: document.getElementById('productUnit').value,
+    current_stock: parseFloat(document.getElementById('productStock').value) || 0,
+    threshold_min: parseFloat(document.getElementById('productMin').value) || 0
+  });
+  closeModal('modalAddProduct');
+  document.getElementById('productName').value = '';
+  document.getElementById('productStock').value = '';
+  document.getElementById('productMin').value = '';
+  loadStock();
+}
+
+// ── ORDERS ──
+async function loadOrders() {
+  const sel = document.getElementById('orderProduct');
+  sel.innerHTML = allProducts.map(p => `<option value="${p.id}">${p.name} (stock: ${p.current_stock} ${p.unit})</option>`).join('');
+  if (allProducts.length === 0) {
+    const { data } = await db.from('products').select('*').order('name');
+    allProducts = data || [];
+    sel.innerHTML = allProducts.map(p => `<option value="${p.id}">${p.name} (stock: ${p.current_stock} ${p.unit})</option>`).join('');
+  }
+
+  let query = db.from('orders').select('*, products(name, unit), users(name)').order('created_at', { ascending: false });
+  if (currentUser.role !== 'admin') query = query.eq('user_id', currentUser.id);
+  const { data } = await query;
+
+  const el = document.getElementById('ordersList');
+  if (!data || data.length === 0) {
+    el.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:13px;padding:40px 0">Aucune commande</div>';
+    return;
+  }
+  el.innerHTML = data.map(o => {
+    const st = o.status === 'pending' ? 'warn' : o.status === 'approved' ? 'ok' : 'danger';
+    const stTxt = o.status === 'pending' ? 'En attente' : o.status === 'approved' ? 'Validée' : 'Refusée';
+    const adminBtns = currentUser.role === 'admin' && o.status === 'pending'
+      ? `<div style="display:flex;gap:8px;margin-top:10px">
+          <button class="btn-sm primary" onclick="updateOrder('${o.id}','approved')">Valider</button>
+          <button class="btn-sm danger" onclick="updateOrder('${o.id}','rejected')">Refuser</button>
+        </div>` : '';
+    return `<div class="card"><div class="card-body">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px">
+        <div><div style="font-size:13px;font-weight:600">${o.products?.name || '—'}</div>
+        <div style="font-size:11px;color:var(--muted)">${o.quantity} ${o.products?.unit || ''} · ${o.users?.name || '—'}</div></div>
+        <span class="pill ${st}">${stTxt}</span>
+      </div>
+      <div style="font-size:12px;color:var(--muted)">${o.reason || ''}</div>
+      ${adminBtns}
+    </div></div>`;
+  }).join('');
+}
+
+async function createOrder() {
+  const productId = document.getElementById('orderProduct').value;
+  const qty = parseFloat(document.getElementById('orderQty').value);
+  if (!productId || !qty) return;
+  await db.from('orders').insert({
+    product_id: productId,
+    user_id: currentUser.id,
+    quantity: qty,
+    reason: document.getElementById('orderReason').value,
+    status: 'pending'
+  });
+  closeModal('modalNewOrder');
+  document.getElementById('orderQty').value = '';
+  loadOrders();
+}
+
+async function updateOrder(id, status) {
+  await db.from('orders').update({ status }).eq('id', id);
+  if (status === 'approved') {
+    const { data: order } = await db.from('orders').select('*, products(current_stock)').eq('id', id).single();
+    if (order) {
+      const newStock = (order.products?.current_stock || 0) + order.quantity;
+      await db.from('products').update({ current_stock: newStock }).eq('id', order.product_id);
+    }
+  }
+  loadOrders();
+}
+
+// ── ADMIN ──
+async function loadAdmin() {
+  loadUsersList();
+}
+
+function adminTab(tab, el) {
+  ['salaries', 'zones', 'rapports'].forEach(t => document.getElementById('admin' + t.charAt(0).toUpperCase() + t.slice(1)).classList.add('hidden'));
+  document.getElementById('admin' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.remove('hidden');
+  document.querySelectorAll('.admin-tab').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  if (tab === 'zones') loadZonesList();
+}
+
+async function loadUsersList() {
+  const { data } = await db.from('users').select('*').order('name');
+  const el = document.getElementById('usersList');
+  el.innerHTML = (data || []).map(u => {
+    const initials = u.name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+    const roleColor = u.role === 'admin' ? '#534AB7' : u.role === 'chef' ? '#0F6E56' : '#6B7280';
+    return `<div class="card"><div class="card-body">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:40px;height:40px;border-radius:50%;background:#F3F4F6;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:14px;color:${roleColor};flex-shrink:0">${initials}</div>
+        <div style="flex:1"><div style="font-size:14px;font-weight:600">${u.name}</div><div style="font-size:11px;color:var(--muted)">${u.role} · PIN: ${u.pin}</div></div>
+        <span class="pill ${u.active ? 'ok' : 'danger'}">${u.active ? 'Actif' : 'Inactif'}</span>
+        ${u.role !== 'admin' ? `<button class="btn-sm danger" onclick="toggleUserActive('${u.id}', ${u.active})">${u.active ? 'Désactiver' : 'Activer'}</button>` : ''}
+      </div>
+    </div></div>`;
+  }).join('');
+}
+
+async function loadZonesList() {
+  const el = document.getElementById('zonesList');
+  el.innerHTML = zoneConfigs.length > 0 ? zoneConfigs.map(z =>
+    `<div class="card"><div class="card-body" style="display:flex;align-items:center;justify-content:space-between">
+      <div><div style="font-size:13px;font-weight:600">${z.name}</div>
+      <div style="font-size:11px;color:var(--muted)">${z.min !== null ? z.min + '°C' : '—'} / ${z.max !== null ? z.max + '°C' : '—'}</div></div>
+    </div></div>`).join('')
+  : '<div style="text-align:center;color:var(--muted);font-size:13px;padding:20px 0">Aucune zone. Ajoutez-en dans l\'onglet Températures.</div>';
+}
+
+async function toggleUserActive(id, current) {
+  await db.from('users').update({ active: !current }).eq('id', id);
+  loadUsersList();
+  loadUsers();
+}
+
+async function createUser() {
+  const name = document.getElementById('newUserName').value.trim();
+  const pin = String(document.getElementById('newUserPin').value).trim();
+  if (!name || pin.length !== 4) { alert('Nom et PIN à 4 chiffres requis'); return; }
+  const perms = {
+    haccp: document.getElementById('perm-haccp').checked,
+    temperatures: document.getElementById('perm-temperatures').checked,
+    labels: document.getElementById('perm-labels').checked,
+    stock: document.getElementById('perm-stock').checked,
+    orders: document.getElementById('perm-orders').checked
+  };
+  await db.from('users').insert({ name, role: document.getElementById('newUserRole').value, pin, permissions: perms });
+  closeModal('modalCreateUser');
+  document.getElementById('newUserName').value = '';
+  document.getElementById('newUserPin').value = '';
+  loadUsersList();
+  loadUsers();
+}
+
+// ── EXPORTS ──
+async function exportCSV(type) {
+  let data, fields, filename;
+  if (type === 'haccp') {
+    const { data: d } = await db.from('haccp_completions').select('*, haccp_tasks(title, zone), users(name)').order('completed_at', { ascending: false });
+    data = (d || []).map(r => ({ tache: r.haccp_tasks?.title, zone: r.haccp_tasks?.zone, employe: r.users?.name, date: r.completed_at }));
+    filename = 'hygipro_haccp.csv';
+  } else if (type === 'temperatures') {
+    const { data: d } = await db.from('temperature_readings').select('*, users(name)').order('read_at', { ascending: false });
+    data = (d || []).map(r => ({ zone: r.zone_name, temperature: r.value_celsius, seuil_min: r.threshold_min, seuil_max: r.threshold_max, employe: r.users?.name, date: r.read_at }));
+    filename = 'hygipro_temperatures.csv';
+  } else {
+    const { data: d } = await db.from('labels').select('*, users(name)').order('opened_at', { ascending: false });
+    data = (d || []).map(r => ({ produit: r.product_name, dlc: r.dlc, lot: r.lot_number, fournisseur: r.supplier, allergenes: r.allergens, employe: r.users?.name, date: r.opened_at }));
+    filename = 'hygipro_etiquettes.csv';
+  }
+  if (!data || data.length === 0) { alert('Aucune donnée à exporter'); return; }
+  const headers = Object.keys(data[0]);
+  const csv = [headers.join(';'), ...data.map(r => headers.map(h => '"' + (r[h] || '') + '"').join(';'))].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+}
+
+// ── MODALS ──
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+});
+
+// ── START ──
+init();
+
+// Create storage bucket (admin setup helper)
+async function setupStorage() {
+  await db.storage.createBucket('hygipro-photos', { public: true });
+}
+</script>
+</body>
+</html>
+ENDOFFILE
