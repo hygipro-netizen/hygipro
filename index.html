@@ -11,50 +11,8 @@
 <link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" href="/icon.png">
 <title>HygiPro</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
-<script>
-let pdfDoc=null,pdfPage=1,pdfTotal=0;
-
-async function openDocViewer(url,title,filename){
-  document.getElementById('docViewerTitle').textContent=title;
-  document.getElementById('modalDocViewer').style.display='flex';
-  document.getElementById('docViewerBody').innerHTML='<div style="color:#7ba7c4;padding:40px;text-align:center">Chargement...</div>';
-  const isImage=/\.(jpg|jpeg|png|gif|webp)$/i.test(filename)||/\.(jpg|jpeg|png|gif|webp)$/i.test(url);
-  if(isImage){
-    document.getElementById('docViewerPages').style.display='none';
-    document.getElementById('docViewerBody').innerHTML=`<img src="${url}" style="max-width:100%;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,0.4)">`;
-    return;
-  }
-  document.getElementById('docViewerPages').style.display='flex';
-  try{
-    pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
-    pdfDoc=await pdfjsLib.getDocument(url).promise;
-    pdfTotal=pdfDoc.numPages;
-    pdfPage=1;
-    renderPdfPage(pdfPage);
-  }catch(e){
-    document.getElementById('docViewerBody').innerHTML=`<div style="color:#fca5a5;padding:40px;text-align:center">Impossible d'afficher ce document.<br><br><a href="${url}" target="_blank" style="color:#2dd4a0">Ouvrir dans le navigateur</a></div>`;
-  }
-}
-async function renderPdfPage(num){
-  document.getElementById('docPageInfo').textContent='Page '+num+' / '+pdfTotal;
-  document.getElementById('docViewerBody').innerHTML='<div style="color:#7ba7c4;padding:40px;text-align:center">Chargement page '+num+'...</div>';
-  const page=await pdfDoc.getPage(num);
-  const viewport=page.getViewport({scale:window.innerWidth<500?1.2:1.6});
-  const canvas=document.createElement('canvas');
-  canvas.width=viewport.width;canvas.height=viewport.height;
-  canvas.style.maxWidth='100%';canvas.style.borderRadius='8px';canvas.style.boxShadow='0 4px 20px rgba(0,0,0,0.4)';
-  await page.render({canvasContext:canvas.getContext('2d'),viewport}).promise;
-  document.getElementById('docViewerBody').innerHTML='';
-  document.getElementById('docViewerBody').appendChild(canvas);
-}
-function prevPage(){if(pdfPage>1){pdfPage--;renderPdfPage(pdfPage);}}
-function nextPage(){if(pdfPage<pdfTotal){pdfPage++;renderPdfPage(pdfPage);}}
-function closeDocViewer(){
-  document.getElementById('modalDocViewer').style.display='none';
-  pdfDoc=null;pdfPage=1;pdfTotal=0;
-}
-</script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{--teal:#2dd4a0;--teal2:#22b589;--teal-light:rgba(45,212,160,0.15);--teal-dark:#17856a;--amber:#f59e0b;--amber-light:rgba(245,158,11,0.15);--amber-dark:#d97706;--red:#f87171;--red-light:rgba(248,113,113,0.15);--red-dark:#ef4444;--blue:#60a5fa;--blue-light:rgba(96,165,250,0.15);--bg:#060f1e;--bg2:#0d1f38;--card:#0f2240;--card2:#162d4f;--border:#1e3a5f;--border2:#254876;--text:#e8f4f0;--muted:#7ba7c4;--subtle:#4a7a9b;--nav-h:68px;--top-h:60px;--r-sm:10px;--r-md:14px;--r-lg:20px;--r-xl:24px}
@@ -902,6 +860,43 @@ async function exportCSV(type){
 function openModal(id){document.getElementById(id).classList.add('open');}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');}));
+let pdfDoc=null,pdfPage=1,pdfTotal=0;
+async function openDocViewer(url,title,filename){
+  document.getElementById('docViewerTitle').textContent=title;
+  document.getElementById('modalDocViewer').style.display='flex';
+  document.getElementById('docViewerBody').innerHTML='<div style="color:#7ba7c4;padding:40px;text-align:center">Chargement...</div>';
+  const isImage=/\.(jpg|jpeg|png|gif|webp)$/i.test(filename)||/\.(jpg|jpeg|png|gif|webp)$/i.test(url);
+  if(isImage){
+    document.getElementById('docViewerPages').style.display='none';
+    document.getElementById('docViewerBody').innerHTML=`<img src="${url}" style="max-width:100%;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,0.4)">`;
+    return;
+  }
+  document.getElementById('docViewerPages').style.display='flex';
+  try{
+    pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+    pdfDoc=await pdfjsLib.getDocument(url).promise;
+    pdfTotal=pdfDoc.numPages;pdfPage=1;
+    renderPdfPage(pdfPage);
+  }catch(e){
+    document.getElementById('docViewerBody').innerHTML=`<div style="color:#fca5a5;padding:40px;text-align:center">Impossible d'afficher ce document.<br><br><a href="${url}" target="_blank" style="color:#2dd4a0">Ouvrir dans le navigateur</a></div>`;
+  }
+}
+async function renderPdfPage(num){
+  document.getElementById('docPageInfo').textContent='Page '+num+' / '+pdfTotal;
+  document.getElementById('docViewerBody').innerHTML='<div style="color:#7ba7c4;padding:40px;text-align:center">Chargement page '+num+'...</div>';
+  const page=await pdfDoc.getPage(num);
+  const viewport=page.getViewport({scale:window.innerWidth<500?1.2:1.6});
+  const canvas=document.createElement('canvas');
+  canvas.width=viewport.width;canvas.height=viewport.height;
+  canvas.style.maxWidth='100%';canvas.style.borderRadius='8px';
+  await page.render({canvasContext:canvas.getContext('2d'),viewport}).promise;
+  document.getElementById('docViewerBody').innerHTML='';
+  document.getElementById('docViewerBody').appendChild(canvas);
+}
+function prevPage(){if(pdfPage>1){pdfPage--;renderPdfPage(pdfPage);}}
+function nextPage(){if(pdfPage<pdfTotal){pdfPage++;renderPdfPage(pdfPage);}}
+function closeDocViewer(){document.getElementById('modalDocViewer').style.display='none';pdfDoc=null;pdfPage=1;pdfTotal=0;}
+
 init();
 </script>
 </body>
