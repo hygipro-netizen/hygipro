@@ -321,6 +321,35 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
       <div class="section-head"><div class="section-title">Traçabilité</div><button class="btn-sm primary" onclick="openModal('modalAddLabel')">+ Traçabilité</button></div>
       <div id="labelsList"><div class="empty"><div class="empty-ico">🏷️</div><div class="empty-sub">Chargement...</div></div></div>
     </div>
+    <div class="page" id="page-etiquettes">
+      <div class="section-head"><div class="section-title">Étiquettes</div></div>
+      <!-- Type selector -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+        <div onclick="openEtiquetteForm('ouverture')" style="background:var(--card);border:1.5px solid rgba(45,212,160,0.3);border-radius:var(--r-lg);padding:16px;text-align:center;cursor:pointer;transition:all .15s">
+          <div style="font-size:28px;margin-bottom:8px">📦</div>
+          <div style="font-size:14px;font-weight:700;color:var(--text)">Produit ouvert</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">DLC secondaire auto</div>
+        </div>
+        <div onclick="openEtiquetteForm('decongelation')" style="background:var(--card);border:1.5px solid rgba(96,165,250,0.3);border-radius:var(--r-lg);padding:16px;text-align:center;cursor:pointer;transition:all .15s">
+          <div style="font-size:28px;margin-bottom:8px">❄️</div>
+          <div style="font-size:14px;font-weight:700;color:var(--text)">Décongélation</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">Timer 24h réglementaire</div>
+        </div>
+        <div onclick="openEtiquetteForm('preparation')" style="background:var(--card);border:1.5px solid rgba(245,158,11,0.3);border-radius:var(--r-lg);padding:16px;text-align:center;cursor:pointer;transition:all .15s">
+          <div style="font-size:28px;margin-bottom:8px">👨‍🍳</div>
+          <div style="font-size:14px;font-weight:700;color:var(--text)">Préparation</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">Produit fabriqué</div>
+        </div>
+        <div onclick="openEtiquetteForm('cuisson')" style="background:var(--card);border:1.5px solid rgba(248,113,113,0.3);border-radius:var(--r-lg);padding:16px;text-align:center;cursor:pointer;transition:all .15s">
+          <div style="font-size:28px;margin-bottom:8px">🔥</div>
+          <div style="font-size:14px;font-weight:700;color:var(--text)">Cuisson</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">Traçabilité cuisson</div>
+        </div>
+      </div>
+      <!-- Historique -->
+      <div class="section-head" style="margin-top:8px"><div class="section-title" style="font-size:14px">Historique du jour</div></div>
+      <div id="etiquettesList"><div class="empty"><div class="empty-ico">🏷️</div><div class="empty-sub">Aucune étiquette générée aujourd'hui</div></div></div>
+    </div>
     <div class="page" id="page-docs">
       <div class="section-head"><div class="section-title">Documents</div><button class="btn-sm primary" id="btnAddDoc" onclick="openModal('modalAddDoc')" style="display:none">+ Document</button></div>
       <div id="docsCats" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px"></div>
@@ -366,15 +395,20 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
   </div>
   <nav class="bottom-nav" id="bottomNav">
     <button class="nav-item active" onclick="goPage('home',this)" id="nav-home"><div class="nav-ico"><svg viewBox="0 0 24 24"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/></svg></div><span class="nav-lbl">Accueil</span></button>
-    <button class="nav-item" id="nav-haccp" onclick="goPage('haccp',this)"><div class="nav-ico" style="position:relative"><svg viewBox="0 0 24 24"><path d="M12 2L4 6v6c0 5.5 3.5 10.7 8 12 4.5-1.3 8-6.5 8-12V6L12 2z"/></svg><div class="alert-badge hidden" id="badge-haccp">!</div></div><span class="nav-lbl">Hygiène/span></button>
     <button class="nav-item" id="nav-temp" onclick="goPage('temp',this)"><div class="nav-ico" style="position:relative"><svg viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><circle cx="12" cy="17" r="4"/></svg><div class="alert-badge hidden" id="badge-temp">!</div></div><span class="nav-lbl">Temp.</span></button>
     <button class="nav-item" id="nav-labels" onclick="goPage('labels',this)"><div class="nav-ico" style="position:relative"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/></svg><div class="alert-badge hidden" id="badge-labels">!</div></div><span class="nav-lbl">Traçabilité</span></button>
+    <button class="nav-item" id="nav-etiquettes" onclick="goPage('etiquettes',this)"><div class="nav-ico" style="position:relative"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg></div><span class="nav-lbl">Étiquettes</span></button>
     <button class="nav-item" id="nav-more" onclick="toggleMore()"><div class="nav-ico" style="position:relative"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="5" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="19" cy="12" r="1.5" fill="currentColor"/></svg><div class="alert-badge hidden" id="badge-more">!</div></div><span class="nav-lbl">Plus</span></button>
   </nav>
 </div>
 
   <div id="moreMenu" style="display:none;position:fixed;bottom:calc(72px + env(safe-area-inset-bottom));left:0;right:0;z-index:200;padding:0 12px 8px">
     <div style="background:#0d1f38;border:1px solid #254876;border-radius:20px;overflow:hidden;box-shadow:0 -8px 40px rgba(0,0,0,0.5)">
+      <div id="more-haccp" onclick="goPageMore('haccp')" style="display:flex;align-items:center;gap:14px;padding:14px 18px;border-bottom:1px solid #1e3a5f;cursor:pointer">
+        <div style="width:38px;height:38px;border-radius:10px;background:rgba(45,212,160,0.1);display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#2dd4a0" stroke-width="1.8" stroke-linecap="round"><path d="M12 2L4 6v6c0 5.5 3.5 10.7 8 12 4.5-1.3 8-6.5 8-12V6L12 2z"/></svg></div>
+        <div style="flex:1"><div style="font-size:14px;font-weight:600;color:#e8f4f0">Hygiène</div><div style="font-size:11px;color:#7ba7c4">Tâches HACCP quotidiennes</div></div>
+        <div class="alert-badge hidden" id="badge-haccp" style="position:static;width:20px;height:20px">!</div>
+      </div>
       <div id="more-docs" onclick="goPageMore('docs')" style="display:flex;align-items:center;gap:14px;padding:14px 18px;border-bottom:1px solid #1e3a5f;cursor:pointer">
         <div style="width:38px;height:38px;border-radius:10px;background:rgba(96,165,250,0.1);display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#60a5fa" stroke-width="1.8" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>
         <div style="flex:1"><div style="font-size:14px;font-weight:600;color:#e8f4f0">Documents</div><div style="font-size:11px;color:#7ba7c4">PMS, DUERT, Attestations...</div></div>
@@ -693,6 +727,67 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
 </div></div>
 
 <!-- MODAL EDIT PERMISSIONS -->
+<!-- MODAL GENERATION ETIQUETTE -->
+<div class="modal-overlay" id="modalEtiquette"><div class="modal"><div class="modal-handle"></div>
+<div class="modal-title" id="etiquetteModalTitle">🏷️ Nouvelle étiquette <button class="modal-close" onclick="closeModal('modalEtiquette')">✕</button></div>
+<input type="hidden" id="etiquetteType">
+
+<div class="form-group"><label class="form-label">Nom du produit *</label>
+<input class="form-input" id="etiqProduct" placeholder="Ex: Beurre, Crème fraîche, Pâte feuilletée..."/>
+</div>
+
+<div id="etiqDlcSecField" class="form-group" style="display:none">
+  <label class="form-label">DLC secondaire</label>
+  <select class="form-select" id="etiqDlcPreset" onchange="updateEtiqDlc(this.value)">
+    <option value="1">+1 jour (produits très frais)</option>
+    <option value="2">+2 jours</option>
+    <option value="3">+3 jours (charcuterie ouverte)</option>
+    <option value="5">+5 jours</option>
+    <option value="7">+7 jours</option>
+    <option value="custom">Personnalisé</option>
+  </select>
+</div>
+
+<div id="etiqDecongelField" style="display:none">
+  <div style="background:rgba(96,165,250,0.1);border:1px solid rgba(96,165,250,0.3);border-radius:var(--r-md);padding:12px 14px;margin-bottom:12px">
+    <div style="font-size:13px;font-weight:600;color:var(--blue)">❄️ Réglementation décongélation</div>
+    <div style="font-size:12px;color:var(--muted);margin-top:4px">Maximum 24h en réfrigérateur (0-4°C) · Ne jamais recongeler</div>
+  </div>
+</div>
+
+<div id="etiqCuissonFields" style="display:none">
+  <div class="form-row">
+    <div class="form-group"><label class="form-label">Temp. à cœur (°C)</label><input class="form-input" id="etiqTempCoeur" type="number" placeholder="63"/></div>
+    <div class="form-group"><label class="form-label">Durée cuisson</label><input class="form-input" id="etiqDureeCuisson" placeholder="25 min"/></div>
+  </div>
+</div>
+
+<div class="form-row">
+  <div class="form-group"><label class="form-label">Date fabrication</label><input class="form-input" id="etiqDateFab" type="date"/></div>
+  <div class="form-group"><label class="form-label">DLC / Consommer avant</label><input class="form-input" id="etiqDlc" type="date"/></div>
+</div>
+
+<div class="form-group"><label class="form-label">Allergènes</label>
+<input class="form-input" id="etiqAllergens" placeholder="Gluten, Lait, Œufs... ou Aucun"/>
+</div>
+
+<div class="form-group"><label class="form-label">Quantité / Poids</label>
+<input class="form-input" id="etiqQty" placeholder="Ex: 500g, 1kg, 6 pièces..."/>
+</div>
+
+<button class="btn btn-primary" onclick="genererEtiquette()">🏷️ Générer l'étiquette</button>
+</div></div>
+
+<!-- MODAL AFFICHAGE ETIQUETTE GENEREE -->
+<div class="modal-overlay" id="modalEtiquetteDisplay"><div class="modal"><div class="modal-handle"></div>
+<div class="modal-title">✅ Étiquette générée <button class="modal-close" onclick="closeModal('modalEtiquetteDisplay')">✕</button></div>
+<div id="etiquettePreview" style="background:white;border-radius:var(--r-md);padding:16px;margin-bottom:16px;color:#111;font-family:Arial,sans-serif"></div>
+<div style="display:flex;gap:8px">
+  <button class="btn btn-primary" onclick="imprimerEtiquette()" style="flex:1">🖨️ Imprimer</button>
+  <button class="btn btn-outline" onclick="closeModal('modalEtiquetteDisplay')" style="flex:1">Fermer</button>
+</div>
+</div></div>
+
 <div class="modal-overlay" id="modalEditPerms"><div class="modal"><div class="modal-handle"></div>
 <div class="modal-title">⚙️ Permissions — <span id="editPermsName" style="color:var(--teal)"></span> <button class="modal-close" onclick="closeModal('modalEditPerms')">✕</button></div>
 <input type="hidden" id="editPermsId">
@@ -795,9 +890,10 @@ function showApp(){
   const p=currentUser.permissions||{};
   const isAdmin=currentUser.role==='admin';
   // Nav bar permissions
-  if(!p.haccp&&!isAdmin){const el=document.getElementById('nav-haccp');if(el)el.classList.add('hidden');}
+  if(!p.haccp&&!isAdmin){const el=document.getElementById('more-haccp');if(el)el.style.display='none';}
   if(!p.temperatures&&!isAdmin){const el=document.getElementById('nav-temp');if(el)el.classList.add('hidden');}
   if(!p.labels&&!isAdmin){const el=document.getElementById('nav-labels');if(el)el.classList.add('hidden');}
+  if(!p.labels&&!isAdmin){const el=document.getElementById('nav-etiquettes');if(el)el.classList.add('hidden');}
   // More menu permissions
   if(isAdmin){
     const a=document.getElementById('more-admin');if(a)a.style.display='flex';
@@ -819,7 +915,7 @@ function goPage(id,el){
   document.getElementById('page-'+id).classList.add('active');
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   if(el)el.classList.add('active');
-  const loaders={home:loadHome,haccp:loadHaccp,temp:loadTemp,labels:loadLabels,admin:loadAdmin,docs:loadDocs,reception:loadReception,incidents:loadIncidents};
+  const loaders={home:loadHome,haccp:loadHaccp,temp:loadTemp,labels:loadLabels,etiquettes:loadEtiquettes,admin:loadAdmin,docs:loadDocs,reception:loadReception,incidents:loadIncidents};
   if(loaders[id])loaders[id]();
 }
 
@@ -2225,6 +2321,136 @@ async function deleteIncident(id){
   await db.from('incidents').delete().eq('id',id);
   showToast('Incident supprimé','ok',2500);
   loadIncidents();checkAlerts();
+}
+
+// ===== ETIQUETTES =====
+const DLC_RULES={
+  ouverture:{default:3},
+  decongelation:{default:1,max:1},
+  preparation:{default:3},
+  cuisson:{default:3},
+};
+
+function openEtiquetteForm(type){
+  const titles={ouverture:'📦 Produit ouvert',decongelation:'❄️ Décongélation',preparation:'👨‍🍳 Préparation',cuisson:'🔥 Cuisson'};
+  document.getElementById('etiquetteModalTitle').textContent=titles[type]+' — Nouvelle étiquette <button class="modal-close" onclick="closeModal(\'modalEtiquette\')">✕</button>';
+  document.getElementById('etiquetteType').value=type;
+  // Set dates
+  const now=new Date();
+  const today=now.toISOString().split('T')[0];
+  document.getElementById('etiqDateFab').value=today;
+  // Auto DLC
+  const dlc=new Date(now);
+  dlc.setDate(dlc.getDate()+(DLC_RULES[type]?.default||3));
+  document.getElementById('etiqDlc').value=dlc.toISOString().split('T')[0];
+  // Reset fields
+  document.getElementById('etiqProduct').value='';
+  document.getElementById('etiqAllergens').value='';
+  document.getElementById('etiqQty').value='';
+  // Show/hide fields
+  document.getElementById('etiqDlcSecField').style.display=type==='ouverture'?'block':'none';
+  document.getElementById('etiqDecongelField').style.display=type==='decongelation'?'block':'none';
+  document.getElementById('etiqCuissonFields').style.display=type==='cuisson'?'block':'none';
+  openModal('modalEtiquette');
+}
+
+function updateEtiqDlc(days){
+  if(days==='custom')return;
+  const fab=new Date(document.getElementById('etiqDateFab').value||new Date());
+  fab.setDate(fab.getDate()+parseInt(days));
+  document.getElementById('etiqDlc').value=fab.toISOString().split('T')[0];
+}
+
+async function genererEtiquette(){
+  const product=document.getElementById('etiqProduct').value.trim();
+  if(!product){showToast('Nom du produit requis','warn');return;}
+  const type=document.getElementById('etiquetteType').value;
+  const dateFab=document.getElementById('etiqDateFab').value;
+  const dlc=document.getElementById('etiqDlc').value;
+  const allergens=document.getElementById('etiqAllergens').value||'Non renseigné';
+  const qty=document.getElementById('etiqQty').value||'';
+  const tempCoeur=document.getElementById('etiqTempCoeur')?.value||null;
+  const duree=document.getElementById('etiqDureeCuisson')?.value||null;
+  const typeLabels={ouverture:'PRODUIT OUVERT',decongelation:'DÉCONGÉLATION',preparation:'PRÉPARATION',cuisson:'CUISSON'};
+  const typeColors={ouverture:'#2dd4a0',decongelation:'#60a5fa',preparation:'#f59e0b',cuisson:'#f87171'};
+  const color=typeColors[type]||'#2dd4a0';
+
+  // Save to DB
+  await db.from('etiquettes_gen').insert({
+    type,product_name:product,date_fab:dateFab,dlc,allergens,qty,
+    temp_coeur:tempCoeur?parseFloat(tempCoeur):null,
+    duree_cuisson:duree,
+    generated_by:currentUser.id,
+  }).then(()=>{}).catch(()=>{});
+
+  // Generate preview HTML
+  const dlcDate=dlc?new Date(dlc).toLocaleDateString('fr-FR'):'—';
+  const fabDate=dateFab?new Date(dateFab).toLocaleDateString('fr-FR'):'—';
+  const qrData=JSON.stringify({p:product,dlc,fab:dateFab,type,par:currentUser.name});
+
+  document.getElementById('etiquettePreview').innerHTML=`
+    <div style="border:3px solid ${color};border-radius:10px;padding:14px;max-width:340px;margin:0 auto;font-family:Arial,sans-serif">
+      <div style="background:${color};color:${type==='preparation'||type==='cuisson'?'#111':'white'};padding:6px 12px;border-radius:6px;font-size:13px;font-weight:800;text-align:center;margin-bottom:10px;letter-spacing:1px">${typeLabels[type]}</div>
+      <div style="font-size:18px;font-weight:800;color:#111;margin-bottom:8px;text-align:center">${product}</div>
+      ${qty?`<div style="font-size:13px;color:#555;text-align:center;margin-bottom:8px">Quantité : <b>${qty}</b></div>`:''}
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px">
+        <div style="background:#f5f5f5;border-radius:6px;padding:6px 8px">
+          <div style="font-size:10px;color:#888;font-weight:600;text-transform:uppercase">Fabriqué le</div>
+          <div style="font-size:13px;font-weight:700;color:#111">${fabDate}</div>
+        </div>
+        <div style="background:${dlc&&new Date(dlc)<new Date()?'#fee2e2':'#f0fdf4'};border-radius:6px;padding:6px 8px">
+          <div style="font-size:10px;color:#888;font-weight:600;text-transform:uppercase">${type==='decongelation'?'À consommer avant':'DLC / À consommer avant'}</div>
+          <div style="font-size:13px;font-weight:700;color:${dlc&&new Date(dlc)<new Date()?'#dc2626':'#166534'}">${dlcDate}</div>
+        </div>
+      </div>
+      ${tempCoeur?`<div style="background:#fff7ed;border-radius:6px;padding:6px 8px;margin-bottom:6px;font-size:12px">🌡️ Temp. à cœur : <b>${tempCoeur}°C</b>${duree?' · Durée : <b>'+duree+'</b>':''}</div>`:''}
+      <div style="background:#fafafa;border-radius:6px;padding:6px 8px;margin-bottom:8px">
+        <div style="font-size:10px;color:#888;font-weight:600;text-transform:uppercase;margin-bottom:2px">Allergènes</div>
+        <div style="font-size:12px;color:#111">${allergens}</div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;border-top:1px solid #eee;padding-top:8px">
+        <div style="font-size:11px;color:#555">Par : <b>${currentUser.name}</b><br>HygiPro · ${new Date().toLocaleDateString('fr-FR')}</div>
+        <div id="etiqQrCode" style="width:60px;height:60px;background:#f0f0f0;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:9px;color:#888;text-align:center">QR Code</div>
+      </div>
+    </div>`;
+
+  closeModal('modalEtiquette');
+  openModal('modalEtiquetteDisplay');
+  loadEtiquettes();
+}
+
+function imprimerEtiquette(){
+  const content=document.getElementById('etiquettePreview').innerHTML;
+  const w=window.open('','_blank');
+  w.document.write(`<html><head><title>Étiquette HygiPro</title><style>body{margin:0;padding:20px;font-family:Arial,sans-serif}@media print{body{padding:0}}</style></head><body>${content}<script>window.onload=()=>{window.print();window.close();}<\/script></body></html>`);
+  w.document.close();
+}
+
+async function loadEtiquettes(){
+  const today=new Date().toISOString().split('T')[0];
+  const el=document.getElementById('etiquettesList');
+  // Try to load from DB, gracefully handle if table doesn't exist yet
+  try{
+    const{data}=await db.from('etiquettes_gen').select('*,generated_by_user:generated_by(name)').gte('created_at',today).order('created_at',{ascending:false});
+    if(!data||!data.length){el.innerHTML='<div class="empty"><div class="empty-ico">🏷️</div><div class="empty-sub">Aucune étiquette générée aujourd\'hui</div></div>';return;}
+    const typeIco={ouverture:'📦',decongelation:'❄️',preparation:'👨‍🍳',cuisson:'🔥'};
+    const typeColor={ouverture:'ok',decongelation:'info',preparation:'warn',cuisson:'danger'};
+    el.innerHTML=data.map(e=>{
+      const dlcDate=e.dlc?new Date(e.dlc).toLocaleDateString('fr-FR'):'—';
+      const diff=e.dlc?Math.ceil((new Date(e.dlc)-new Date())/86400000):null;
+      const st=diff===null?'pending':diff<0?'danger':diff<=1?'warn':'ok';
+      return`<div class="card"><div class="card-body" style="display:flex;align-items:center;gap:12px">
+        <div style="font-size:24px">${typeIco[e.type]||'🏷️'}</div>
+        <div style="flex:1">
+          <div style="font-size:14px;font-weight:700;color:var(--text)">${e.product_name}</div>
+          <div style="font-size:11px;color:var(--muted)">DLC : ${dlcDate} · ${e.generated_by_user?.name||'—'}</div>
+        </div>
+        <span class="pill ${st}" style="font-size:11px">${diff===null?'—':diff<0?'Dépassée':diff===0?'Auj.':'J+'+diff}</span>
+      </div></div>`;
+    }).join('');
+  }catch(e){
+    el.innerHTML='<div class="empty"><div class="empty-sub">Table à créer — voir instructions</div></div>';
+  }
 }
 
 // ===== BARCODE SCANNER =====
