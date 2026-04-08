@@ -399,6 +399,7 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
         <button class="admin-tab active" onclick="adminTab('Dashboard',this)">📊 Dashboard</button>
         <button class="admin-tab" onclick="adminTab('Salaries',this)">Salariés</button>
         <button class="admin-tab" onclick="adminTab('Zones',this)">Zones</button>
+        <button class="admin-tab" onclick="adminTab('Fermetures',this)">📅 Fermetures</button>
         <button class="admin-tab" onclick="adminTab('Rapports',this)">Rapports</button>
       </div>
       <div id="adminDashboard"><div id="dashboardContent"><div class="empty"><div class="empty-sub">Chargement...</div></div></div></div>
@@ -407,6 +408,32 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
         <div class="section-head"><div class="card-title">Meubles réfrigérés</div><button class="btn-sm primary" onclick="openModal('modalAddZoneAdmin')">+ Ajouter</button></div>
         <div id="zonesList"></div>
       </div>
+      <div id="adminFermetures" class="hidden">
+        <div class="section-head"><div class="card-title">Jours de fermeture</div></div>
+
+        <!-- Jours hebdomadaires -->
+        <div class="card" style="margin-bottom:14px">
+          <div class="card-header"><div class="card-title" style="font-size:13px">📅 Fermetures hebdomadaires</div></div>
+          <div class="card-body">
+            <div style="font-size:12px;color:var(--muted);margin-bottom:12px">Cochez les jours où l'établissement est fermé — aucune notification ne sera envoyée ces jours-là.</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px" id="joursSemaineList">
+              <div class="empty"><div class="empty-sub">Chargement...</div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Fermetures ponctuelles -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title" style="font-size:13px">🗓️ Fermetures ponctuelles</div>
+            <button class="btn-sm primary" onclick="openModal('modalAddFermeture')">+ Ajouter</button>
+          </div>
+          <div class="card-body" style="padding:0">
+            <div id="fermeturesPonctuelles"><div class="empty"><div class="empty-sub">Aucune fermeture ponctuelle</div></div></div>
+          </div>
+        </div>
+      </div>
+
       <div id="adminRapports" class="hidden"><div class="card"><div class="card-body" style="display:flex;flex-direction:column;gap:10px">
         <div style="font-size:13px;color:var(--muted);margin-bottom:4px">Téléchargez vos données pour les contrôles sanitaires.</div>
         <button class="btn btn-primary" onclick="generateRapportPDF()">📋 Rapport hygiène journalier (HTML)</button>
@@ -849,6 +876,16 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
 <button class="btn btn-primary" onclick="validerNettoyage()" id="btnValiderNettoyage" style="margin-top:8px">✅ Valider le nettoyage</button>
 </div></div>
 
+<!-- MODAL FERMETURE PONCTUELLE -->
+<div class="modal-overlay" id="modalAddFermeture"><div class="modal"><div class="modal-handle"></div>
+<div class="modal-title">🗓️ Fermeture ponctuelle <button class="modal-close" onclick="closeModal('modalAddFermeture')">✕</button></div>
+<div class="form-group"><label class="form-label">Date de fermeture *</label>
+<input class="form-input" id="fermetureDate" type="date"/></div>
+<div class="form-group"><label class="form-label">Motif</label>
+<input class="form-input" id="fermetureMotif" placeholder="Ex: Congés, Jour férié, Travaux..."/></div>
+<button class="btn btn-primary" onclick="saveFermeturePonctuelle()">Enregistrer</button>
+</div></div>
+
 <div class="modal-overlay" id="modalMyPin"><div class="modal"><div class="modal-handle"></div><div class="modal-title">Mon PIN <button class="modal-close" onclick="closeModal('modalMyPin')">✕</button></div><p style="font-size:13px;color:var(--muted);margin-bottom:16px">Choisissez un nouveau PIN à 6 chiffres pour votre compte.</p><div class="form-group"><label class="form-label">Nouveau PIN (6 chiffres)</label><input class="form-input" id="myNewPin" type="number" placeholder="Ex: 739201"/></div><div class="form-group"><label class="form-label">Confirmer le PIN</label><input class="form-input" id="myNewPinConfirm" type="number" placeholder="Répétez le PIN"/></div><button class="btn btn-primary" onclick="saveMyPin()">Enregistrer mon PIN</button></div></div>
 
 <div class="modal-overlay" id="modalChangePin"><div class="modal"><div class="modal-handle"></div><div class="modal-title">Changer le PIN — <span id="changePinUserName" style="color:var(--teal)"></span> <button class="modal-close" onclick="closeModal('modalChangePin')">✕</button></div><input type="hidden" id="changePinUserId"><div class="form-group"><label class="form-label">Nouveau PIN (6 chiffres)</label><input class="form-input" id="newPinValue" type="number" placeholder="Ex: 482910" maxlength="6"/></div><button class="btn btn-primary" onclick="saveNewPin()">Enregistrer le nouveau PIN</button></div></div>
@@ -1250,14 +1287,18 @@ function scheduleNotifications(){
     const target=new Date(now.getFullYear(),now.getMonth(),now.getDate(),slot.h,slot.m,0);
     if(target<=now)target.setDate(target.getDate()+1);
     const delay=target-now;
-    setTimeout(()=>{
-      new Notification('🌡️ HygiPro — Relevé de température',{
-        body:'Il est '+slot.h+'h00 — Prenez les relevés avec votre thermomètre laser !',
-        icon:'/icon.png',
-        badge:'/icon.png',
-        tag:'temp-'+slot.h,
-        renotify:true,
-      });
+    setTimeout(async()=>{
+      // Vérifier si jour fermé
+      const ferme=await isJourFerme();
+      if(!ferme){
+        new Notification('🌡️ HygiPro — Relevé de température',{
+          body:'Il est '+slot.h+'h00 — Prenez les relevés avec votre thermomètre laser !',
+          icon:'/icon.png',
+          badge:'/icon.png',
+          tag:'temp-'+slot.h,
+          renotify:true,
+        });
+      }
       // Reschedule for next day
       setTimeout(()=>scheduleNotifications(),1000);
     },delay);
@@ -1590,12 +1631,13 @@ async function generateRapportPDF(){
   showToast('📋 Rapport téléchargé !','ok',3000);
 }
 function adminTab(tab,el){
-  ['Dashboard','Salaries','Zones','Rapports'].forEach(t=>document.getElementById('admin'+t).classList.add('hidden'));
+  ['Dashboard','Salaries','Zones','Fermetures','Rapports'].forEach(t=>document.getElementById('admin'+t).classList.add('hidden'));
   document.getElementById('admin'+tab).classList.remove('hidden');
   document.querySelectorAll('#page-admin .admin-tab').forEach(b=>b.classList.remove('active'));el.classList.add('active');
   if(tab==='Zones')loadZonesList();
   if(tab==='Dashboard')loadDashboard();
   if(tab==='Salaries')loadUsersList();
+  if(tab==='Fermetures')loadFermetures();
 }
 async function loadDashboard(){
   const el=document.getElementById('dashboardContent');
@@ -2501,6 +2543,86 @@ async function loadEtiquettes(){
   }catch(e){
     el.innerHTML='<div class="empty"><div class="empty-sub">Table à créer — voir instructions</div></div>';
   }
+}
+
+// ===== JOURS DE FERMETURE =====
+const JOURS=['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+
+async function loadFermetures(){
+  const{data}=await db.from('jours_fermeture').select('*').order('created_at');
+  const hebdo=(data||[]).filter(f=>f.type==='hebdomadaire');
+  const ponctuel=(data||[]).filter(f=>f.type==='ponctuel');
+  const fermeJours=new Set(hebdo.map(f=>f.jour_semaine));
+
+  // Render weekly days
+  document.getElementById('joursSemaineList').innerHTML=JOURS.map((j,i)=>`
+    <label style="display:flex;align-items:center;gap:10px;background:var(--bg2);border:1px solid ${fermeJours.has(i)?'rgba(248,113,113,0.4)':'var(--border2)'};border-radius:8px;padding:10px 12px;cursor:pointer">
+      <input type="checkbox" id="jour-${i}" ${fermeJours.has(i)?'checked':''} onchange="toggleJourFermeture(${i},this.checked)">
+      <span style="font-size:13px;font-weight:500;color:${fermeJours.has(i)?'var(--red)':'var(--text)'}">${j}</span>
+      ${fermeJours.has(i)?'<span class="pill danger" style="font-size:10px;margin-left:auto">Fermé</span>':'<span class="pill ok" style="font-size:10px;margin-left:auto">Ouvert</span>'}
+    </label>`).join('');
+
+  // Render ponctuelles
+  const el=document.getElementById('fermeturesPonctuelles');
+  const future=ponctuel.filter(f=>f.date_ponctuelle>=new Date().toISOString().split('T')[0]);
+  const past=ponctuel.filter(f=>f.date_ponctuelle<new Date().toISOString().split('T')[0]);
+  const all=[...future,...past.slice(0,5)];
+  if(!all.length){el.innerHTML='<div class="empty"><div class="empty-sub">Aucune fermeture ponctuelle</div></div>';return;}
+  el.innerHTML=all.map(f=>{
+    const isPast=f.date_ponctuelle<new Date().toISOString().split('T')[0];
+    return`<div class="act-row">
+      <div class="act-ico" style="background:${isPast?'var(--bg2)':'rgba(248,113,113,0.1)'}">🗓️</div>
+      <div class="act-info">
+        <div class="act-title">${new Date(f.date_ponctuelle+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})}</div>
+        <div class="act-sub">${f.motif||'—'}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end">
+        <span class="pill ${isPast?'pending':'danger'}" style="font-size:10px">${isPast?'Passé':'À venir'}</span>
+        <button class="btn-sm danger" onclick="deleteFermeture('${f.id}')" style="font-size:10px">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function toggleJourFermeture(jour,checked){
+  if(checked){
+    await db.from('jours_fermeture').insert({type:'hebdomadaire',jour_semaine:jour});
+    showToast(JOURS[jour]+' marqué comme fermé — pas de notification ce jour','ok',3000);
+  }else{
+    await db.from('jours_fermeture').delete().eq('type','hebdomadaire').eq('jour_semaine',jour);
+    showToast(JOURS[jour]+' retiré des fermetures','ok',2500);
+  }
+  loadFermetures();
+  scheduleNotifications();
+}
+
+async function saveFermeturePonctuelle(){
+  const date=document.getElementById('fermetureDate').value;
+  const motif=document.getElementById('fermetureMotif').value;
+  if(!date){showToast('Date requise','warn');return;}
+  await db.from('jours_fermeture').insert({type:'ponctuel',date_ponctuelle:date,motif});
+  closeModal('modalAddFermeture');
+  document.getElementById('fermetureDate').value='';
+  document.getElementById('fermetureMotif').value='';
+  showToast('Fermeture ajoutée — pas de notification ce jour','ok',3000);
+  loadFermetures();
+}
+
+async function deleteFermeture(id){
+  await db.from('jours_fermeture').delete().eq('id',id);
+  showToast('Fermeture supprimée','ok',2500);
+  loadFermetures();
+}
+
+async function isJourFerme(){
+  const today=new Date();
+  const dayOfWeek=today.getDay();
+  const dateStr=today.toISOString().split('T')[0];
+  const{data}=await db.from('jours_fermeture').select('*');
+  if(!data)return false;
+  const hebdoFerme=data.some(f=>f.type==='hebdomadaire'&&f.jour_semaine===dayOfWeek);
+  const ponctuelFerme=data.some(f=>f.type==='ponctuel'&&f.date_ponctuelle===dateStr);
+  return hebdoFerme||ponctuelFerme;
 }
 
 // ===== PLAN DE NETTOYAGE =====
