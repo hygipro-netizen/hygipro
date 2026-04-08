@@ -370,6 +370,29 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
       </div>
       <div id="incidentsList"><div class="empty"><div class="empty-ico">🚨</div><div class="empty-sub">Chargement...</div></div></div>
     </div>
+    <div class="page" id="page-nettoyage">
+      <div class="section-head"><div class="section-title">Plan de nettoyage</div></div>
+      <!-- Filtres zone -->
+      <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">
+        <button class="btn-sm primary" id="nzAll" onclick="filterNettoyage('all',this)">Tout</button>
+        <button class="btn-sm" id="nzLabo" onclick="filterNettoyage('Laboratoire',this)">🥐 Labo</button>
+        <button class="btn-sm" id="nzFroid" onclick="filterNettoyage('Froid',this)">❄️ Froid</button>
+        <button class="btn-sm" id="nzVente" onclick="filterNettoyage('Zone vente',this)">🛍️ Vente</button>
+        <button class="btn-sm" id="nzSanit" onclick="filterNettoyage('Sanitaires',this)">🚿 WC</button>
+        <button class="btn-sm" id="nzHyg" onclick="filterNettoyage('Hygiène personnel',this)">👐 Mains</button>
+      </div>
+      <!-- Progression du jour -->
+      <div id="nettoyageProgress" style="background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:14px 16px;margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <div style="font-size:13px;font-weight:600;color:var(--text)">Progression aujourd'hui</div>
+          <span id="nettoyagePct" class="pill ok">0%</span>
+        </div>
+        <div style="height:6px;background:var(--bg2);border-radius:3px;overflow:hidden">
+          <div id="nettoyageBar" style="height:100%;width:0%;background:linear-gradient(90deg,var(--teal),var(--teal2));border-radius:3px;transition:width .4s"></div>
+        </div>
+      </div>
+      <div id="nettoyageList"><div class="empty"><div class="empty-ico">🧹</div><div class="empty-sub">Chargement...</div></div></div>
+    </div>
     <div class="page" id="page-admin">
       <div class="section-title" style="margin-bottom:14px">Administration</div>
       <div class="admin-tabs">
@@ -421,6 +444,11 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
         <div style="width:38px;height:38px;border-radius:10px;background:rgba(248,113,113,0.1);display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#f87171" stroke-width="1.8" stroke-linecap="round"><path d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg></div>
         <div style="flex:1"><div style="font-size:14px;font-weight:600;color:#e8f4f0">Registre incidents</div><div style="font-size:11px;color:#7ba7c4">Signalement</div></div>
         <div class="alert-badge hidden" id="badge-incidents" style="position:static;width:20px;height:20px">!</div>
+      </div>
+      <div id="more-nettoyage" onclick="goPageMore('nettoyage')" style="display:flex;align-items:center;gap:14px;padding:14px 18px;border-bottom:1px solid #1e3a5f;cursor:pointer">
+        <div style="width:38px;height:38px;border-radius:10px;background:rgba(52,211,153,0.1);display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#34d399" stroke-width="1.8" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>
+        <div style="flex:1"><div style="font-size:14px;font-weight:600;color:#e8f4f0">Plan de nettoyage</div><div style="font-size:11px;color:#7ba7c4">Désinfection HACCP quotidienne</div></div>
+        <div class="alert-badge hidden" id="badge-nettoyage" style="position:static;width:20px;height:20px">!</div>
       </div>
       <div id="more-admin" onclick="goPageMore('admin')" style="display:none;align-items:center;gap:14px;padding:14px 18px;cursor:pointer">
         <div style="width:38px;height:38px;border-radius:10px;background:rgba(167,139,250,0.1);display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#a78bfa" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></div>
@@ -798,15 +826,34 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
   <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--text);background:var(--bg2);border:1px solid var(--border2);padding:10px 12px;border-radius:8px;cursor:pointer"><input type="checkbox" id="ep-documents"> 📄 Documents</label>
   <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--text);background:var(--bg2);border:1px solid var(--border2);padding:10px 12px;border-radius:8px;cursor:pointer"><input type="checkbox" id="ep-reception"> 📦 Réception</label>
   <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--text);background:var(--bg2);border:1px solid var(--border2);padding:10px 12px;border-radius:8px;cursor:pointer"><input type="checkbox" id="ep-incidents"> 🚨 Incidents</label>
+  <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--text);background:var(--bg2);border:1px solid var(--border2);padding:10px 12px;border-radius:8px;cursor:pointer"><input type="checkbox" id="ep-nettoyage"> 🧹 Nettoyage</label>
 </div>
 <button class="btn btn-primary" onclick="saveEditPerms()">💾 Enregistrer</button>
+</div></div>
+
+<!-- MODAL VALIDATION NETTOYAGE -->
+<div class="modal-overlay" id="modalNettoyage"><div class="modal"><div class="modal-handle"></div>
+<div class="modal-title">🧹 Valider le nettoyage <button class="modal-close" onclick="closeModal('modalNettoyage')">✕</button></div>
+<input type="hidden" id="nettoyagePlanId">
+<div id="nettoyageTaskInfo" style="background:var(--bg2);border-radius:var(--r-md);padding:12px 14px;margin-bottom:14px"></div>
+<div style="background:rgba(45,212,160,0.08);border:1px solid rgba(45,212,160,0.2);border-radius:var(--r-md);padding:10px 12px;margin-bottom:14px;font-size:12px;color:var(--muted)">
+  <div id="nettoyageMethode" style="line-height:1.8"></div>
+</div>
+<div class="form-group"><label class="form-label">Remarques (optionnel)</label>
+<textarea class="form-textarea" id="nettoyageNotes" placeholder="Ex: Tâche sur plan de travail difficile à enlever..."></textarea></div>
+<div class="form-group">
+  <label class="form-label">Signature *</label>
+  <canvas id="nettoyageSigCanvas" style="width:100%;height:110px;border-radius:10px;border:1.5px solid #254876;touch-action:none;display:block;background:#0d1f38"></canvas>
+  <button class="btn-sm" onclick="clearNettoyageSig()" style="margin-top:6px">🗑 Effacer</button>
+</div>
+<button class="btn btn-primary" onclick="validerNettoyage()" id="btnValiderNettoyage" style="margin-top:8px">✅ Valider le nettoyage</button>
 </div></div>
 
 <div class="modal-overlay" id="modalMyPin"><div class="modal"><div class="modal-handle"></div><div class="modal-title">Mon PIN <button class="modal-close" onclick="closeModal('modalMyPin')">✕</button></div><p style="font-size:13px;color:var(--muted);margin-bottom:16px">Choisissez un nouveau PIN à 6 chiffres pour votre compte.</p><div class="form-group"><label class="form-label">Nouveau PIN (6 chiffres)</label><input class="form-input" id="myNewPin" type="number" placeholder="Ex: 739201"/></div><div class="form-group"><label class="form-label">Confirmer le PIN</label><input class="form-input" id="myNewPinConfirm" type="number" placeholder="Répétez le PIN"/></div><button class="btn btn-primary" onclick="saveMyPin()">Enregistrer mon PIN</button></div></div>
 
 <div class="modal-overlay" id="modalChangePin"><div class="modal"><div class="modal-handle"></div><div class="modal-title">Changer le PIN — <span id="changePinUserName" style="color:var(--teal)"></span> <button class="modal-close" onclick="closeModal('modalChangePin')">✕</button></div><input type="hidden" id="changePinUserId"><div class="form-group"><label class="form-label">Nouveau PIN (6 chiffres)</label><input class="form-input" id="newPinValue" type="number" placeholder="Ex: 482910" maxlength="6"/></div><button class="btn btn-primary" onclick="saveNewPin()">Enregistrer le nouveau PIN</button></div></div>
 
-<div class="modal-overlay" id="modalCreateUser"><div class="modal"><div class="modal-handle"></div><div class="modal-title">Nouveau salarié <button class="modal-close" onclick="closeModal('modalCreateUser')">✕</button></div><div class="form-group"><label class="form-label">Prénom et nom</label><input class="form-input" id="newUserName" placeholder="Ex: Marie Lemoine"/></div><div class="form-row"><div class="form-group"><label class="form-label">Rôle</label><select class="form-select" id="newUserRole"><option value="patissier">Pâtissier</option><option value="boulanger">Boulanger</option><option value="vendeuse">Vendeuse</option><option value="responsable">Responsable</option><option value="admin">Administrateur</option></select></div><div class="form-group"><label class="form-label">PIN (6 chiffres)</label><input class="form-input" id="newUserPin" type="number" placeholder="123456"/></div></div><div style="font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:10px">Permissions</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px"><label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--text)"><input type="checkbox" id="perm-haccp" checked> 🛡 Hygiène</label><label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--text)"><input type="checkbox" id="perm-temperatures" checked> 🌡️ Températures</label><label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--text)"><input type="checkbox" id="perm-labels" checked> 🏷️ Traçabilité</label><label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--text)"><input type="checkbox" id="perm-documents" checked> 📄 Documents</label><label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--text)"><input type="checkbox" id="perm-reception" checked> 📦 Réception</label><label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--text)"><input type="checkbox" id="perm-incidents" checked> 🚨 Incidents</label></div><button class="btn btn-primary" onclick="createUser()">Créer le compte</button></div></div>
+<div class="modal-overlay" id="modalCreateUser"><div class="modal"><div class="modal-handle"></div><div class="modal-title">Nouveau salarié <button class="modal-close" onclick="closeModal('modalCreateUser')">✕</button></div><div class="form-group"><label class="form-label">Prénom et nom</label><input class="form-input" id="newUserName" placeholder="Ex: Marie Lemoine"/></div><div class="form-row"><div class="form-group"><label class="form-label">Rôle</label><select class="form-select" id="newUserRole"><option value="patissier">Pâtissier</option><option value="boulanger">Boulanger</option><option value="vendeuse">Vendeuse</option><option value="responsable">Responsable</option><option value="admin">Administrateur</option></select></div><div class="form-group"><label class="form-label">PIN (6 chiffres)</label><input class="form-input" id="newUserPin" type="number" placeholder="123456"/></div></div><div style="font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:10px">Permissions</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px"><label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--text)"><input type="checkbox" id="perm-haccp" checked> 🛡 Hygiène</label><label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--text)"><input type="checkbox" id="perm-temperatures" checked> 🌡️ Températures</label><label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--text)"><input type="checkbox" id="perm-labels" checked> 🏷️ Traçabilité</label><label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--text)"><input type="checkbox" id="perm-documents" checked> 📄 Documents</label><label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--text)"><input type="checkbox" id="perm-reception" checked> 📦 Réception</label><label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--text)"><input type="checkbox" id="perm-incidents" checked> 🚨 Incidents</label><label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--text)"><input type="checkbox" id="perm-nettoyage" checked> 🧹 Nettoyage</label></div><button class="btn btn-primary" onclick="createUser()">Créer le compte</button></div></div>
 
 <script>
 const SUPA_URL='https://mzyrffxosabnmkcqduvc.supabase.co';
@@ -902,6 +949,7 @@ function showApp(){
   if(!p.documents&&!isAdmin){const el=document.getElementById('more-docs');if(el)el.style.display='none';}
   if(!p.reception&&!isAdmin){const el=document.getElementById('more-reception');if(el)el.style.display='none';}
   if(!p.incidents&&!isAdmin){const el=document.getElementById('more-incidents');if(el)el.style.display='none';}
+  if(!p.nettoyage&&!isAdmin){const el=document.getElementById('more-nettoyage');if(el)el.style.display='none';}
   const h=new Date().getHours();
   document.getElementById('greetingTime').textContent=(h<12?'Bonjour':h<18?'Bon après-midi':'Bonsoir')+' 👋';
   document.getElementById('greetingName').textContent=currentUser.name.split(' ')[0];
@@ -915,7 +963,7 @@ function goPage(id,el){
   document.getElementById('page-'+id).classList.add('active');
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   if(el)el.classList.add('active');
-  const loaders={home:loadHome,haccp:loadHaccp,temp:loadTemp,labels:loadLabels,etiquettes:loadEtiquettes,admin:loadAdmin,docs:loadDocs,reception:loadReception,incidents:loadIncidents};
+  const loaders={home:loadHome,haccp:loadHaccp,temp:loadTemp,labels:loadLabels,etiquettes:loadEtiquettes,admin:loadAdmin,docs:loadDocs,reception:loadReception,incidents:loadIncidents,nettoyage:loadNettoyage};
   if(loaders[id])loaders[id]();
 }
 
@@ -1883,7 +1931,7 @@ function openEditPerms(id,name,perms){
   document.getElementById('editPermsId').value=id;
   document.getElementById('editPermsName').textContent=name;
   const p=typeof perms==='string'?JSON.parse(perms.replace(/'/g,'"')):perms;
-  ['haccp','temperatures','labels','documents','reception','incidents'].forEach(k=>{
+  ['haccp','temperatures','labels','documents','reception','incidents','nettoyage'].forEach(k=>{
     const el=document.getElementById('ep-'+k);
     if(el)el.checked=p[k]!==false;
   });
@@ -1898,6 +1946,7 @@ async function saveEditPerms(){
     documents:document.getElementById('ep-documents').checked,
     reception:document.getElementById('ep-reception').checked,
     incidents:document.getElementById('ep-incidents').checked,
+    nettoyage:document.getElementById('ep-nettoyage').checked,
   };
   await db.from('users').update({permissions:perms}).eq('id',id);
   closeModal('modalEditPerms');
@@ -1923,7 +1972,7 @@ async function saveNewPin(){
 async function createUser(){
   const n=document.getElementById('newUserName').value.trim(),pin=String(document.getElementById('newUserPin').value).trim();
   if(!n||pin.length!==6){showToast('Nom et PIN à 6 chiffres requis','warn');return;}
-  const perms={haccp:document.getElementById('perm-haccp').checked,temperatures:document.getElementById('perm-temperatures').checked,labels:document.getElementById('perm-labels').checked,documents:document.getElementById('perm-documents').checked,reception:document.getElementById('perm-reception').checked,incidents:document.getElementById('perm-incidents').checked};
+  const perms={haccp:document.getElementById('perm-haccp').checked,temperatures:document.getElementById('perm-temperatures').checked,labels:document.getElementById('perm-labels').checked,documents:document.getElementById('perm-documents').checked,reception:document.getElementById('perm-reception').checked,incidents:document.getElementById('perm-incidents').checked,nettoyage:document.getElementById('perm-nettoyage').checked};
   await db.from('users').insert({name:n,role:document.getElementById('newUserRole').value,pin,permissions:perms});
   closeModal('modalCreateUser');document.getElementById('newUserName').value='';document.getElementById('newUserPin').value='';
   showToast('Compte créé pour '+n+' · PIN : '+pin,'ok',5000);
@@ -1947,6 +1996,7 @@ function openModal(id){
   document.getElementById(id).classList.add('open');
   if(id==='modalAddReception'){resetReceptionForm();setTimeout(initRecSig,100);}
   if(id==='modalAddIncident'){resetIncidentForm();setTimeout(initIncSig,100);}
+  if(id==='modalNettoyage'){setTimeout(initNettoyageSig,100);}
 }
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');}));
@@ -2451,6 +2501,144 @@ async function loadEtiquettes(){
   }catch(e){
     el.innerHTML='<div class="empty"><div class="empty-sub">Table à créer — voir instructions</div></div>';
   }
+}
+
+// ===== PLAN DE NETTOYAGE =====
+let nettoyageFilter='all';
+let nettoyageSigDrawing=false,nettoyageSigLX=0,nettoyageSigLY=0;
+
+function filterNettoyage(zone,btn){
+  nettoyageFilter=zone;
+  document.querySelectorAll('#page-nettoyage .btn-sm').forEach(b=>b.classList.remove('primary'));
+  if(btn)btn.classList.add('primary');
+  loadNettoyage();
+}
+
+async function loadNettoyage(){
+  const el=document.getElementById('nettoyageList');
+  const today=new Date().toISOString().split('T')[0];
+  const role=currentUser.role;
+
+  // Load plan + today's completions
+  const[{data:plan},{data:done}]=await Promise.all([
+    db.from('plan_nettoyage').select('*').eq('actif',true).order('zone').order('frequence'),
+    db.from('nettoyage_completions').select('*').gte('completed_at',today).eq('user_id',currentUser.id)
+  ]);
+
+  const allTasks=plan||[];
+  const myTasks=allTasks.filter(t=>t.role_assigned==='all'||t.role_assigned===role||role==='admin'||role==='responsable');
+  const filtered=nettoyageFilter==='all'?myTasks:myTasks.filter(t=>t.zone===nettoyageFilter);
+  const doneIds=new Set((done||[]).map(d=>d.plan_id));
+
+  // Progress
+  const total=myTasks.length,doneCount=[...doneIds].filter(id=>myTasks.some(t=>t.id===id)).length;
+  const pct=total>0?Math.round((doneCount/total)*100):0;
+  document.getElementById('nettoyagePct').textContent=pct+'%';
+  document.getElementById('nettoyagePct').className='pill '+(pct===100?'ok':pct>50?'warn':'danger');
+  document.getElementById('nettoyageBar').style.width=pct+'%';
+  setBadge('nettoyage',pct<100);
+
+  if(!filtered.length){el.innerHTML='<div class="empty"><div class="empty-ico">🧹</div><div class="empty-sub">Aucune tâche pour cette zone</div></div>';return;}
+
+  const freqColors={
+    'après chaque utilisation':'var(--teal)',
+    'après chaque service':'var(--blue)',
+    'quotidien':'var(--amber)',
+    '2x/jour minimum':'var(--amber)',
+    'avant chaque service':'var(--blue)',
+    'plusieurs fois par service':'var(--teal)',
+    'hebdomadaire':'var(--muted)',
+    'mensuel':'var(--subtle)'
+  };
+  const zoneIco={'Laboratoire':'🥐','Froid':'❄️','Zone vente':'🛍️','Sanitaires':'🚿','Hygiène personnel':'👐'};
+
+  // Group by zone
+  const zones=[...new Set(filtered.map(t=>t.zone))];
+  el.innerHTML=zones.map(zone=>{
+    const tasks=filtered.filter(t=>t.zone===zone);
+    return`<div style="margin-bottom:16px">
+      <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px">${zoneIco[zone]||'🧹'} ${zone}</div>
+      <div class="card">
+        ${tasks.map(t=>{
+          const isDone=doneIds.has(t.id);
+          const fColor=freqColors[t.frequence]||'var(--muted)';
+          return`<div class="check-item" style="${isDone?'opacity:0.6':''}">
+            <div class="chk ${isDone?'on':''}" onclick="${isDone?'':''}" id="nchk-${t.id}" 
+              ${isDone?'':'onclick="openNettoyageModal(\''+t.id+'\')"'}
+              style="cursor:${isDone?'default':'pointer'}"></div>
+            <div style="flex:1;min-width:0">
+              <div class="chk-label ${isDone?'done':''}">${t.surface}</div>
+              <div style="font-size:11px;color:${fColor};margin-top:2px;font-weight:600">${t.frequence}</div>
+              <div style="font-size:11px;color:var(--subtle);margin-top:1px">🧴 ${t.produit}${t.dilution&&t.dilution!=='Prêt à l\'emploi'?' · '+t.dilution:''}</div>
+            </div>
+            ${isDone?'<span class="pill ok" style="font-size:10px">✓ Fait</span>':'<button class="btn-sm primary" onclick="openNettoyageModal(\''+t.id+'\')" style="font-size:11px">Valider</button>'}
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openNettoyageModal(planId){
+  document.getElementById('nettoyagePlanId').value=planId;
+  document.getElementById('nettoyageNotes').value='';
+  // Find task info
+  db.from('plan_nettoyage').select('*').eq('id',planId).single().then(({data:t})=>{
+    if(!t)return;
+    document.getElementById('nettoyageTaskInfo').innerHTML=`
+      <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px">${t.surface}</div>
+      <div style="font-size:12px;color:var(--muted)">${t.zone} · ${t.frequence}</div>
+      <div style="font-size:12px;color:var(--teal);margin-top:4px;font-weight:600">🧴 ${t.produit}</div>
+      ${t.dilution?`<div style="font-size:11px;color:var(--muted)">Dilution : ${t.dilution}</div>`:''}
+      ${t.temps_contact?`<div style="font-size:11px;color:var(--amber)">⏱ Temps de contact : ${t.temps_contact}</div>`:''}`;
+    document.getElementById('nettoyageMethode').innerHTML=t.methode?
+      '<b style="color:var(--teal)">Méthode :</b> '+t.methode.split('→').map(s=>'→ '+s.trim()).join('<br>'):'-';
+  });
+  setTimeout(initNettoyageSig,100);
+  openModal('modalNettoyage');
+}
+
+function clearNettoyageSig(){
+  const c=document.getElementById('nettoyageSigCanvas');
+  if(!c)return;
+  const ctx=c.getContext('2d');
+  ctx.fillStyle='#0d1f38';ctx.fillRect(0,0,c.width,c.height);
+  ctx.strokeStyle='rgba(45,212,160,0.2)';ctx.setLineDash([4,8]);
+  ctx.beginPath();ctx.moveTo(20,c.height*0.7);ctx.lineTo(c.width-20,c.height*0.7);ctx.stroke();
+  ctx.setLineDash([]);ctx.fillStyle='#4a7a9b';ctx.font='11px Arial';ctx.textAlign='center';
+  ctx.fillText('Signez ici',c.width/2,c.height*0.85);
+}
+
+function initNettoyageSig(){
+  const c=document.getElementById('nettoyageSigCanvas');
+  if(!c)return;
+  c.width=c.offsetWidth||320;c.height=110;clearNettoyageSig();
+  const getPos=(e,r)=>{const t=e.touches?e.touches[0]:e;return{x:t.clientX-r.left,y:t.clientY-r.top};};
+  c.addEventListener('mousedown',e=>{nettoyageSigDrawing=true;const r=c.getBoundingClientRect(),p=getPos(e,r);nettoyageSigLX=p.x;nettoyageSigLY=p.y;});
+  c.addEventListener('mousemove',e=>{if(!nettoyageSigDrawing)return;const r=c.getBoundingClientRect(),p=getPos(e,r),ctx=c.getContext('2d');ctx.strokeStyle='#2dd4a0';ctx.lineWidth=2;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(nettoyageSigLX,nettoyageSigLY);ctx.lineTo(p.x,p.y);ctx.stroke();nettoyageSigLX=p.x;nettoyageSigLY=p.y;});
+  c.addEventListener('mouseup',()=>nettoyageSigDrawing=false);
+  c.addEventListener('touchstart',e=>{nettoyageSigDrawing=true;e.preventDefault();const r=c.getBoundingClientRect(),p=getPos(e,r);nettoyageSigLX=p.x;nettoyageSigLY=p.y;},{passive:false});
+  c.addEventListener('touchmove',e=>{if(!nettoyageSigDrawing)return;e.preventDefault();const r=c.getBoundingClientRect(),p=getPos(e,r),ctx=c.getContext('2d');ctx.strokeStyle='#2dd4a0';ctx.lineWidth=2;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(nettoyageSigLX,nettoyageSigLY);ctx.lineTo(p.x,p.y);ctx.stroke();nettoyageSigLX=p.x;nettoyageSigLY=p.y;},{passive:false});
+  c.addEventListener('touchend',()=>nettoyageSigDrawing=false);
+}
+
+async function validerNettoyage(){
+  const planId=document.getElementById('nettoyagePlanId').value;
+  const c=document.getElementById('nettoyageSigCanvas');
+  const pixels=c.getContext('2d').getImageData(0,0,c.width,c.height).data;
+  let signed=false;for(let i=0;i<pixels.length;i+=4){if(pixels[i+1]>180&&pixels[i]<100){signed=true;break;}}
+  if(!signed){showToast('Veuillez signer avant de valider','warn');return;}
+  const btn=document.getElementById('btnValiderNettoyage');btn.textContent='Enregistrement...';btn.disabled=true;
+  await db.from('nettoyage_completions').insert({
+    plan_id:planId,
+    user_id:currentUser.id,
+    notes:document.getElementById('nettoyageNotes').value||null,
+    signature:c.toDataURL('image/png'),
+  });
+  btn.textContent='✅ Valider le nettoyage';btn.disabled=false;
+  closeModal('modalNettoyage');
+  showToast('✅ Nettoyage validé !','ok',3000);
+  loadNettoyage();
 }
 
 // ===== BARCODE SCANNER =====
