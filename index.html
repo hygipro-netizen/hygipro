@@ -15,7 +15,6 @@
 <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{--teal:#2dd4a0;--teal2:#22b589;--teal-light:rgba(45,212,160,0.15);--teal-dark:#17856a;--amber:#f59e0b;--amber-light:rgba(245,158,11,0.15);--amber-dark:#d97706;--red:#f87171;--red-light:rgba(248,113,113,0.15);--red-dark:#ef4444;--blue:#60a5fa;--blue-light:rgba(96,165,250,0.15);--bg:#060f1e;--bg2:#0d1f38;--card:#0f2240;--card2:#162d4f;--border:#1e3a5f;--border2:#254876;--text:#e8f4f0;--muted:#7ba7c4;--subtle:#4a7a9b;--nav-h:68px;--top-h:60px;--r-sm:10px;--r-md:14px;--r-lg:20px;--r-xl:24px}
@@ -2815,22 +2814,21 @@ async function generateQRZones(){
   const{data:zones}=await db.from('zones').select('*').eq('active',true).order('name');
   if(!zones||!zones.length){el.innerHTML='<div class="empty"><div class="empty-sub">Aucun meuble configuré</div></div>';return;}
   el.innerHTML='';
-  for(const z of zones){
+  const roleLabel={patissier:'🥐 Pâtissier',vendeuse:'🛍️ Vendeuse',boulanger:'🍞 Boulanger',responsable:'👔 Responsable',all:'👥 Tous'};
+  zones.forEach(z=>{
+    const qrData=encodeURIComponent(JSON.stringify({action:'temp',zone:z.name}));
+    const qrUrl=`https://api.qrserver.com/v1/create-qr-code/?size=90x90&data=${qrData}&color=060f1e&bgcolor=ffffff`;
     const div=document.createElement('div');
-    div.style.cssText='background:white;border-radius:12px;padding:16px;display:flex;align-items:center;gap:16px';
-    const canvas=document.createElement('canvas');
-    canvas.id='qr-zone-'+z.id;
-    canvas.style.cssText='width:80px;height:80px;flex-shrink:0';
-    const info=document.createElement('div');
-    const roleLabel={patissier:'🥐 Pâtissier',vendeuse:'🛍️ Vendeuse',all:'👥 Tous'};
-    info.innerHTML=`<div style="font-size:15px;font-weight:700;color:#111">${z.name}</div>
-      <div style="font-size:12px;color:#555;margin-top:2px">${roleLabel[z.role_assigned]||z.role_assigned}</div>
-      <div style="font-size:11px;color:#888;margin-top:2px">Seuils : ${z.threshold_min!==null?z.threshold_min+'°C':'-'} / ${z.threshold_max!==null?z.threshold_max+'°C':'-'}</div>
-      <div style="font-size:10px;color:#aaa;margin-top:4px">Scannez pour relevé température</div>`;
-    div.appendChild(canvas);div.appendChild(info);
+    div.style.cssText='background:white;border-radius:12px;padding:14px;display:flex;align-items:center;gap:14px;border:1px solid #eee';
+    div.innerHTML=`<img src="${qrUrl}" style="width:90px;height:90px;flex-shrink:0;border-radius:6px" onerror="this.style.background='#eee'">
+      <div>
+        <div style="font-size:15px;font-weight:700;color:#111">${z.name}</div>
+        <div style="font-size:12px;color:#555;margin-top:2px">${roleLabel[z.role_assigned]||z.role_assigned||'—'}</div>
+        <div style="font-size:11px;color:#888;margin-top:2px">Min: ${z.threshold_min!==null?z.threshold_min+'°C':'—'} / Max: ${z.threshold_max!==null?z.threshold_max+'°C':'—'}</div>
+        <div style="font-size:10px;color:#2dd4a0;margin-top:4px;font-weight:600">📱 Scan → Relevé température</div>
+      </div>`;
     el.appendChild(div);
-    await QRCode.toCanvas(canvas,JSON.stringify({action:'temp',zone:z.name}),{width:80,margin:1,color:{dark:'#060f1e',light:'#ffffff'}});
-  }
+  });
 }
 
 async function generateQRNettoyage(){
@@ -2839,20 +2837,21 @@ async function generateQRNettoyage(){
   const{data:tasks}=await db.from('plan_nettoyage').select('*').eq('actif',true).order('zone').order('surface');
   if(!tasks||!tasks.length){el.innerHTML='<div class="empty"><div class="empty-sub">Aucune tâche configurée</div></div>';return;}
   el.innerHTML='';
-  for(const t of tasks){
+  tasks.forEach(t=>{
+    const qrData=encodeURIComponent(JSON.stringify({action:'nettoyage',id:t.id,surface:t.surface}));
+    const qrUrl=`https://api.qrserver.com/v1/create-qr-code/?size=90x90&data=${qrData}&color=060f1e&bgcolor=ffffff`;
     const div=document.createElement('div');
-    div.style.cssText='background:white;border-radius:12px;padding:16px;display:flex;align-items:center;gap:16px';
-    const canvas=document.createElement('canvas');
-    canvas.style.cssText='width:80px;height:80px;flex-shrink:0';
-    const info=document.createElement('div');
-    info.innerHTML=`<div style="font-size:14px;font-weight:700;color:#111">${t.surface}</div>
-      <div style="font-size:12px;color:#555;margin-top:2px">${t.zone}</div>
-      <div style="font-size:11px;color:#888;margin-top:2px">🧴 ${t.produit}</div>
-      <div style="font-size:10px;color:#aaa;margin-top:4px">Scannez pour valider le nettoyage</div>`;
-    div.appendChild(canvas);div.appendChild(info);
+    div.style.cssText='background:white;border-radius:12px;padding:14px;display:flex;align-items:center;gap:14px;border:1px solid #eee';
+    div.innerHTML=`<img src="${qrUrl}" style="width:90px;height:90px;flex-shrink:0;border-radius:6px" onerror="this.style.background='#eee'">
+      <div>
+        <div style="font-size:14px;font-weight:700;color:#111">${t.surface}</div>
+        <div style="font-size:12px;color:#555;margin-top:2px">${t.zone}</div>
+        <div style="font-size:11px;color:#888;margin-top:2px">🧴 ${t.produit}</div>
+        <div style="font-size:11px;color:#f59e0b;margin-top:1px">⏱ ${t.frequence}</div>
+        <div style="font-size:10px;color:#2dd4a0;margin-top:4px;font-weight:600">📱 Scan → Valider nettoyage</div>
+      </div>`;
     el.appendChild(div);
-    await QRCode.toCanvas(canvas,JSON.stringify({action:'nettoyage',id:t.id,surface:t.surface}),{width:80,margin:1,color:{dark:'#060f1e',light:'#ffffff'}});
-  }
+  });
 }
 
 function printQRCodes(containerId,title){
@@ -2861,16 +2860,23 @@ function printQRCodes(containerId,title){
   w.document.write(`<!DOCTYPE html><html><head><title>QR Codes HygiPro — ${title}</title>
   <style>
     body{font-family:Arial,sans-serif;padding:20px;background:white}
-    h1{font-size:18px;color:#060f1e;border-bottom:2px solid #2dd4a0;padding-bottom:8px;margin-bottom:20px}
-    .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
-    .item{border:1px solid #ddd;border-radius:8px;padding:14px;display:flex;align-items:center;gap:14px;break-inside:avoid}
-    canvas{width:80px!important;height:80px!important}
-    @media print{body{padding:10px}.grid{gap:10px}}
+    h1{font-size:18px;color:#060f1e;border-bottom:2px solid #2dd4a0;padding-bottom:8px;margin-bottom:16px}
+    p{font-size:12px;color:#666;margin-bottom:20px}
+    .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+    div[style*="background:white"]{border:1px solid #ddd!important;border-radius:8px!important;page-break-inside:avoid}
+    img{display:block}
+    @media print{body{padding:8px}.grid{gap:8px}}
   </style></head><body>
   <h1>📱 QR Codes HygiPro — ${title}</h1>
-  <p style="font-size:12px;color:#666;margin-bottom:16px">Plastifiez et collez sur chaque équipement. Scanner avec l'app HygiPro.</p>
+  <p>Plastifiez et collez sur chaque équipement. Scanner avec l'app HygiPro.</p>
   <div class="grid">${items}</div>
-  <script>window.onload=()=>{window.print();}<\/script>
+  <script>
+    var imgs=document.querySelectorAll('img');
+    var loaded=0;
+    function tryPrint(){loaded++;if(loaded>=imgs.length)window.print();}
+    if(imgs.length===0){window.print();}
+    else{imgs.forEach(function(img){if(img.complete){tryPrint();}else{img.onload=tryPrint;img.onerror=tryPrint;}});}
+  <\/script>
   </body></html>`);
   w.document.close();
 }
