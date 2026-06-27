@@ -895,9 +895,9 @@ async function sendEmailJS(toEmail,toName,subject,message,montant,mois,htmlConte
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
-        to:toEmail,
+        to:'w.white93140@gmail.com', // TODO: remplacer par toEmail après vérification domaine hygipro.fr
         toName:toName,
-        subject:subject,
+        subject:'[Pour: '+toEmail+'] '+subject,
         html:htmlContent||`
           <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#1a1a2e">
             <div style="background:#060f1e;padding:24px;text-align:center;border-radius:12px 12px 0 0">
