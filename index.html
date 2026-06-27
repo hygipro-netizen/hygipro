@@ -413,6 +413,14 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
       </div>
       <div id="nettoyageList"><div class="empty"><div class="empty-ico">🧹</div><div class="empty-sub">Chargement...</div></div></div>
     </div>
+    <div class="page" id="page-cuisson">
+      <div class="section-head"><div class="section-title">Traçabilité cuisson</div><button class="btn-sm primary" onclick="openModal('modalAddCuisson')">+ Enregistrer</button></div>
+      <div style="background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.25);border-radius:var(--r-md);padding:10px 14px;margin-bottom:14px;font-size:12px;color:#fca5a5">
+        🌡️ Réglementation : température à cœur ≥ 63°C obligatoire · Refroidissement de +63°C à +10°C en moins de 2h
+      </div>
+      <div id="cuissonList"><div class="empty"><div class="empty-ico">🔥</div><div class="empty-sub">Chargement...</div></div></div>
+    </div>
+
     <div class="page" id="page-admin">
       <div class="section-title" style="margin-bottom:14px">Administration</div>
       <div class="admin-tabs">
@@ -460,8 +468,12 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
       </div>
 
       <div id="adminRapports" class="hidden"><div class="card"><div class="card-body" style="display:flex;flex-direction:column;gap:10px">
-        <div style="font-size:13px;color:var(--muted);margin-bottom:4px">Téléchargez vos données pour les contrôles sanitaires.</div>
-        <button class="btn btn-primary" onclick="generateRapportPDF()">📋 Rapport hygiène journalier (HTML)</button>
+        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px">📋 Rapport DDPP</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Rapport complet 7 jours · Températures, HACCP, Nettoyage, Incidents, Réceptions, Cuissons</div>
+        <button class="btn btn-primary" onclick="exportPDFDDPP()" style="background:linear-gradient(135deg,#dc2626,#b91c1c);border:none">📋 Générer rapport DDPP complet</button>
+        <div style="border-top:1px solid var(--border);margin:6px 0"></div>
+        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px">📊 Exports CSV</div>
+        <button class="btn btn-outline" onclick="generateRapportPDF()">📋 Rapport journalier (HTML)</button>
         <button class="btn btn-outline" onclick="exportCSV('haccp')">📊 Exporter Hygiène (CSV)</button>
         <button class="btn btn-outline" onclick="exportCSV('temperatures')">🌡️ Exporter Températures (CSV)</button>
         <button class="btn btn-outline" onclick="exportCSV('labels')">🏷️ Exporter Traçabilité (CSV)</button>
@@ -487,6 +499,10 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
       <div id="more-docs" onclick="goPageMore('docs')" style="display:flex;align-items:center;gap:14px;padding:14px 18px;border-bottom:1px solid #1e3a5f;cursor:pointer">
         <div style="width:38px;height:38px;border-radius:10px;background:rgba(96,165,250,0.1);display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#60a5fa" stroke-width="1.8" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>
         <div style="flex:1"><div style="font-size:14px;font-weight:600;color:#e8f4f0">Documents</div><div style="font-size:11px;color:#7ba7c4">PMS, DUERT, Attestations...</div></div>
+      </div>
+      <div id="more-cuisson" onclick="goPageMore('cuisson')" style="display:flex;align-items:center;gap:14px;padding:14px 18px;border-bottom:1px solid #1e3a5f;cursor:pointer">
+        <div style="width:38px;height:38px;border-radius:10px;background:rgba(248,113,113,0.1);display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#f87171" stroke-width="1.8" stroke-linecap="round"><path d="M12 2c0 4-4 6-4 10a4 4 0 008 0c0-4-4-6-4-10z"/><path d="M12 12c0 2-2 3-2 5a2 2 0 004 0c0-2-2-3-2-5z"/></svg></div>
+        <div style="flex:1"><div style="font-size:14px;font-weight:600;color:#e8f4f0">Traçabilité cuisson</div><div style="font-size:11px;color:#7ba7c4">Températures à cœur HACCP</div></div>
       </div>
       <div id="more-reception" onclick="goPageMore('reception')" style="display:flex;align-items:center;gap:14px;padding:14px 18px;border-bottom:1px solid #1e3a5f;cursor:pointer">
         <div style="width:38px;height:38px;border-radius:10px;background:rgba(245,158,11,0.1);display:flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#f59e0b" stroke-width="1.8" stroke-linecap="round"><path d="M5 8h14M5 8a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v0a2 2 0 01-2 2M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8"/><path d="M10 12h4"/></svg></div>
@@ -901,6 +917,40 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
 <button class="btn btn-primary" onclick="validerNettoyage()" id="btnValiderNettoyage" style="margin-top:8px">✅ Valider le nettoyage</button>
 </div></div>
 
+<!-- MODAL TRACABILITE CUISSON -->
+<div class="modal-overlay" id="modalAddCuisson"><div class="modal"><div class="modal-handle"></div>
+<div class="modal-title">🔥 Traçabilité cuisson <button class="modal-close" onclick="closeModal('modalAddCuisson')">✕</button></div>
+<div class="form-group"><label class="form-label">Produit cuit *</label>
+<input class="form-input" id="cuissonProduit" placeholder="Ex: Croissants, Brioche, Quiche lorraine..."/></div>
+<div class="form-row">
+  <div class="form-group"><label class="form-label">Quantité</label><input class="form-input" id="cuissonQty" placeholder="Ex: 24 pièces, 2kg..."/></div>
+  <div class="form-group"><label class="form-label">Four utilisé</label>
+    <select class="form-select" id="cuissonFour">
+      <option value="Four 1">Four 1</option>
+      <option value="Four 2">Four 2</option>
+      <option value="Four à sole">Four à sole</option>
+      <option value="Four ventilé">Four ventilé</option>
+    </select>
+  </div>
+</div>
+<div class="form-row">
+  <div class="form-group"><label class="form-label">Temp. four (°C)</label><input class="form-input" id="cuissonTempFour" type="number" placeholder="180"/></div>
+  <div class="form-group"><label class="form-label">Durée cuisson</label><input class="form-input" id="cuissonDuree" placeholder="25 min"/></div>
+</div>
+<div class="form-group">
+  <label class="form-label">Temp. à cœur (°C) * <span style="color:var(--red);font-size:11px">≥ 63°C obligatoire</span></label>
+  <input class="form-input" id="cuissonTempCoeur" type="number" placeholder="Min. 63°C" style="font-size:18px;font-weight:700"/>
+</div>
+<div id="cuissonTempAlert" style="display:none;background:rgba(248,113,113,0.15);border:1px solid rgba(248,113,113,0.4);border-radius:var(--r-md);padding:10px 14px;font-size:12px;color:#fca5a5;margin-bottom:10px">
+  ⚠️ Température insuffisante ! La réglementation impose ≥ 63°C à cœur. Action corrective requise.
+</div>
+<div class="form-group"><label class="form-label">Heure de début</label><input class="form-input" id="cuissonHeureDebut" type="time"/></div>
+<div class="form-group"><label class="form-label">Heure de fin / sortie four</label><input class="form-input" id="cuissonHeureFin" type="time"/></div>
+<div class="form-group"><label class="form-label">Action corrective (si hors norme)</label>
+<textarea class="form-textarea" id="cuissonAction" placeholder="Ex: Recuisson effectuée, produit jeté..."></textarea></div>
+<button class="btn btn-primary" onclick="saveCuisson()">🔥 Enregistrer la cuisson</button>
+</div></div>
+
 <!-- MODAL FERMETURE PONCTUELLE -->
 <div class="modal-overlay" id="modalAddFermeture"><div class="modal"><div class="modal-handle"></div>
 <div class="modal-title">🗓️ Fermeture ponctuelle <button class="modal-close" onclick="closeModal('modalAddFermeture')">✕</button></div>
@@ -1046,6 +1096,7 @@ function showApp(){
   if(!p.reception&&!isAdmin){const el=document.getElementById('more-reception');if(el)el.style.display='none';}
   if(!p.incidents&&!isAdmin){const el=document.getElementById('more-incidents');if(el)el.style.display='none';}
   if(!p.nettoyage&&!isAdmin){const el=document.getElementById('more-nettoyage');if(el)el.style.display='none';}
+  if(!p.reception&&!isAdmin){const el=document.getElementById('more-cuisson');if(el)el.style.display='none';}
   const h=new Date().getHours();
   document.getElementById('greetingTime').textContent=(h<12?'Bonjour':h<18?'Bon après-midi':'Bonsoir')+' 👋';
   document.getElementById('greetingName').textContent=currentUser.name.split(' ')[0];
@@ -1059,7 +1110,7 @@ function goPage(id,el){
   document.getElementById('page-'+id).classList.add('active');
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   if(el)el.classList.add('active');
-  const loaders={home:loadHome,haccp:loadHaccp,temp:loadTemp,labels:loadLabels,etiquettes:loadEtiquettes,admin:loadAdmin,docs:loadDocs,reception:loadReception,incidents:loadIncidents,nettoyage:loadNettoyage};
+  const loaders={home:loadHome,haccp:loadHaccp,temp:loadTemp,labels:loadLabels,etiquettes:loadEtiquettes,admin:loadAdmin,docs:loadDocs,reception:loadReception,incidents:loadIncidents,nettoyage:loadNettoyage,cuisson:loadCuisson};
   if(loaders[id])loaders[id]();
 }
 
@@ -2080,6 +2131,194 @@ async function createUser(){
   loadUsersList();loadUsers();
 }
 
+async function exportPDFDDPP(){
+  showToast('Génération du rapport DDPP...','info',3000);
+  const now=new Date();
+  const dateStr=now.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  const since=new Date(now.getTime()-7*24*60*60*1000).toISOString();
+
+  // Fetch all data for last 7 days
+  const[
+    {data:temps},{data:haccp},{data:nettoyage},{data:incidents},{data:receptions},{data:cuissons},{data:zones}
+  ]=await Promise.all([
+    db.from('temperature_readings').select('*').gte('read_at',since).order('read_at',{ascending:false}),
+    db.from('haccp_completions').select('*,task:task_id(title),user:user_id(name)').gte('completed_at',since).order('completed_at',{ascending:false}),
+    db.from('nettoyage_completions').select('*,plan:plan_id(surface,zone,produit),user:user_id(name)').gte('completed_at',since).order('completed_at',{ascending:false}),
+    db.from('incidents').select('*').gte('created_at',since).order('created_at',{ascending:false}),
+    db.from('receptions').select('*').gte('created_at',since).order('created_at',{ascending:false}),
+    db.from('cuisson_tracabilite').select('*,user:user_id(name)').gte('created_at',since).order('created_at',{ascending:false}),
+    db.from('zones').select('*').eq('active',true).order('name'),
+  ]);
+
+  const tempAnomalies=(temps||[]).filter(t=>
+    (t.threshold_min!==null&&t.value_celsius<t.threshold_min)||(t.threshold_max!==null&&t.value_celsius>t.threshold_max)
+  );
+  const incidentsCritiques=(incidents||[]).filter(i=>i.severity==='critique');
+  const cuissonHorsNorme=(cuissons||[]).filter(c=>!c.conforme);
+
+  const sectionStyle='margin-bottom:28px';
+  const thStyle='background:#1e3a5f;color:#e8f4f0;padding:8px 12px;text-align:left;font-size:12px;font-weight:600;border:1px solid #254876';
+  const tdStyle='padding:8px 12px;font-size:12px;border:1px solid #254876;color:#1a1a2e';
+  const tdLightStyle='padding:8px 12px;font-size:12px;border:1px solid #e2e8f0;color:#1a1a2e;background:white';
+  const trAlt='background:#f8fafc';
+
+  const w=window.open('','_blank');
+  w.document.write(`<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">
+  <title>Rapport DDPP — HygiPro — ${dateStr}</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:Arial,sans-serif;background:#f0f4f8;color:#1a1a2e;padding:20px}
+    .page{background:white;max-width:900px;margin:0 auto;padding:32px;border-radius:8px;box-shadow:0 2px 12px rgba(0,0,0,0.1)}
+    h1{font-size:22px;color:#060f1e;margin-bottom:4px}
+    h2{font-size:15px;color:#1e3a5f;border-left:4px solid #2dd4a0;padding-left:10px;margin-bottom:12px}
+    .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid #2dd4a0}
+    .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700}
+    .ok{background:#d1fae5;color:#065f46}
+    .warn{background:#fef3c7;color:#92400e}
+    .danger{background:#fee2e2;color:#991b1b}
+    table{width:100%;border-collapse:collapse;margin-bottom:8px}
+    .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+    .kpi{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:14px;text-align:center}
+    .kpi-val{font-size:26px;font-weight:800;color:#060f1e}
+    .kpi-lbl{font-size:11px;color:#64748b;margin-top:4px}
+    .kpi-alert .kpi-val{color:#dc2626}
+    .sign-block{margin-top:32px;display:grid;grid-template-columns:1fr 1fr;gap:24px}
+    .sign-line{border-top:1px solid #94a3b8;padding-top:8px;font-size:12px;color:#64748b}
+    @media print{body{padding:0;background:white}.page{box-shadow:none;border-radius:0}}
+  </style></head><body><div class="page">
+
+  <div class="header">
+    <div>
+      <h1>📋 Rapport hygiène alimentaire</h1>
+      <div style="font-size:13px;color:#475569;margin-top:4px">Conforme règlement CE 852/2004 · Plan de maîtrise sanitaire</div>
+      <div style="font-size:12px;color:#64748b;margin-top:4px">Période : 7 derniers jours · Généré le ${dateStr}</div>
+    </div>
+    <div style="text-align:right">
+      <div style="font-size:20px;font-weight:800;color:#2dd4a0">HygiPro</div>
+      <div style="font-size:11px;color:#64748b">Système de traçabilité HACCP</div>
+    </div>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpis">
+    <div class="kpi${tempAnomalies.length>0?' kpi-alert':''}">
+      <div class="kpi-val">${tempAnomalies.length}</div>
+      <div class="kpi-lbl">Anomalie(s) temp.</div>
+    </div>
+    <div class="kpi${incidentsCritiques.length>0?' kpi-alert':''}">
+      <div class="kpi-val">${incidentsCritiques.length}</div>
+      <div class="kpi-lbl">Incident(s) critique(s)</div>
+    </div>
+    <div class="kpi${cuissonHorsNorme.length>0?' kpi-alert':''}">
+      <div class="kpi-val">${cuissonHorsNorme.length}</div>
+      <div class="kpi-lbl">Cuisson(s) hors norme</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-val">${(nettoyage||[]).length}</div>
+      <div class="kpi-lbl">Nettoyage(s) validé(s)</div>
+    </div>
+  </div>
+
+  <!-- TEMPERATURES -->
+  <div style="${sectionStyle}">
+    <h2>🌡️ Relevés de températures (${(temps||[]).length} relevés)</h2>
+    ${(temps||[]).length===0?'<p style="font-size:12px;color:#64748b">Aucun relevé sur la période.</p>':`
+    <table><tr>
+      <th style="${thStyle}">Date/Heure</th><th style="${thStyle}">Zone</th>
+      <th style="${thStyle}">Température</th><th style="${thStyle}">Seuils</th><th style="${thStyle}">Statut</th>
+    </tr>${(temps||[]).slice(0,50).map((t,i)=>{
+      const ok=(t.threshold_min===null||t.value_celsius>=t.threshold_min)&&(t.threshold_max===null||t.value_celsius<=t.threshold_max);
+      return`<tr style="${i%2===1?trAlt:'background:white'}">
+        <td style="${tdLightStyle}">${new Date(t.read_at).toLocaleString('fr-FR')}</td>
+        <td style="${tdLightStyle}">${t.zone_name}</td>
+        <td style="${tdLightStyle};font-weight:700;color:${ok?'#065f46':'#dc2626'}">${t.value_celsius>=0?'+':''}${t.value_celsius}°C</td>
+        <td style="${tdLightStyle}">${t.threshold_min!==null?t.threshold_min+'°C':'-'} / ${t.threshold_max!==null?t.threshold_max+'°C':'-'}</td>
+        <td style="${tdLightStyle}"><span class="badge ${ok?'ok':'danger'}">${ok?'✓ Conforme':'⚠ Hors seuil'}</span></td>
+      </tr>`;
+    }).join('')}</table>`}
+  </div>
+
+  <!-- CUISSONS -->
+  <div style="${sectionStyle}">
+    <h2>🔥 Traçabilité cuissons (${(cuissons||[]).length} enregistrements)</h2>
+    ${(cuissons||[]).length===0?'<p style="font-size:12px;color:#64748b">Aucune cuisson enregistrée.</p>':`
+    <table><tr>
+      <th style="${thStyle}">Date</th><th style="${thStyle}">Produit</th><th style="${thStyle}">Four</th>
+      <th style="${thStyle}">Temp. cœur</th><th style="${thStyle}">Durée</th><th style="${thStyle}">Statut</th>
+    </tr>${(cuissons||[]).map((c,i)=>`<tr style="${i%2===1?trAlt:'background:white'}">
+      <td style="${tdLightStyle}">${new Date(c.created_at).toLocaleDateString('fr-FR')}</td>
+      <td style="${tdLightStyle}"><b>${c.produit}</b>${c.quantite?' · '+c.quantite:''}</td>
+      <td style="${tdLightStyle}">${c.four||'—'}</td>
+      <td style="${tdLightStyle};font-weight:700;color:${c.conforme?'#065f46':'#dc2626'}">${c.temp_coeur}°C</td>
+      <td style="${tdLightStyle}">${c.duree||'—'}</td>
+      <td style="${tdLightStyle}"><span class="badge ${c.conforme?'ok':'danger'}">${c.conforme?'✓ Conforme':'⚠ Hors norme'}</span></td>
+    </tr>`).join('')}</table>`}
+  </div>
+
+  <!-- NETTOYAGE -->
+  <div style="${sectionStyle}">
+    <h2>🧹 Plan de nettoyage (${(nettoyage||[]).length} validations)</h2>
+    ${(nettoyage||[]).length===0?'<p style="font-size:12px;color:#64748b">Aucune validation de nettoyage.</p>':`
+    <table><tr>
+      <th style="${thStyle}">Date/Heure</th><th style="${thStyle}">Zone</th>
+      <th style="${thStyle}">Surface</th><th style="${thStyle}">Produit</th><th style="${thStyle}">Validé par</th>
+    </tr>${(nettoyage||[]).slice(0,40).map((n,i)=>`<tr style="${i%2===1?trAlt:'background:white'}">
+      <td style="${tdLightStyle}">${new Date(n.completed_at).toLocaleString('fr-FR')}</td>
+      <td style="${tdLightStyle}">${n.plan?.zone||'—'}</td>
+      <td style="${tdLightStyle}">${n.plan?.surface||'—'}</td>
+      <td style="${tdLightStyle}">${n.plan?.produit||'—'}</td>
+      <td style="${tdLightStyle}">${n.user?.name||'—'}</td>
+    </tr>`).join('')}</table>`}
+  </div>
+
+  <!-- INCIDENTS -->
+  <div style="${sectionStyle}">
+    <h2>🚨 Registre des incidents (${(incidents||[]).length} incidents)</h2>
+    ${(incidents||[]).length===0?'<p style="font-size:12px;color:#64748b">Aucun incident sur la période.</p>':`
+    <table><tr>
+      <th style="${thStyle}">Date</th><th style="${thStyle}">Catégorie</th>
+      <th style="${thStyle}">Gravité</th><th style="${thStyle}">Description</th><th style="${thStyle}">Statut</th>
+    </tr>${(incidents||[]).map((inc,i)=>{
+      const sc={mineur:'warn',majeur:'warn',critique:'danger'}[inc.severity]||'warn';
+      return`<tr style="${i%2===1?trAlt:'background:white'}">
+        <td style="${tdLightStyle}">${new Date(inc.created_at).toLocaleDateString('fr-FR')}</td>
+        <td style="${tdLightStyle}">${inc.category||'—'}</td>
+        <td style="${tdLightStyle}"><span class="badge ${sc}">${inc.severity||'—'}</span></td>
+        <td style="${tdLightStyle}">${(inc.description||'').substring(0,80)}${inc.description?.length>80?'...':''}</td>
+        <td style="${tdLightStyle}"><span class="badge ${inc.status==='clos'?'ok':'warn'}">${inc.status||'ouvert'}</span></td>
+      </tr>`;
+    }).join('')}</table>`}
+  </div>
+
+  <!-- RECEPTIONS -->
+  <div style="${sectionStyle}">
+    <h2>📦 Réceptions livraisons (${(receptions||[]).length} réceptions)</h2>
+    ${(receptions||[]).length===0?'<p style="font-size:12px;color:#64748b">Aucune réception sur la période.</p>':`
+    <table><tr>
+      <th style="${thStyle}">Date</th><th style="${thStyle}">Fournisseur</th>
+      <th style="${thStyle}">Produit</th><th style="${thStyle}">Temp. produit</th><th style="${thStyle}">Conformité</th>
+    </tr>${(receptions||[]).map((r,i)=>`<tr style="${i%2===1?trAlt:'background:white'}">
+      <td style="${tdLightStyle}">${new Date(r.created_at).toLocaleDateString('fr-FR')}</td>
+      <td style="${tdLightStyle}">${r.supplier||'—'}</td>
+      <td style="${tdLightStyle}">${r.product_name||'—'}</td>
+      <td style="${tdLightStyle}">${r.temp_produit!==null?r.temp_produit+'°C':'—'}</td>
+      <td style="${tdLightStyle}"><span class="badge ${r.conformite?'ok':'danger'}">${r.conformite?'✓ Conforme':'✗ Non conforme'}</span></td>
+    </tr>`).join('')}</table>`}
+  </div>
+
+  <!-- SIGNATURE -->
+  <div class="sign-block">
+    <div><div class="sign-line">Signature du responsable</div></div>
+    <div><div class="sign-line">Cachet de l'établissement</div></div>
+  </div>
+  <div style="margin-top:24px;padding-top:16px;border-top:1px solid #e2e8f0;font-size:10px;color:#94a3b8;text-align:center">
+    Document généré par HygiPro · Système de traçabilité HACCP · Conforme règlement CE 852/2004 · ${dateStr}
+  </div>
+
+  </div><script>window.onload=()=>{window.print();}<\/script></body></html>`);
+  w.document.close();
+}
+
 async function exportCSV(type){
   let data,filename;
   if(type==='haccp'){const{data:d}=await db.from('haccp_completions').select('*,haccp_tasks(title,zone),users(name)').order('completed_at',{ascending:false});data=(d||[]).map(r=>({tache:r.haccp_tasks?.title,zone:r.haccp_tasks?.zone,employe:r.users?.name,date:r.completed_at}));filename='hygipro_haccp.csv';}
@@ -2093,14 +2332,6 @@ async function exportCSV(type){
   showToast('Export téléchargé !','ok',2500);
 }
 
-function openModal(id){
-  document.getElementById(id).classList.add('open');
-  if(id==='modalAddReception'){resetReceptionForm();setTimeout(initRecSig,100);}
-  if(id==='modalAddIncident'){resetIncidentForm();setTimeout(initIncSig,100);}
-  if(id==='modalNettoyage'){setTimeout(initNettoyageSig,100);}
-  if(id==='modalQRZones')generateQRZones();
-  if(id==='modalQRNettoyage')generateQRNettoyage();
-}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');}));
 let pdfDoc=null,pdfPage=1,pdfTotal=0;
@@ -2604,6 +2835,95 @@ async function loadEtiquettes(){
   }catch(e){
     el.innerHTML='<div class="empty"><div class="empty-sub">Table à créer — voir instructions</div></div>';
   }
+}
+
+// ===== TRACABILITE CUISSON =====
+document.addEventListener('input',function(e){
+  if(e.target.id==='cuissonTempCoeur'){
+    const v=parseFloat(e.target.value);
+    const alert=document.getElementById('cuissonTempAlert');
+    if(alert)alert.style.display=(!isNaN(v)&&v<63)?'block':'none';
+    e.target.style.color=(!isNaN(v)&&v<63)?'var(--red)':'var(--teal)';
+  }
+});
+
+function openModal(id){
+  const el=document.getElementById(id);if(!el)return;
+  el.classList.add('open');
+  if(id==='modalAddReception'){resetReceptionForm();setTimeout(initRecSig,100);}
+  if(id==='modalAddIncident'){resetIncidentForm();setTimeout(initIncSig,100);}
+  if(id==='modalNettoyage'){setTimeout(initNettoyageSig,100);}
+  if(id==='modalQRZones')generateQRZones();
+  if(id==='modalQRNettoyage')generateQRNettoyage();
+  if(id==='modalAddCuisson'){
+    const now=new Date();
+    const hm=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+    document.getElementById('cuissonHeureDebut').value=hm;
+    document.getElementById('cuissonHeureFin').value=hm;
+    document.getElementById('cuissonProduit').value='';
+    document.getElementById('cuissonQty').value='';
+    document.getElementById('cuissonTempFour').value='';
+    document.getElementById('cuissonDuree').value='';
+    document.getElementById('cuissonTempCoeur').value='';
+    document.getElementById('cuissonAction').value='';
+    document.getElementById('cuissonTempAlert').style.display='none';
+    document.getElementById('cuissonTempCoeur').style.color='';
+  }
+}
+
+async function saveCuisson(){
+  const produit=document.getElementById('cuissonProduit').value.trim();
+  const tempCoeur=parseFloat(document.getElementById('cuissonTempCoeur').value);
+  if(!produit){showToast('Nom du produit requis','warn');return;}
+  if(isNaN(tempCoeur)){showToast('Température à cœur requise','warn');return;}
+  const conforme=tempCoeur>=63;
+  const{error}=await db.from('cuisson_tracabilite').insert({
+    produit,
+    quantite:document.getElementById('cuissonQty').value||null,
+    four:document.getElementById('cuissonFour').value,
+    temp_four:parseFloat(document.getElementById('cuissonTempFour').value)||null,
+    duree:document.getElementById('cuissonDuree').value||null,
+    temp_coeur:tempCoeur,
+    heure_debut:document.getElementById('cuissonHeureDebut').value||null,
+    heure_fin:document.getElementById('cuissonHeureFin').value||null,
+    conforme,
+    action_corrective:document.getElementById('cuissonAction').value||null,
+    user_id:currentUser.id,
+  });
+  if(error){showToast('Erreur enregistrement','danger');return;}
+  closeModal('modalAddCuisson');
+  showToast(conforme?'🔥 Cuisson enregistrée ✓':'⚠️ Cuisson hors norme enregistrée',conforme?'ok':'warn',3000);
+  loadCuisson();
+}
+
+async function loadCuisson(){
+  const el=document.getElementById('cuissonList');
+  const today=new Date().toISOString().split('T')[0];
+  const{data}=await db.from('cuisson_tracabilite').select('*,user:user_id(name)').gte('created_at',today+'T00:00:00').order('created_at',{ascending:false});
+  if(!data||!data.length){
+    el.innerHTML='<div class="empty"><div class="empty-ico">🔥</div><div class="empty-sub">Aucune cuisson enregistrée aujourd\'hui</div></div>';
+    return;
+  }
+  el.innerHTML=data.map(c=>{
+    const st=c.conforme?'ok':'danger';
+    const time=c.heure_debut?c.heure_debut+(c.heure_fin?' → '+c.heure_fin:''):'';
+    return`<div class="card"><div class="card-body">
+      <div style="display:flex;align-items:flex-start;gap:12px">
+        <div style="font-size:24px">🔥</div>
+        <div style="flex:1">
+          <div style="font-size:15px;font-weight:700;color:var(--text)">${c.produit}${c.quantite?' <span style="font-size:12px;color:var(--muted)">· '+c.quantite+'</span>':''}</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:3px">${c.four}${c.temp_four?' · '+c.temp_four+'°C':''} ${c.duree?'· '+c.duree:''}</div>
+          ${time?`<div style="font-size:11px;color:var(--subtle);margin-top:2px">⏱ ${time}</div>`:''}
+          <div style="display:flex;align-items:center;gap:8px;margin-top:6px">
+            <span style="font-size:16px;font-weight:800;color:${c.conforme?'var(--teal)':'var(--red)'}">${c.temp_coeur>=0?'+':''}${c.temp_coeur}°C</span>
+            <span class="pill ${st}" style="font-size:10px">${c.conforme?'✓ Conforme':'⚠ Hors norme'}</span>
+          </div>
+          ${c.action_corrective?`<div style="font-size:11px;color:var(--amber);margin-top:4px">📋 ${c.action_corrective}</div>`:''}
+          <div style="font-size:11px;color:var(--subtle);margin-top:4px">Par ${c.user?.name||'—'} · ${new Date(c.created_at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</div>
+        </div>
+      </div>
+    </div></div>`;
+  }).join('');
 }
 
 // ===== JOURS DE FERMETURE =====
