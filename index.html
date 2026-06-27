@@ -245,6 +245,16 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
   </div>
 </div>
 
+<!-- ECRAN SUSPENSION ABONNEMENT -->
+<div id="suspendedScreen" style="display:none;position:fixed;inset:0;background:linear-gradient(160deg,#020810,#060f1e);z-index:9999;align-items:center;justify-content:center;flex-direction:column;padding:32px;text-align:center">
+  <div style="font-size:56px;margin-bottom:20px">⏸</div>
+  <div style="font-size:22px;font-weight:800;color:#f87171;margin-bottom:12px">Abonnement suspendu</div>
+  <div style="font-size:14px;color:#7ba7c4;max-width:300px;line-height:1.6;margin-bottom:24px">L'accès à HygiPro a été temporairement suspendu. Veuillez régulariser votre situation pour retrouver l'accès.</div>
+  <div style="background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3);border-radius:12px;padding:16px 20px;font-size:13px;color:#fca5a5">
+    📞 Contactez votre administrateur HygiPro
+  </div>
+</div>
+
 <div id="app" class="app">
   <div class="topbar">
     <div class="topbar-left">
@@ -1048,10 +1058,42 @@ async function checkAlerts(){
 
 async function init(){
   initSignatureCanvas();
+  // Vérification abonnement client via ?client=slug
+  await checkClientStatus();
   const s=localStorage.getItem('hygipro_user');
   if(s){currentUser=JSON.parse(s);showApp();}
   await loadUsers();
 }
+async function checkClientStatus(){
+  // Récupère le slug depuis l'URL (?client=xxx)
+  const params=new URLSearchParams(window.location.search);
+  const slug=params.get('client');
+  if(!slug)return; // Pas de slug = mode dev/direct, pas de vérification
+  // Cherche le client dans saas_clients
+  const{data}=await db.from('saas_clients').select('nom,statut,plan').eq('slug',slug).single();
+  if(!data){
+    // Client introuvable
+    document.getElementById('loginScreen').style.display='none';
+    document.getElementById('suspendedScreen').style.display='flex';
+    document.getElementById('suspendedScreen').querySelector('div:nth-child(3)').textContent='Ce lien HygiPro est invalide ou n\'existe pas.';
+    return;
+  }
+  if(data.statut==='suspendu'||data.statut==='resilié'){
+    // Compte bloqué
+    document.getElementById('loginScreen').style.display='none';
+    document.getElementById('suspendedScreen').style.display='flex';
+    return;
+  }
+  // Actif — affiche le nom de la boulangerie sur l'écran de login
+  const loginLogo=document.querySelector('.login-logo-wrap');
+  if(loginLogo){
+    const tag=document.createElement('div');
+    tag.style.cssText='font-size:13px;color:var(--teal);font-weight:600;text-align:center;margin-top:8px;margin-bottom:-8px';
+    tag.textContent='🥐 '+data.nom;
+    loginLogo.appendChild(tag);
+  }
+}
+
 async function loadUsers(){
   const{data}=await db.from('users').select('*').eq('active',true).order('name');
   const sel=document.getElementById('userSelect');

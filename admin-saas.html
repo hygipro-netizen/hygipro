@@ -207,6 +207,7 @@ tr:hover td{background:rgba(45,212,160,0.03)}
   <div class="modal">
     <div class="modal-title">🏪 Nouveau client <button onclick="closeModal('modalAddClient')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px">✕</button></div>
     <div class="form-group"><label class="form-label">Nom de l'établissement *</label><input class="form-input" id="newClientNom" placeholder="Ex: Boulangerie Martin"></div>
+    <div class="form-group"><label class="form-label">Slug (identifiant URL) * <span style="font-size:10px;color:#64748b">Ex: martin → hygipro.vercel.app?client=martin</span></label><input class="form-input" id="newClientSlug" placeholder="martin" oninput="this.value=this.value.toLowerCase().replace(/[^a-z0-9-]/g,'')"></div>
     <div class="form-group"><label class="form-label">Nom du responsable *</label><input class="form-input" id="newClientResponsable" placeholder="Ex: Jean Martin"></div>
     <div class="form-group"><label class="form-label">Email *</label><input class="form-input" id="newClientEmail" type="email" placeholder="martin@boulangerie.fr"></div>
     <div class="form-group"><label class="form-label">Téléphone</label><input class="form-input" id="newClientTel" placeholder="06 XX XX XX XX"></div>
@@ -336,7 +337,7 @@ function renderClients(){
     const diffJ=c.renouvellement?Math.ceil((new Date(c.renouvellement)-new Date())/86400000):null;
     const renewWarn=diffJ!==null&&diffJ<=7;
     return`<tr>
-      <td><div style="font-weight:600">${c.nom}</div><div style="font-size:11px;color:var(--muted)">${c.ville||''}</div></td>
+      <td><div style="font-weight:600">${c.nom}</div><div style="font-size:10px;color:var(--teal);margin-top:2px">🔗 ?client=${c.slug||'—'}</div><div style="font-size:11px;color:var(--muted)">${c.ville||''}</div></td>
       <td><div>${c.responsable||'—'}</div><div style="font-size:11px;color:var(--muted)">${c.email||''}</div></td>
       <td><span class="badge ${PLAN_COLOR[c.plan]||'badge-blue'}">${PLAN_LABEL[c.plan]||c.plan} · ${PLAN_PRIX[c.plan]||'—'}€</span></td>
       <td><span style="color:${renewWarn?'var(--amber)':'var(--text)'}">${renouv}</span>${renewWarn?'<div style="font-size:10px;color:var(--amber)">⚠ Dans '+diffJ+'j</div>':''}</td>
@@ -424,13 +425,14 @@ async function loadImpayes(){
 
 async function addClient(){
   const nom=document.getElementById('newClientNom').value.trim();
+  const slug=document.getElementById('newClientSlug').value.trim();
   const resp=document.getElementById('newClientResponsable').value.trim();
   const email=document.getElementById('newClientEmail').value.trim();
-  if(!nom||!resp||!email){alert('Champs obligatoires manquants');return;}
+  if(!nom||!slug||!resp||!email){alert('Champs obligatoires manquants (nom, slug, responsable, email)');return;}
   const debut=document.getElementById('newClientDebut').value||new Date().toISOString().split('T')[0];
   const renouv=new Date(debut);renouv.setMonth(renouv.getMonth()+1);
   const{error}=await db.from('saas_clients').insert({
-    nom,responsable:resp,email,
+    nom,slug,responsable:resp,email,
     tel:document.getElementById('newClientTel').value||null,
     ville:document.getElementById('newClientVille').value||null,
     plan:document.getElementById('newClientPlan').value,
@@ -441,9 +443,7 @@ async function addClient(){
   });
   if(error){alert('Erreur : '+error.message);return;}
   closeModal('modalAddClient');
-  // Reset fields
-  ['newClientNom','newClientResponsable','newClientEmail','newClientTel','newClientVille','newClientNotes'].forEach(id=>document.getElementById(id).value='');
-  // Reload and switch to clients tab
+  ['newClientNom','newClientSlug','newClientResponsable','newClientEmail','newClientTel','newClientVille','newClientNotes'].forEach(id=>document.getElementById(id).value='');
   await loadClients();
   const btn=document.querySelector('.nav-link[onclick*="clients"]');
   if(btn)showTab('clients',btn);
