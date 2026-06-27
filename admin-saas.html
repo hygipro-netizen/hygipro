@@ -699,7 +699,7 @@ function genFactureRapide(clientId){
   },100);
 }
 
-async function genererFacture(sendEmail){
+async function genererFacture(sendMail){
   const clientId=document.getElementById('factClient').value;
   const c=allClients.find(cl=>cl.id===clientId);
   if(!c){showToast('Client introuvable','danger');return;}
@@ -717,26 +717,24 @@ async function genererFacture(sendEmail){
     numero:num,client_id:clientId,client_nom:c.nom,mois,
     montant_ht:ht,tva,montant_ttc:ttc,
     description:desc,statut:'envoyée',
-  }).catch(()=>{});
+  });
 
-  // Generate PDF
-  const w=window.open('','_blank');
-  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Facture ${num}</title>
+  // Generate PDF via blob URL (évite le popup blocker)
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Facture ${num}</title>
   <style>*{box-sizing:border-box}body{font-family:Arial,sans-serif;max-width:700px;margin:40px auto;color:#1a1a2e;padding:20px}
   .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:32px;padding-bottom:20px;border-bottom:3px solid #2dd4a0}
   .logo{font-size:26px;font-weight:800;color:#2dd4a0}.fact-num{font-size:13px;color:#64748b;text-align:right}
-  .fact-num strong{font-size:18px;color:#1a1a2e;display:block}
+  .fact-num strong{font-size:18px;color:#1a1a2e;display:block;margin-bottom:4px}
   .parties{display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-bottom:32px}
   .partie h3{font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:#64748b;margin-bottom:8px}
   .partie p{font-size:14px;color:#1a1a2e;margin-bottom:4px}
   table{width:100%;border-collapse:collapse;margin-bottom:24px}
-  th{background:#f1f5f9;padding:12px;text-align:left;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.3px;color:#475569}
+  th{background:#f1f5f9;padding:12px;text-align:left;font-size:12px;font-weight:700;color:#475569}
   td{padding:14px 12px;border-bottom:1px solid #e2e8f0;font-size:14px}
   .totals{margin-left:auto;width:280px}
   .total-row{display:flex;justify-content:space-between;padding:8px 0;font-size:14px;border-bottom:1px solid #e2e8f0}
   .total-ttc{display:flex;justify-content:space-between;padding:12px 0;font-size:18px;font-weight:800;color:#2dd4a0}
   .footer{margin-top:40px;padding-top:20px;border-top:1px solid #e2e8f0;font-size:11px;color:#94a3b8;text-align:center}
-  .badge-paid{display:inline-block;background:#d1fae5;color:#065f46;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700}
   @media print{body{margin:0}}</style></head><body>
   <div class="header">
     <div><div class="logo">HygiPro</div><div style="font-size:12px;color:#64748b;margin-top:4px">Système HACCP & Hygiène alimentaire</div></div>
@@ -746,7 +744,7 @@ async function genererFacture(sendEmail){
     <div class="partie"><h3>Émetteur</h3><p><strong>HygiPro</strong></p><p>hygipro.vercel.app</p></div>
     <div class="partie"><h3>Client</h3><p><strong>${c.nom}</strong></p><p>${c.responsable||''}</p><p>${c.email||''}</p><p>${c.ville||''}</p></div>
   </div>
-  <table><tr><th>Description</th><th>Quantité</th><th>Prix unitaire HT</th><th>Total HT</th></tr>
+  <table><tr><th>Description</th><th>Qté</th><th>Prix HT</th><th>Total HT</th></tr>
   <tr><td>${desc}</td><td>1</td><td>${ht.toFixed(2)}€</td><td>${ht.toFixed(2)}€</td></tr></table>
   <div class="totals">
     <div class="total-row"><span>Sous-total HT</span><span>${ht.toFixed(2)}€</span></div>
@@ -756,13 +754,18 @@ async function genererFacture(sendEmail){
   <div style="margin-top:24px;padding:16px;background:#f8fafc;border-radius:8px;font-size:13px;color:#475569">
     <strong>Modalités de paiement :</strong> Virement bancaire · Délai : 30 jours
   </div>
-  <div class="footer">HygiPro · Facture générée automatiquement · ${dateFacture}</div>
-  <script>window.onload=()=>{window.print();}<\/script></body></html>`);
-  w.document.close();
+  <div class="footer">HygiPro · Facture N°${num} · ${dateFacture}</div>
+  <script>window.onload=function(){window.print();}<\/script></body></html>`;
 
-  if(sendEmail&&c.email){
+  const blob=new Blob([html],{type:'text/html'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.target='_blank';a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),5000);
+
+  if(sendMail&&c.email){
     await sendEmailJS(c.email,c.responsable||c.nom,`Votre facture HygiPro — ${moisLabel}`,
-      `Bonjour ${c.responsable||c.nom},\n\nVeuillez trouver ci-joint votre facture HygiPro pour ${moisLabel}.\n\n📋 N° Facture : ${num}\n💰 Montant TTC : ${ttc.toFixed(2)}€\n📅 Période : ${moisLabel}\n\nCordialement,\nL'équipe HygiPro`,
+      `Bonjour ${c.responsable||c.nom},\n\nVeuillez trouver votre facture HygiPro pour ${moisLabel}.\n\n📋 N° Facture : ${num}\n💰 Montant TTC : ${ttc.toFixed(2)}€\n📅 Période : ${moisLabel}\n\nCordialement,\nL'équipe HygiPro`,
       ttc.toFixed(2),moisLabel);
     showToast('🧾 Facture générée + email envoyé !','ok',4000);
   }else{
