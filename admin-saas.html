@@ -224,7 +224,7 @@ tr:hover td{background:rgba(45,212,160,0.02)}
       </div>
       <div class="card">
         <table>
-          <tr><th>N° Facture</th><th>Client</th><th>Mois</th><th>Montant HT</th><th>TVA</th><th>TTC</th><th>Statut</th><th>Actions</th></tr>
+          <tr><th>N° Facture</th><th>Client</th><th>Mois</th><th>Montant</th><th>Statut</th><th>Actions</th></tr>
           <tbody id="facturesTable"></tbody>
         </table>
       </div>
@@ -713,17 +713,32 @@ async function genererFacture(sendMail){
   const moisLabel=new Date(mois+'-01').toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
 
   // Save to DB
-  await db.from('saas_factures').insert({
+  const{error}=await db.from('saas_factures').insert({
     numero:num,client_id:clientId,client_nom:c.nom,mois,
     montant_ht:ht,tva,montant_ttc:ttc,
-    description:desc,statut:'envoyée',
+    description:desc,statut:sendMail?'envoyée':'générée',
   });
+  if(error){showToast('Erreur DB : '+error.message,'danger');return;}
 
-  // Generate PDF via blob URL (évite le popup blocker)
+  if(sendMail&&c.email){
+    await sendEmailJS(c.email,c.responsable||c.nom,`Votre facture HygiPro — ${moisLabel}`,
+      `Bonjour ${c.responsable||c.nom},\n\nVotre facture HygiPro est disponible.\n\n📋 N° Facture : ${num}\n💰 Montant TTC : ${ttc.toFixed(2)}€\n📅 Période : ${moisLabel}\n📝 ${desc}\n\nPour toute question, contactez-nous.\n\nCordialement,\nL'équipe HygiPro`,
+      ttc.toFixed(2),moisLabel);
+    showToast('🧾 Facture créée + email envoyé à '+c.email,'ok',4000);
+  }else{
+    showToast('🧾 Facture créée et enregistrée !','ok',3000);
+  }
+  closeModal('modalGenFacture');
+  await loadAll();
+  showTab('factures',document.querySelectorAll('.nav-link')[4]);
+}
+
+function genererPDFFacture(num,clientNom,clientResp,clientEmail,clientVille,desc,ht,tva,ttc,moisLabel,dateFacture){
   const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Facture ${num}</title>
   <style>*{box-sizing:border-box}body{font-family:Arial,sans-serif;max-width:700px;margin:40px auto;color:#1a1a2e;padding:20px}
   .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:32px;padding-bottom:20px;border-bottom:3px solid #2dd4a0}
-  .logo{font-size:26px;font-weight:800;color:#2dd4a0}.fact-num{font-size:13px;color:#64748b;text-align:right}
+  .logo{font-size:26px;font-weight:800;color:#2dd4a0}
+  .fact-num{font-size:13px;color:#64748b;text-align:right}
   .fact-num strong{font-size:18px;color:#1a1a2e;display:block;margin-bottom:4px}
   .parties{display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-bottom:32px}
   .partie h3{font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:#64748b;margin-bottom:8px}
@@ -742,58 +757,53 @@ async function genererFacture(sendMail){
   </div>
   <div class="parties">
     <div class="partie"><h3>Émetteur</h3><p><strong>HygiPro</strong></p><p>hygipro.vercel.app</p></div>
-    <div class="partie"><h3>Client</h3><p><strong>${c.nom}</strong></p><p>${c.responsable||''}</p><p>${c.email||''}</p><p>${c.ville||''}</p></div>
+    <div class="partie"><h3>Client</h3><p><strong>${clientNom}</strong></p><p>${clientResp}</p><p>${clientEmail}</p><p>${clientVille}</p></div>
   </div>
   <table><tr><th>Description</th><th>Qté</th><th>Prix HT</th><th>Total HT</th></tr>
-  <tr><td>${desc}</td><td>1</td><td>${ht.toFixed(2)}€</td><td>${ht.toFixed(2)}€</td></tr></table>
+  <tr><td>${desc}</td><td>1</td><td>${parseFloat(ht).toFixed(2)}€</td><td>${parseFloat(ht).toFixed(2)}€</td></tr></table>
   <div class="totals">
-    <div class="total-row"><span>Sous-total HT</span><span>${ht.toFixed(2)}€</span></div>
-    <div class="total-row"><span>TVA (20%)</span><span>${tva.toFixed(2)}€</span></div>
-    <div class="total-ttc"><span>Total TTC</span><span>${ttc.toFixed(2)}€</span></div>
+    <div class="total-row"><span>Sous-total HT</span><span>${parseFloat(ht).toFixed(2)}€</span></div>
+    <div class="total-row"><span>TVA (20%)</span><span>${parseFloat(tva).toFixed(2)}€</span></div>
+    <div class="total-ttc"><span>Total TTC</span><span>${parseFloat(ttc).toFixed(2)}€</span></div>
   </div>
   <div style="margin-top:24px;padding:16px;background:#f8fafc;border-radius:8px;font-size:13px;color:#475569">
     <strong>Modalités de paiement :</strong> Virement bancaire · Délai : 30 jours
   </div>
   <div class="footer">HygiPro · Facture N°${num} · ${dateFacture}</div>
   <script>window.onload=function(){window.print();}<\/script></body></html>`;
-
   const blob=new Blob([html],{type:'text/html'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
   a.href=url;a.target='_blank';a.click();
   setTimeout(()=>URL.revokeObjectURL(url),5000);
-
-  if(sendMail&&c.email){
-    await sendEmailJS(c.email,c.responsable||c.nom,`Votre facture HygiPro — ${moisLabel}`,
-      `Bonjour ${c.responsable||c.nom},\n\nVeuillez trouver votre facture HygiPro pour ${moisLabel}.\n\n📋 N° Facture : ${num}\n💰 Montant TTC : ${ttc.toFixed(2)}€\n📅 Période : ${moisLabel}\n\nCordialement,\nL'équipe HygiPro`,
-      ttc.toFixed(2),moisLabel);
-    showToast('🧾 Facture générée + email envoyé !','ok',4000);
-  }else{
-    showToast('🧾 Facture générée !','ok',3000);
-  }
-  closeModal('modalGenFacture');
-  await loadAll();
 }
 
 function renderFactures(){
   const el=document.getElementById('facturesTable');
-  if(!allFactures.length){el.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:24px">Aucune facture générée</td></tr>';return;}
+  if(!allFactures.length){el.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:24px">Aucune facture générée</td></tr>';return;}
+  // Group by client
+  const byClient={};
+  allFactures.forEach(f=>{
+    const key=f.client_id||'unknown';
+    if(!byClient[key])byClient[key]=[];
+    byClient[key].push(f);
+  });
   el.innerHTML=allFactures.map(f=>{
-    const sc=f.statut==='payée'?'badge-green':f.statut==='envoyée'?'badge-blue':'badge-red';
+    const sc=f.statut==='payée'?'badge-green':f.statut==='envoyée'?'badge-blue':f.statut==='générée'?'badge-gray':'badge-red';
     const c=allClients.find(cl=>cl.id===f.client_id);
     const moisLabel=f.mois?new Date(f.mois+'-01').toLocaleDateString('fr-FR',{month:'long',year:'numeric'}):'—';
+    const dateFacture=f.created_at?new Date(f.created_at).toLocaleDateString('fr-FR'):'—';
     return`<tr>
       <td style="font-weight:700;color:var(--teal)">${f.numero}</td>
-      <td>${f.client_nom||c?.nom||'—'}</td>
+      <td><div style="font-weight:600">${f.client_nom||c?.nom||'—'}</div><div style="font-size:11px;color:var(--muted)">${c?.email||''}</div></td>
       <td>${moisLabel}</td>
-      <td>${f.montant_ht?.toFixed(2)||'—'}€</td>
-      <td>${f.tva?.toFixed(2)||'—'}€</td>
-      <td style="font-weight:700;color:var(--teal)">${f.montant_ttc?.toFixed(2)||'—'}€</td>
+      <td style="font-weight:600">${f.montant_ttc?.toFixed(2)||'—'}€ TTC</td>
       <td><span class="badge ${sc}">${f.statut}</span></td>
       <td style="white-space:nowrap">
         <div style="display:flex;gap:4px">
-          ${f.statut!=='payée'?`<button class="btn-sm btn-green" onclick="marquerFacturePaye('${f.id}')">✅ Payée</button>`:''}
-          ${c?.email?`<button class="btn-sm btn-purple" onclick="openEmailModal('${c.id}','Votre facture HygiPro ${f.numero}','Bonjour,\\n\\nVeuillez trouver votre facture N°${f.numero} pour ${moisLabel}.\\n\\nMontant TTC : ${f.montant_ttc?.toFixed(2)||'—'}€\\n\\nCordialement,\\nHygiPro')">📧</button>`:''}
+          <button class="btn-sm btn-blue" onclick="genererPDFFacture('${f.numero}','${(f.client_nom||c?.nom||'').replace(/'/g,"\\'")}','${(c?.responsable||'').replace(/'/g,"\\'")}','${(c?.email||'').replace(/'/g,"\\'")}','${(c?.ville||'').replace(/'/g,"\\'")}','${(f.description||'').replace(/'/g,"\\'")}',${f.montant_ht||0},${f.tva||0},${f.montant_ttc||0},'${moisLabel}','${dateFacture}')" title="Télécharger PDF">📄 PDF</button>
+          ${f.statut!=='payée'?`<button class="btn-sm btn-green" onclick="marquerFacturePaye('${f.id}')">✅</button>`:''}
+          ${c?.email&&f.statut!=='envoyée'?`<button class="btn-sm btn-purple" onclick="openEmailModal('${c.id}','Votre facture HygiPro ${f.numero}','Bonjour ${c.responsable||c.nom},\\n\\nVoici votre facture N°${f.numero} pour ${moisLabel}.\\n\\nMontant TTC : ${f.montant_ttc?.toFixed(2)||'—'}€\\n\\nCordialement,\\nHygiPro')">📧</button>`:''}
         </div>
       </td>
     </tr>`;
