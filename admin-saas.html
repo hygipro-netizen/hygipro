@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>HygiPro — Back-office SaaS</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--bg:#060f1e;--card:#0d1f38;--border:#1e3a5f;--text:#e8f4f0;--muted:#7ba7c4;--teal:#2dd4a0;--red:#f87171;--amber:#f59e0b;--blue:#60a5fa;--green:#34d399;--purple:#a78bfa}
@@ -366,10 +365,7 @@ tr:hover td{background:rgba(45,212,160,0.02)}
 const SUPA_URL='https://mzyrffxosabnmkcqduvc.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16eXJmZnhvc2Fibm1rY3FkdXZjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0NjkzMzYsImV4cCI6MjA5MTA0NTMzNn0.fbhCUI5EKvCO2k0014JWrOR-dqBF4XL1k6Tqdy4zIM8';
 const db=supabase.createClient(SUPA_URL,SUPA_KEY);
-const EJS_SERVICE='service_2yk17ie';
-const EJS_TEMPLATE='template_04mofjd';
-const EJS_KEY='7kVoTf5LrAc4KCOpG';
-emailjs.init({publicKey: EJS_KEY});
+const RESEND_KEY='re_58nxWcgM_8WhSRuBBHa1UvD9SQpRvitR8';
 
 const PLAN_PRIX={starter:39,pro:69,premium:99};
 const PLAN_LABEL={starter:'Starter',pro:'Pro',premium:'Premium'};
@@ -721,9 +717,39 @@ async function genererFacture(sendMail){
   if(error){showToast('Erreur DB : '+error.message,'danger');return;}
 
   if(sendMail&&c.email){
+    const invoiceHtml=`
+      <div style="font-family:Arial,sans-serif;max-width:700px;margin:0 auto;color:#1a1a2e">
+        <div style="background:#060f1e;padding:24px;border-radius:12px 12px 0 0;display:flex;justify-content:space-between;align-items:center">
+          <div><div style="font-size:24px;font-weight:800;color:#2dd4a0">HygiPro</div><div style="font-size:11px;color:#7ba7c4;margin-top:2px">Système HACCP & Hygiène alimentaire</div></div>
+          <div style="text-align:right"><div style="font-size:11px;color:#7ba7c4">FACTURE</div><div style="font-size:18px;font-weight:800;color:white">${num}</div><div style="font-size:11px;color:#7ba7c4">${dateFacture}</div></div>
+        </div>
+        <div style="background:white;padding:28px;border:1px solid #e2e8f0">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:24px">
+            <div><div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#94a3b8;margin-bottom:6px">Émetteur</div><div style="font-weight:700">HygiPro</div><div style="font-size:13px;color:#475569">hygipro.vercel.app</div></div>
+            <div><div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#94a3b8;margin-bottom:6px">Client</div><div style="font-weight:700">${c.nom}</div><div style="font-size:13px;color:#475569">${c.responsable||''}</div><div style="font-size:13px;color:#475569">${c.email||''}</div></div>
+          </div>
+          <div style="background:#f8fafc;border-radius:8px;padding:16px;margin-bottom:20px">
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#94a3b8;margin-bottom:8px">Période · ${moisLabel}</div>
+            <div style="font-size:14px;color:#1a1a2e">${desc}</div>
+          </div>
+          <table style="width:100%;border-collapse:collapse;margin-bottom:16px">
+            <tr style="background:#f1f5f9"><th style="padding:10px 12px;text-align:left;font-size:11px;font-weight:700;color:#475569">Description</th><th style="padding:10px 12px;text-align:right;font-size:11px;font-weight:700;color:#475569">Montant HT</th></tr>
+            <tr><td style="padding:12px;border-bottom:1px solid #e2e8f0;font-size:14px">${desc}</td><td style="padding:12px;border-bottom:1px solid #e2e8f0;text-align:right;font-size:14px">${ht.toFixed(2)}€</td></tr>
+          </table>
+          <div style="margin-left:auto;width:240px">
+            <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;color:#475569"><span>Sous-total HT</span><span>${ht.toFixed(2)}€</span></div>
+            <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;color:#475569;border-bottom:1px solid #e2e8f0"><span>TVA (20%)</span><span>${tva.toFixed(2)}€</span></div>
+            <div style="display:flex;justify-content:space-between;padding:10px 0;font-size:18px;font-weight:800;color:#2dd4a0"><span>Total TTC</span><span>${ttc.toFixed(2)}€</span></div>
+          </div>
+          <div style="margin-top:20px;background:#f8fafc;border-radius:8px;padding:14px;font-size:13px;color:#475569"><strong>Modalités de paiement :</strong> Virement bancaire · Délai : 30 jours</div>
+        </div>
+        <div style="background:#f1f5f9;padding:16px;border-radius:0 0 12px 12px;text-align:center;font-size:11px;color:#94a3b8">
+          HygiPro · Facture N°${num} · Générée le ${dateFacture}
+        </div>
+      </div>`;
     await sendEmailJS(c.email,c.responsable||c.nom,`Votre facture HygiPro — ${moisLabel}`,
-      `Bonjour ${c.responsable||c.nom},\n\nVotre facture HygiPro est disponible.\n\n📋 N° Facture : ${num}\n💰 Montant TTC : ${ttc.toFixed(2)}€\n📅 Période : ${moisLabel}\n📝 ${desc}\n\nPour toute question, contactez-nous.\n\nCordialement,\nL'équipe HygiPro`,
-      ttc.toFixed(2),moisLabel);
+      `Votre facture HygiPro N°${num} pour ${moisLabel} est disponible ci-dessous.\n\nMontant TTC : ${ttc.toFixed(2)}€`,
+      ttc.toFixed(2),moisLabel,invoiceHtml);
     showToast('🧾 Facture créée + email envoyé à '+c.email,'ok',4000);
   }else{
     showToast('🧾 Facture créée et enregistrée !','ok',3000);
@@ -862,22 +888,44 @@ async function sendEmail(){
   closeModal('modalEmail');
 }
 
-async function sendEmailJS(toEmail,toName,subject,message,montant,mois){
+async function sendEmailJS(toEmail,toName,subject,message,montant,mois,htmlContent){
   try{
-    console.log('📧 Envoi email à:',toEmail,'sujet:',subject);
-    const result=await emailjs.send(EJS_SERVICE,EJS_TEMPLATE,{
-      to_email:toEmail,
-      to_name:toName,
+    console.log('📧 Envoi Resend à:',toEmail,'sujet:',subject);
+    const body={
+      from:'HygiPro <onboarding@resend.dev>',
+      to:[toEmail],
       subject:subject,
-      message:message,
-      montant:montant,
-      mois:mois
+      html:htmlContent||`
+        <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#1a1a2e">
+          <div style="background:#060f1e;padding:24px;text-align:center;border-radius:12px 12px 0 0">
+            <div style="font-size:24px;font-weight:800;color:#2dd4a0">HygiPro</div>
+            <div style="font-size:12px;color:#7ba7c4;margin-top:4px">Système HACCP & Hygiène alimentaire</div>
+          </div>
+          <div style="background:#f8fafc;padding:28px;border-radius:0 0 12px 12px;border:1px solid #e2e8f0">
+            <p style="font-size:15px;margin-bottom:16px">Bonjour <strong>${toName}</strong>,</p>
+            <div style="background:white;border-radius:8px;padding:20px;border:1px solid #e2e8f0;white-space:pre-line;font-size:14px;line-height:1.7">${message}</div>
+            ${montant?`<div style="margin-top:16px;background:#e6faf4;border:1px solid #2dd4a0;border-radius:8px;padding:16px;text-align:center">
+              <div style="font-size:11px;color:#065f46;text-transform:uppercase;font-weight:700;margin-bottom:4px">Montant TTC</div>
+              <div style="font-size:28px;font-weight:800;color:#065f46">${montant}€</div>
+            </div>`:''}
+            <div style="margin-top:20px;padding-top:16px;border-top:1px solid #e2e8f0;font-size:12px;color:#94a3b8;text-align:center">
+              HygiPro · Système de traçabilité HACCP · hygipro.vercel.app
+            </div>
+          </div>
+        </div>`,
+    };
+    const res=await fetch('https://api.resend.com/emails',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+RESEND_KEY},
+      body:JSON.stringify(body)
     });
-    console.log('✅ Email envoyé:',result);
+    const data=await res.json();
+    if(!res.ok)throw new Error(data.message||JSON.stringify(data));
+    console.log('✅ Email envoyé:',data);
     showToast('📧 Email envoyé à '+toEmail,'ok',4000);
   }catch(e){
-    console.error('❌ EmailJS erreur:',e);
-    showToast('❌ Erreur email : '+(e.text||e.message||JSON.stringify(e)),'danger',6000);
+    console.error('❌ Resend erreur:',e);
+    showToast('❌ Erreur email : '+e.message,'danger',6000);
   }
 }
 
