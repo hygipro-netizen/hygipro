@@ -5,75 +5,100 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>HygiPro — Back-office SaaS</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-:root{--bg:#060f1e;--card:#0d1f38;--border:#1e3a5f;--text:#e8f4f0;--muted:#7ba7c4;--teal:#2dd4a0;--red:#f87171;--amber:#f59e0b;--blue:#60a5fa;--green:#34d399}
+:root{--bg:#060f1e;--card:#0d1f38;--border:#1e3a5f;--text:#e8f4f0;--muted:#7ba7c4;--teal:#2dd4a0;--red:#f87171;--amber:#f59e0b;--blue:#60a5fa;--green:#34d399;--purple:#a78bfa}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
-/* LOGIN */
 #loginScreen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
 .login-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:32px;width:100%;max-width:380px}
 .logo{font-size:28px;font-weight:800;color:var(--teal);text-align:center;margin-bottom:4px}
 .logo-sub{font-size:12px;color:var(--muted);text-align:center;margin-bottom:24px}
-/* MAIN */
 #mainScreen{display:none}
-.sidebar{position:fixed;left:0;top:0;bottom:0;width:220px;background:var(--card);border-right:1px solid var(--border);padding:20px 0;z-index:100}
-.sidebar-logo{padding:0 20px 20px;border-bottom:1px solid var(--border);margin-bottom:12px}
-.sidebar-logo .name{font-size:18px;font-weight:800;color:var(--teal)}
-.sidebar-logo .sub{font-size:11px;color:var(--muted)}
-.nav-link{display:flex;align-items:center;gap:10px;padding:10px 20px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border:none;background:none;width:100%;text-align:left;transition:all .15s;border-left:3px solid transparent}
+.sidebar{position:fixed;left:0;top:0;bottom:0;width:230px;background:var(--card);border-right:1px solid var(--border);padding:0;z-index:100;display:flex;flex-direction:column}
+.sidebar-logo{padding:20px;border-bottom:1px solid var(--border)}
+.sidebar-logo .name{font-size:20px;font-weight:800;color:var(--teal)}
+.sidebar-logo .sub{font-size:11px;color:var(--muted);margin-top:2px}
+.sidebar-nav{flex:1;padding:12px 0;overflow-y:auto}
+.nav-link{display:flex;align-items:center;gap:10px;padding:11px 20px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border:none;background:none;width:100%;text-align:left;transition:all .15s;border-left:3px solid transparent}
 .nav-link:hover{color:var(--text);background:rgba(45,212,160,0.05)}
 .nav-link.active{color:var(--teal);background:rgba(45,212,160,0.1);border-left-color:var(--teal)}
-.content{margin-left:220px;padding:24px;min-height:100vh}
-.page-header{margin-bottom:24px}
+.nav-section{padding:8px 20px 4px;font-size:10px;font-weight:700;color:#2a4a6a;text-transform:uppercase;letter-spacing:0.8px}
+.sidebar-footer{padding:16px;border-top:1px solid var(--border)}
+.content{margin-left:230px;padding:28px;min-height:100vh}
+.page-header{margin-bottom:24px;display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px}
 .page-title{font-size:22px;font-weight:700;color:var(--text)}
 .page-sub{font-size:13px;color:var(--muted);margin-top:4px}
-/* CARDS */
 .card{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px}
+.card-header{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.card-title{font-size:14px;font-weight:700;color:var(--text)}
 .card-body{padding:16px}
 .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
-.kpi{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px}
-.kpi-val{font-size:28px;font-weight:800;color:var(--text)}
-.kpi-lbl{font-size:12px;color:var(--muted);margin-top:4px}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px;position:relative;overflow:hidden}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.kpi-green::before{background:var(--green)}
+.kpi-red::before{background:var(--red)}
+.kpi-amber::before{background:var(--amber)}
+.kpi-blue::before{background:var(--blue)}
+.kpi-purple::before{background:var(--purple)}
+.kpi-val{font-size:30px;font-weight:800;color:var(--text);margin-top:4px}
+.kpi-lbl{font-size:11px;color:var(--muted);margin-top:4px;font-weight:600;text-transform:uppercase;letter-spacing:0.3px}
 .kpi-green .kpi-val{color:var(--green)}
 .kpi-red .kpi-val{color:var(--red)}
 .kpi-amber .kpi-val{color:var(--amber)}
-/* TABLE */
+.kpi-blue .kpi-val{color:var(--blue)}
+.kpi-purple .kpi-val{color:var(--purple)}
 table{width:100%;border-collapse:collapse}
-th{background:#0a1828;color:var(--muted);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;padding:10px 14px;text-align:left;border-bottom:1px solid var(--border)}
-td{padding:12px 14px;font-size:13px;color:var(--text);border-bottom:1px solid rgba(30,58,95,0.5)}
-tr:hover td{background:rgba(45,212,160,0.03)}
-/* BADGES */
-.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700}
+th{background:#080f1e;color:var(--muted);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;padding:10px 14px;text-align:left;border-bottom:1px solid var(--border)}
+td{padding:12px 14px;font-size:13px;color:var(--text);border-bottom:1px solid rgba(30,58,95,0.4);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(45,212,160,0.02)}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700}
 .badge-green{background:rgba(52,211,153,0.15);color:var(--green)}
 .badge-red{background:rgba(248,113,113,0.15);color:var(--red)}
 .badge-amber{background:rgba(245,158,11,0.15);color:var(--amber)}
 .badge-blue{background:rgba(96,165,250,0.15);color:var(--blue)}
-/* BTNS */
-.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .15s}
+.badge-purple{background:rgba(167,139,250,0.15);color:var(--purple)}
+.badge-gray{background:rgba(100,116,139,0.15);color:#94a3b8}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .15s;white-space:nowrap}
 .btn-primary{background:var(--teal);color:#060f1e}
+.btn-primary:hover{background:#25b88a}
 .btn-danger{background:rgba(248,113,113,0.15);color:var(--red);border:1px solid rgba(248,113,113,0.3)}
 .btn-outline{background:transparent;color:var(--muted);border:1px solid var(--border)}
-.btn-sm{padding:5px 12px;font-size:12px;border-radius:6px;cursor:pointer;border:none;font-weight:600}
-/* FORMS */
+.btn-outline:hover{color:var(--text);border-color:var(--muted)}
+.btn-amber{background:rgba(245,158,11,0.15);color:var(--amber);border:1px solid rgba(245,158,11,0.3)}
+.btn-green{background:rgba(52,211,153,0.15);color:var(--green);border:1px solid rgba(52,211,153,0.3)}
+.btn-blue{background:rgba(96,165,250,0.15);color:var(--blue);border:1px solid rgba(96,165,250,0.3)}
+.btn-purple{background:rgba(167,139,250,0.15);color:var(--purple);border:1px solid rgba(167,139,250,0.3)}
+.btn-sm{padding:5px 12px;font-size:12px;border-radius:6px;cursor:pointer;border:none;font-weight:600;display:inline-flex;align-items:center;gap:4px}
 .form-group{margin-bottom:14px}
-.form-label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.3px}
-.form-input,.form-select{width:100%;background:#0a1828;border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-size:14px}
-.form-input:focus,.form-select:focus{outline:none;border-color:var(--teal)}
-/* MODAL */
-.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:500;align-items:flex-end;justify-content:center}
+.form-label{display:block;font-size:11px;font-weight:700;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.4px}
+.form-input,.form-select,.form-textarea{width:100%;background:#080f1e;border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-size:14px;font-family:inherit}
+.form-textarea{resize:vertical;min-height:80px}
+.form-input:focus,.form-select:focus,.form-textarea:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(45,212,160,0.1)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:500;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px)}
 .modal-overlay.open{display:flex}
-.modal{background:var(--card);border:1px solid var(--border);border-radius:16px 16px 0 0;padding:24px;width:100%;max-width:480px}
-.modal-title{font-size:16px;font-weight:700;color:var(--text);margin-bottom:16px;display:flex;justify-content:space-between;align-items:center}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:20px 20px 0 0;padding:24px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto}
+.modal-title{font-size:16px;font-weight:700;color:var(--text);margin-bottom:18px;display:flex;justify-content:space-between;align-items:center}
+.modal-close{background:rgba(100,116,139,0.2);border:none;color:var(--muted);width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center}
 .section-tab{display:none}
 .section-tab.active{display:block}
-/* STATUS INDICATOR */
-.status-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px}
-.dot-green{background:var(--green)}
-.dot-red{background:var(--red)}
-.dot-amber{background:var(--amber)}
+.search-bar{background:#080f1e;border:1px solid var(--border);border-radius:10px;padding:10px 16px;color:var(--text);font-size:14px;width:280px}
+.search-bar:focus{outline:none;border-color:var(--teal)}
+.filter-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center}
+.fact-row{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid rgba(30,58,95,0.4)}
+.fact-row:last-child{border-bottom:none}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 20px;font-size:13px;font-weight:600;z-index:9999;display:none;gap:10px;align-items:center;box-shadow:0 8px 32px rgba(0,0,0,0.4)}
+.toast.show{display:flex}
+.toast.ok{border-color:rgba(52,211,153,0.4);color:var(--green)}
+.toast.warn{border-color:rgba(245,158,11,0.4);color:var(--amber)}
+.toast.danger{border-color:rgba(248,113,113,0.4);color:var(--red)}
 </style>
 </head>
 <body>
+
+<div class="toast" id="toast"></div>
 
 <!-- LOGIN -->
 <div id="loginScreen">
@@ -82,81 +107,125 @@ tr:hover td{background:rgba(45,212,160,0.03)}
     <div class="logo-sub">Back-office SaaS · Administration</div>
     <div class="form-group">
       <label class="form-label">Email administrateur</label>
-      <input class="form-input" id="adminEmail" type="email" placeholder="admin@hygipro.fr" value="admin@hygipro.fr">
+      <input class="form-input" id="adminEmail" type="email" value="admin@hygipro.fr">
     </div>
     <div class="form-group">
       <label class="form-label">Mot de passe</label>
       <input class="form-input" id="adminPassword" type="password" placeholder="••••••••">
     </div>
-    <div id="loginError" style="display:none;color:var(--red);font-size:12px;margin-bottom:12px"></div>
-    <button class="btn btn-primary" onclick="loginAdmin()" style="width:100%;justify-content:center">Connexion</button>
+    <div id="loginError" style="display:none;color:var(--red);font-size:12px;margin-bottom:12px;padding:10px;background:rgba(248,113,113,0.1);border-radius:8px"></div>
+    <button class="btn btn-primary" onclick="loginAdmin()" style="width:100%;justify-content:center;padding:12px">🔐 Connexion</button>
   </div>
 </div>
 
 <!-- MAIN -->
 <div id="mainScreen">
-  <!-- SIDEBAR -->
   <div class="sidebar">
     <div class="sidebar-logo">
       <div class="name">HygiPro</div>
       <div class="sub">Administration SaaS</div>
     </div>
-    <button class="nav-link active" onclick="showTab('dashboard',this)">📊 Dashboard</button>
-    <button class="nav-link" onclick="showTab('clients',this)">🏪 Clients</button>
-    <button class="nav-link" onclick="showTab('abonnements',this)">💳 Abonnements</button>
-    <button class="nav-link" onclick="showTab('impayés',this)">⚠️ Impayés</button>
-    <div style="margin-top:auto;padding:20px;border-top:1px solid var(--border);position:absolute;bottom:0;width:100%">
-      <div style="font-size:12px;color:var(--muted);margin-bottom:8px" id="adminEmailDisplay"></div>
-      <button class="btn btn-outline btn-sm" onclick="logoutAdmin()" style="width:100%">Déconnexion</button>
+    <div class="sidebar-nav">
+      <div class="nav-section">Vue d'ensemble</div>
+      <button class="nav-link active" onclick="showTab('dashboard',this)">📊 Dashboard</button>
+      <div class="nav-section">Clients</div>
+      <button class="nav-link" onclick="showTab('clients',this)">🏪 Tous les clients</button>
+      <button class="nav-link" onclick="showTab('impayes',this)">⚠️ Impayés <span id="badgeImpayes" style="display:none;background:var(--red);color:white;border-radius:10px;padding:1px 7px;font-size:10px;margin-left:auto"></span></button>
+      <div class="nav-section">Facturation</div>
+      <button class="nav-link" onclick="showTab('factures',this)">🧾 Factures</button>
+      <button class="nav-link" onclick="showTab('abonnements',this)">💳 Abonnements</button>
+    </div>
+    <div class="sidebar-footer">
+      <div style="font-size:11px;color:var(--muted);margin-bottom:8px" id="adminEmailDisplay"></div>
+      <button class="btn btn-outline btn-sm" onclick="logoutAdmin()" style="width:100%;justify-content:center">Déconnexion</button>
     </div>
   </div>
 
-  <!-- CONTENT -->
   <div class="content">
 
     <!-- DASHBOARD -->
     <div id="tab-dashboard" class="section-tab active">
       <div class="page-header">
-        <div class="page-title">📊 Dashboard</div>
-        <div class="page-sub">Vue d'ensemble de tous vos clients HygiPro</div>
+        <div><div class="page-title">📊 Dashboard</div><div class="page-sub">Vue d'ensemble · Mis à jour en temps réel</div></div>
+        <button class="btn btn-outline" onclick="loadAll()">🔄 Actualiser</button>
       </div>
       <div class="kpi-grid">
-        <div class="kpi kpi-green"><div class="kpi-val" id="kpiActifs">—</div><div class="kpi-lbl">Clients actifs</div></div>
-        <div class="kpi kpi-red"><div class="kpi-val" id="kpiSuspendus">—</div><div class="kpi-lbl">Comptes suspendus</div></div>
-        <div class="kpi kpi-amber"><div class="kpi-val" id="kpiImpayes">—</div><div class="kpi-lbl">Impayés en cours</div></div>
-        <div class="kpi"><div class="kpi-val" id="kpiRevenu">— €</div><div class="kpi-lbl">Revenus mensuels (MRR)</div></div>
+        <div class="kpi kpi-green"><div class="kpi-lbl">Clients actifs</div><div class="kpi-val" id="kpiActifs">—</div></div>
+        <div class="kpi kpi-purple"><div class="kpi-lbl">MRR</div><div class="kpi-val" id="kpiMRR">— €</div></div>
+        <div class="kpi kpi-red"><div class="kpi-lbl">Impayés</div><div class="kpi-val" id="kpiImpayes">—</div></div>
+        <div class="kpi kpi-amber"><div class="kpi-lbl">Suspendus</div><div class="kpi-val" id="kpiSuspendus">—</div></div>
       </div>
+      <!-- Plans breakdown -->
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px">
+        <div class="card"><div class="card-body" style="text-align:center">
+          <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:6px">Starter · 39€</div>
+          <div style="font-size:24px;font-weight:800;color:var(--blue)" id="nbStarter">—</div>
+          <div style="font-size:12px;color:var(--muted)" id="mrrStarter">— €/mois</div>
+        </div></div>
+        <div class="card"><div class="card-body" style="text-align:center">
+          <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:6px">Pro · 69€</div>
+          <div style="font-size:24px;font-weight:800;color:var(--teal)" id="nbPro">—</div>
+          <div style="font-size:12px;color:var(--muted)" id="mrrPro">— €/mois</div>
+        </div></div>
+        <div class="card"><div class="card-body" style="text-align:center">
+          <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:6px">Premium · 99€</div>
+          <div style="font-size:24px;font-weight:800;color:var(--amber)" id="nbPremium">—</div>
+          <div style="font-size:12px;color:var(--muted)" id="mrrPremium">— €/mois</div>
+        </div></div>
+      </div>
+      <!-- Renouvellements à venir -->
       <div class="card">
-        <div style="padding:16px 16px 0;font-size:14px;font-weight:700;color:var(--text)">Derniers clients ajoutés</div>
-        <div class="card-body" style="padding:0">
-          <table>
-            <tr><th>Établissement</th><th>Plan</th><th>Statut</th><th>Depuis</th></tr>
-            <tbody id="latestClients"><tr><td colspan="4" style="text-align:center;color:var(--muted);padding:20px">Chargement...</td></tr></tbody>
-          </table>
-        </div>
+        <div class="card-header"><div class="card-title">⏰ Renouvellements dans les 7 jours</div></div>
+        <table><tr><th>Client</th><th>Plan</th><th>Renouvellement</th><th>Paiement</th><th>Actions</th></tr>
+        <tbody id="renouvDash"></tbody></table>
+      </div>
+      <!-- Derniers clients -->
+      <div class="card">
+        <div class="card-header"><div class="card-title">🆕 Derniers clients</div><button class="btn btn-sm btn-outline" onclick="showTab('clients',document.querySelector('.nav-link:nth-child(4))'))">Voir tous</button></div>
+        <table><tr><th>Établissement</th><th>Plan</th><th>Statut</th><th>Depuis</th></tr>
+        <tbody id="latestClients"></tbody></table>
       </div>
     </div>
 
     <!-- CLIENTS -->
     <div id="tab-clients" class="section-tab">
-      <div class="page-header" style="display:flex;justify-content:space-between;align-items:center">
-        <div>
-          <div class="page-title">🏪 Clients</div>
-          <div class="page-sub">Gestion de tous vos établissements</div>
-        </div>
+      <div class="page-header">
+        <div><div class="page-title">🏪 Clients</div><div class="page-sub">Gérez tous vos établissements</div></div>
         <button class="btn btn-primary" onclick="openModal('modalAddClient')">+ Nouveau client</button>
       </div>
-      <!-- Filtres -->
-      <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
-        <button class="btn btn-sm" id="filterAll" onclick="filterClients('all',this)" style="background:rgba(45,212,160,0.15);color:var(--teal);border:1px solid rgba(45,212,160,0.3)">Tous</button>
-        <button class="btn btn-sm btn-outline" id="filterActif" onclick="filterClients('actif',this)">✅ Actifs</button>
-        <button class="btn btn-sm btn-outline" id="filterSuspendu" onclick="filterClients('suspendu',this)">⏸ Suspendus</button>
-        <button class="btn btn-sm btn-outline" id="filterResilie" onclick="filterClients('resilié',this)">❌ Résiliés</button>
+      <div class="filter-bar">
+        <input class="search-bar" id="searchClients" placeholder="🔍 Rechercher un client..." oninput="renderClients()">
+        <button class="btn-sm" id="f-all" onclick="setFilter('all',this)" style="background:rgba(45,212,160,0.15);color:var(--teal);border:1px solid rgba(45,212,160,0.3)">Tous</button>
+        <button class="btn-sm btn-outline" id="f-actif" onclick="setFilter('actif',this)">✅ Actifs</button>
+        <button class="btn-sm btn-outline" id="f-suspendu" onclick="setFilter('suspendu',this)">⏸ Suspendus</button>
+        <button class="btn-sm btn-outline" id="f-resilié" onclick="setFilter('resilié',this)">❌ Résiliés</button>
       </div>
       <div class="card">
         <table>
           <tr><th>Établissement</th><th>Contact</th><th>Plan</th><th>Renouvellement</th><th>Statut</th><th>Actions</th></tr>
-          <tbody id="clientsTable"><tr><td colspan="6" style="text-align:center;color:var(--muted);padding:20px">Chargement...</td></tr></tbody>
+          <tbody id="clientsTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- IMPAYES -->
+    <div id="tab-impayes" class="section-tab">
+      <div class="page-header">
+        <div><div class="page-title">⚠️ Impayés</div><div class="page-sub">Clients avec paiement en retard</div></div>
+      </div>
+      <div id="impayesList"></div>
+    </div>
+
+    <!-- FACTURES -->
+    <div id="tab-factures" class="section-tab">
+      <div class="page-header">
+        <div><div class="page-title">🧾 Factures</div><div class="page-sub">Génération et envoi de factures</div></div>
+        <button class="btn btn-primary" onclick="openModal('modalGenFacture')">+ Générer facture</button>
+      </div>
+      <div class="card">
+        <table>
+          <tr><th>N° Facture</th><th>Client</th><th>Mois</th><th>Montant HT</th><th>TVA</th><th>TTC</th><th>Statut</th><th>Actions</th></tr>
+          <tbody id="facturesTable"></tbody>
         </table>
       </div>
     </div>
@@ -164,39 +233,14 @@ tr:hover td{background:rgba(45,212,160,0.03)}
     <!-- ABONNEMENTS -->
     <div id="tab-abonnements" class="section-tab">
       <div class="page-header">
-        <div class="page-title">💳 Abonnements</div>
-        <div class="page-sub">Suivi des plans et renouvellements</div>
-      </div>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px">
-        <div class="card"><div class="card-body" style="text-align:center">
-          <div style="font-size:22px;font-weight:800;color:var(--teal)" id="nbStarter">—</div>
-          <div style="font-size:13px;color:var(--muted);margin-top:4px">Starter · 39€/mois</div>
-        </div></div>
-        <div class="card"><div class="card-body" style="text-align:center">
-          <div style="font-size:22px;font-weight:800;color:var(--blue)" id="nbPro">—</div>
-          <div style="font-size:13px;color:var(--muted);margin-top:4px">Pro · 69€/mois</div>
-        </div></div>
-        <div class="card"><div class="card-body" style="text-align:center">
-          <div style="font-size:22px;font-weight:800;color:var(--amber)" id="nbPremium">—</div>
-          <div style="font-size:13px;color:var(--muted);margin-top:4px">Premium · 99€/mois</div>
-        </div></div>
+        <div><div class="page-title">💳 Abonnements</div><div class="page-sub">Renouvellements et plans</div></div>
       </div>
       <div class="card">
-        <div style="padding:16px;font-size:14px;font-weight:700;color:var(--text)">Renouvellements à venir (30 jours)</div>
         <table>
-          <tr><th>Établissement</th><th>Plan</th><th>Renouvellement</th><th>Montant</th><th>Statut paiement</th></tr>
-          <tbody id="renouvTable"><tr><td colspan="5" style="text-align:center;color:var(--muted);padding:20px">Chargement...</td></tr></tbody>
+          <tr><th>Client</th><th>Plan actuel</th><th>Depuis</th><th>Prochain renouvellement</th><th>Paiement</th><th>Actions</th></tr>
+          <tbody id="aboTable"></tbody>
         </table>
       </div>
-    </div>
-
-    <!-- IMPAYES -->
-    <div id="tab-impayés" class="section-tab">
-      <div class="page-header">
-        <div class="page-title">⚠️ Impayés</div>
-        <div class="page-sub">Clients avec paiement en retard</div>
-      </div>
-      <div id="impayesList">Chargement...</div>
     </div>
 
   </div>
@@ -205,221 +249,299 @@ tr:hover td{background:rgba(45,212,160,0.03)}
 <!-- MODAL ADD CLIENT -->
 <div class="modal-overlay" id="modalAddClient">
   <div class="modal">
-    <div class="modal-title">🏪 Nouveau client <button onclick="closeModal('modalAddClient')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px">✕</button></div>
-    <div class="form-group"><label class="form-label">Nom de l'établissement *</label><input class="form-input" id="newClientNom" placeholder="Ex: Boulangerie Martin"></div>
-    <div class="form-group"><label class="form-label">Slug (identifiant URL) * <span style="font-size:10px;color:#64748b">Ex: martin → hygipro.vercel.app?client=martin</span></label><input class="form-input" id="newClientSlug" placeholder="martin" oninput="this.value=this.value.toLowerCase().replace(/[^a-z0-9-]/g,'')"></div>
-    <div class="form-group"><label class="form-label">Nom du responsable *</label><input class="form-input" id="newClientResponsable" placeholder="Ex: Jean Martin"></div>
+    <div class="modal-title">🏪 Nouveau client <button class="modal-close" onclick="closeModal('modalAddClient')">✕</button></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Nom établissement *</label><input class="form-input" id="newClientNom" placeholder="Boulangerie Martin"></div>
+      <div class="form-group"><label class="form-label">Slug URL * <span style="font-size:9px;color:var(--muted)">ex: martin</span></label><input class="form-input" id="newClientSlug" placeholder="martin" oninput="this.value=this.value.toLowerCase().replace(/[^a-z0-9-]/g,'')"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Responsable *</label><input class="form-input" id="newClientResponsable" placeholder="Jean Martin"></div>
+      <div class="form-group"><label class="form-label">Téléphone</label><input class="form-input" id="newClientTel" placeholder="06 XX XX XX XX"></div>
+    </div>
     <div class="form-group"><label class="form-label">Email *</label><input class="form-input" id="newClientEmail" type="email" placeholder="martin@boulangerie.fr"></div>
-    <div class="form-group"><label class="form-label">Téléphone</label><input class="form-input" id="newClientTel" placeholder="06 XX XX XX XX"></div>
-    <div class="form-group"><label class="form-label">Ville</label><input class="form-input" id="newClientVille" placeholder="Paris"></div>
-    <div class="form-group"><label class="form-label">Plan souscrit</label>
-      <select class="form-select" id="newClientPlan">
-        <option value="starter">Starter — 39€/mois</option>
-        <option value="pro" selected>Pro — 69€/mois</option>
-        <option value="premium">Premium — 99€/mois</option>
-      </select>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Ville</label><input class="form-input" id="newClientVille" placeholder="Paris"></div>
+      <div class="form-group"><label class="form-label">Plan *</label>
+        <select class="form-select" id="newClientPlan">
+          <option value="starter">Starter — 39€/mois</option>
+          <option value="pro" selected>Pro — 69€/mois</option>
+          <option value="premium">Premium — 99€/mois</option>
+        </select>
+      </div>
     </div>
     <div class="form-group"><label class="form-label">Date de début</label><input class="form-input" id="newClientDebut" type="date"></div>
-    <div class="form-group"><label class="form-label">Notes</label><textarea class="form-input" id="newClientNotes" placeholder="Notes internes..." rows="2"></textarea></div>
-    <button class="btn btn-primary" onclick="addClient()" style="width:100%;justify-content:center">Créer le client</button>
+    <div class="form-group"><label class="form-label">Notes internes</label><textarea class="form-textarea" id="newClientNotes" placeholder="Notes..."></textarea></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-primary" onclick="addClient()" style="flex:1;justify-content:center">✅ Créer le client</button>
+      <div style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="sendWelcome" checked><label style="font-size:12px;color:var(--muted);cursor:pointer" for="sendWelcome">Envoyer email bienvenue</label></div>
+    </div>
   </div>
 </div>
 
 <!-- MODAL EDIT CLIENT -->
 <div class="modal-overlay" id="modalEditClient">
   <div class="modal">
-    <div class="modal-title">✏️ Modifier le client <button onclick="closeModal('modalEditClient')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px">✕</button></div>
+    <div class="modal-title">✏️ Modifier client <button class="modal-close" onclick="closeModal('modalEditClient')">✕</button></div>
     <input type="hidden" id="editClientId">
-    <div class="form-group"><label class="form-label">Nom de l'établissement</label><input class="form-input" id="editClientNom"></div>
-    <div class="form-group"><label class="form-label">Responsable</label><input class="form-input" id="editClientResponsable"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Nom établissement</label><input class="form-input" id="editClientNom"></div>
+      <div class="form-group"><label class="form-label">Slug URL</label><input class="form-input" id="editClientSlug" oninput="this.value=this.value.toLowerCase().replace(/[^a-z0-9-]/g,'')"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Responsable</label><input class="form-input" id="editClientResponsable"></div>
+      <div class="form-group"><label class="form-label">Téléphone</label><input class="form-input" id="editClientTel"></div>
+    </div>
     <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="editClientEmail" type="email"></div>
-    <div class="form-group"><label class="form-label">Téléphone</label><input class="form-input" id="editClientTel"></div>
-    <div class="form-group"><label class="form-label">Plan</label>
-      <select class="form-select" id="editClientPlan">
-        <option value="starter">Starter — 39€/mois</option>
-        <option value="pro">Pro — 69€/mois</option>
-        <option value="premium">Premium — 99€/mois</option>
-      </select>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Plan</label>
+        <select class="form-select" id="editClientPlan">
+          <option value="starter">Starter — 39€/mois</option>
+          <option value="pro">Pro — 69€/mois</option>
+          <option value="premium">Premium — 99€/mois</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Statut</label>
+        <select class="form-select" id="editClientStatut">
+          <option value="actif">✅ Actif</option>
+          <option value="suspendu">⏸ Suspendu</option>
+          <option value="resilié">❌ Résilié</option>
+        </select>
+      </div>
     </div>
-    <div class="form-group"><label class="form-label">Statut</label>
-      <select class="form-select" id="editClientStatut">
-        <option value="actif">✅ Actif</option>
-        <option value="suspendu">⏸ Suspendu (impayé)</option>
-        <option value="resilié">❌ Résilié</option>
-      </select>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Renouvellement</label><input class="form-input" id="editClientRenouvellement" type="date"></div>
+      <div class="form-group"><label class="form-label">Paiement</label>
+        <select class="form-select" id="editClientPaiement">
+          <option value="ok">✅ À jour</option>
+          <option value="retard">⚠️ En retard</option>
+          <option value="impayé">❌ Impayé</option>
+        </select>
+      </div>
     </div>
-    <div class="form-group"><label class="form-label">Prochain renouvellement</label><input class="form-input" id="editClientRenouvellement" type="date"></div>
-    <div class="form-group"><label class="form-label">Paiement</label>
-      <select class="form-select" id="editClientPaiement">
-        <option value="ok">✅ À jour</option>
-        <option value="retard">⚠️ En retard</option>
-        <option value="impayé">❌ Impayé</option>
-      </select>
-    </div>
-    <div class="form-group"><label class="form-label">Notes internes</label><textarea class="form-input" id="editClientNotes" rows="2"></textarea></div>
-    <div style="display:flex;gap:8px">
+    <div class="form-group"><label class="form-label">Notes internes</label><textarea class="form-textarea" id="editClientNotes"></textarea></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn btn-primary" onclick="saveEditClient()" style="flex:1;justify-content:center">💾 Enregistrer</button>
-      <button class="btn btn-danger" onclick="toggleBlock()" id="btnBlock" style="flex:1;justify-content:center">⏸ Suspendre</button>
+      <button class="btn btn-danger" onclick="resilierClient()" style="flex:1;justify-content:center">❌ Résilier</button>
     </div>
   </div>
 </div>
 
+<!-- MODAL GENERER FACTURE -->
+<div class="modal-overlay" id="modalGenFacture">
+  <div class="modal">
+    <div class="modal-title">🧾 Générer une facture <button class="modal-close" onclick="closeModal('modalGenFacture')">✕</button></div>
+    <div class="form-group"><label class="form-label">Client *</label>
+      <select class="form-select" id="factClient"></select>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Mois de facturation</label><input class="form-input" id="factMois" type="month"></div>
+      <div class="form-group"><label class="form-label">Montant HT (€)</label><input class="form-input" id="factMontantHT" type="number" placeholder="69" oninput="calcTVA()"></div>
+    </div>
+    <div style="background:#080f1e;border-radius:8px;padding:12px 14px;margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-bottom:6px"><span>Montant HT</span><span id="factHT">—</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-bottom:6px"><span>TVA 20%</span><span id="factTVA">—</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:15px;font-weight:700;color:var(--text);border-top:1px solid var(--border);padding-top:8px;margin-top:4px"><span>Total TTC</span><span id="factTTC" style="color:var(--teal)">—</span></div>
+    </div>
+    <div class="form-group"><label class="form-label">Description</label><textarea class="form-textarea" id="factDesc" placeholder="Abonnement HygiPro Pro — Janvier 2026"></textarea></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-primary" onclick="genererFacture(false)" style="flex:1;justify-content:center">🧾 Générer</button>
+      <button class="btn btn-purple" onclick="genererFacture(true)" style="flex:1;justify-content:center">📧 Générer + Envoyer</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EMAIL -->
+<div class="modal-overlay" id="modalEmail">
+  <div class="modal">
+    <div class="modal-title">📧 Envoyer un email <button class="modal-close" onclick="closeModal('modalEmail')">✕</button></div>
+    <input type="hidden" id="emailClientId">
+    <div class="form-group"><label class="form-label">Destinataire</label><input class="form-input" id="emailTo" readonly style="opacity:0.7"></div>
+    <div class="form-group"><label class="form-label">Sujet *</label><input class="form-input" id="emailSubject" placeholder="Objet de l'email"></div>
+    <div class="form-group"><label class="form-label">Message *</label><textarea class="form-textarea" id="emailMessage" placeholder="Votre message..." style="min-height:120px"></textarea></div>
+    <button class="btn btn-primary" onclick="sendEmail()" style="width:100%;justify-content:center">📧 Envoyer</button>
+  </div>
+</div>
+
 <script>
-const SUPABASE_URL='https://mzyrffxosabnmkcqduvc.supabase.co';
-const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16eXJmZnhvc2Fibm1rY3FkdXZjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0NjkzMzYsImV4cCI6MjA5MTA0NTMzNn0.fbhCUI5EKvCO2k0014JWrOR-dqBF4XL1k6Tqdy4zIM8';
-const db=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const SUPA_URL='https://mzyrffxosabnmkcqduvc.supabase.co';
+const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16eXJmZnhvc2Fibm1rY3FkdXZjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0NjkzMzYsImV4cCI6MjA5MTA0NTMzNn0.fbhCUI5EKvCO2k0014JWrOR-dqBF4XL1k6Tqdy4zIM8';
+const db=supabase.createClient(SUPA_URL,SUPA_KEY);
+const EJS_SERVICE='service_tvxdil9';
+const EJS_TEMPLATE='template_04mofjd';
+const EJS_KEY='7kVoTf5LrAc4KCOpG';
+emailjs.init(EJS_KEY);
 
 const PLAN_PRIX={starter:39,pro:69,premium:99};
 const PLAN_LABEL={starter:'Starter',pro:'Pro',premium:'Premium'};
 const PLAN_COLOR={starter:'badge-blue',pro:'badge-green',premium:'badge-amber'};
 let allClients=[];
+let allFactures=[];
 let currentFilter='all';
+let factureNum=1000;
 
-async function loginAdmin(){
-  const email=document.getElementById('adminEmail').value;
-  const password=document.getElementById('adminPassword').value;
-  // Simple auth — mot de passe admin
-  if(password==='HygiPro2025!'){
+function showToast(msg,type='ok',dur=3000){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className='toast show '+type;
+  setTimeout(()=>t.className='toast',dur);
+}
+
+function loginAdmin(){
+  const pwd=document.getElementById('adminPassword').value;
+  if(pwd==='HygiPro2025!'){
     document.getElementById('loginScreen').style.display='none';
     document.getElementById('mainScreen').style.display='block';
-    document.getElementById('adminEmailDisplay').textContent=email;
-    loadDashboard();
-    loadClients();
+    document.getElementById('adminEmailDisplay').textContent=document.getElementById('adminEmail').value;
+    loadAll();
   }else{
     document.getElementById('loginError').style.display='block';
     document.getElementById('loginError').textContent='Mot de passe incorrect';
   }
 }
-
 function logoutAdmin(){
   document.getElementById('loginScreen').style.display='flex';
   document.getElementById('mainScreen').style.display='none';
   document.getElementById('adminPassword').value='';
 }
+document.getElementById('adminPassword').addEventListener('keypress',e=>{if(e.key==='Enter')loginAdmin();});
 
 function showTab(tab,el){
   document.querySelectorAll('.section-tab').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.nav-link').forEach(l=>l.classList.remove('active'));
   document.getElementById('tab-'+tab).classList.add('active');
-  el.classList.add('active');
-  if(tab==='dashboard')loadDashboard();
+  if(el)el.classList.add('active');
+  if(tab==='dashboard')renderDashboard();
   if(tab==='clients')renderClients();
-  if(tab==='abonnements')loadAbonnements();
-  if(tab==='impayés')loadImpayes();
+  if(tab==='impayes')renderImpayes();
+  if(tab==='factures')renderFactures();
+  if(tab==='abonnements')renderAbonnements();
 }
 
-function openModal(id){document.getElementById(id).classList.add('open');}
+function openModal(id){
+  document.getElementById(id).classList.add('open');
+  if(id==='modalGenFacture'){
+    const now=new Date();
+    document.getElementById('factMois').value=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+    const sel=document.getElementById('factClient');
+    sel.innerHTML=allClients.filter(c=>c.statut==='actif').map(c=>`<option value="${c.id}" data-plan="${c.plan}">${c.nom}</option>`).join('');
+    sel.onchange=function(){
+      const plan=sel.options[sel.selectedIndex]?.dataset.plan||'pro';
+      document.getElementById('factMontantHT').value=PLAN_PRIX[plan]||69;
+      calcTVA();
+    };
+    sel.dispatchEvent(new Event('change'));
+  }
+}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
-document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');}));
+document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)closeModal(m.id);}));
 
-async function loadClients(){
-  const{data}=await db.from('saas_clients').select('*').order('created_at',{ascending:false});
-  allClients=data||[];
-  renderClients();
-  loadDashboard();
+async function loadAll(){
+  const[{data:clients},{data:factures}]=await Promise.all([
+    db.from('saas_clients').select('*').order('created_at',{ascending:false}),
+    db.from('saas_factures').select('*').order('created_at',{ascending:false}).catch(()=>({data:[]}))
+  ]);
+  allClients=clients||[];
+  allFactures=factures||[];
+  renderDashboard();
+  updateBadges();
 }
 
-function filterClients(filter,btn){
-  currentFilter=filter;
-  document.querySelectorAll('#tab-clients .btn-sm').forEach(b=>{b.style.background='transparent';b.style.color='var(--muted)';b.style.border='1px solid var(--border)';});
+function updateBadges(){
+  const n=allClients.filter(c=>c.paiement==='impayé'||c.paiement==='retard').length;
+  const b=document.getElementById('badgeImpayes');
+  if(n>0){b.textContent=n;b.style.display='inline';}else{b.style.display='none';}
+}
+
+function renderDashboard(){
+  const actifs=allClients.filter(c=>c.statut==='actif');
+  const mrr=actifs.reduce((s,c)=>s+(PLAN_PRIX[c.plan]||0),0);
+  const impayes=allClients.filter(c=>c.paiement==='impayé'||c.paiement==='retard').length;
+  const suspendus=allClients.filter(c=>c.statut==='suspendu').length;
+  document.getElementById('kpiActifs').textContent=actifs.length;
+  document.getElementById('kpiMRR').textContent=mrr+'€';
+  document.getElementById('kpiImpayes').textContent=impayes;
+  document.getElementById('kpiSuspendus').textContent=suspendus;
+  ['starter','pro','premium'].forEach(p=>{
+    const n=actifs.filter(c=>c.plan===p).length;
+    document.getElementById('nb'+p.charAt(0).toUpperCase()+p.slice(1)).textContent=n;
+    document.getElementById('mrr'+p.charAt(0).toUpperCase()+p.slice(1)).textContent=(n*PLAN_PRIX[p])+'€/mois';
+  });
+  // Renouvellements dans 7j
+  const in7=allClients.filter(c=>{
+    if(!c.renouvellement)return false;
+    const d=Math.ceil((new Date(c.renouvellement)-new Date())/86400000);
+    return d>=0&&d<=7;
+  }).sort((a,b)=>new Date(a.renouvellement)-new Date(b.renouvellement));
+  const elR=document.getElementById('renouvDash');
+  elR.innerHTML=in7.length?in7.map(c=>{
+    const d=Math.ceil((new Date(c.renouvellement)-new Date())/86400000);
+    const pc=c.paiement==='ok'?'badge-green':c.paiement==='retard'?'badge-amber':'badge-red';
+    return`<tr><td><b>${c.nom}</b></td><td><span class="badge ${PLAN_COLOR[c.plan]}">${PLAN_LABEL[c.plan]}</span></td>
+    <td style="color:var(--amber)">J−${d} · ${new Date(c.renouvellement).toLocaleDateString('fr-FR')}</td>
+    <td><span class="badge ${pc}">${c.paiement}</span></td>
+    <td><button class="btn-sm btn-purple" onclick="openEmailModal('${c.id}','Renouvellement abonnement HygiPro','Bonjour ${c.responsable||c.nom},\\n\\nVotre abonnement HygiPro ${PLAN_LABEL[c.plan]} arrive à renouvellement dans ${d} jour(s).\\n\\nMontant : ${PLAN_PRIX[c.plan]}€/mois\\n\\nCordialement,\\nHygiPro')">📧 Rappel</button></td></tr>`;
+  }).join(''):'<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:20px">Aucun renouvellement dans les 7 jours</td></tr>';
+  // Derniers clients
+  const elL=document.getElementById('latestClients');
+  elL.innerHTML=allClients.slice(0,5).map(c=>{
+    const sc=c.statut==='actif'?'badge-green':c.statut==='suspendu'?'badge-amber':'badge-red';
+    return`<tr><td><b>${c.nom}</b><br><span style="font-size:10px;color:var(--teal)">?client=${c.slug||'—'}</span></td>
+    <td><span class="badge ${PLAN_COLOR[c.plan]}">${PLAN_LABEL[c.plan]}</span></td>
+    <td><span class="badge ${sc}">${c.statut}</span></td>
+    <td style="color:var(--muted)">${c.created_at?new Date(c.created_at).toLocaleDateString('fr-FR'):'—'}</td></tr>`;
+  }).join('')||'<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:20px">Aucun client</td></tr>';
+}
+
+function setFilter(f,btn){
+  currentFilter=f;
+  document.querySelectorAll('.filter-bar .btn-sm').forEach(b=>{b.style.background='transparent';b.style.color='var(--muted)';b.style.border='1px solid var(--border)';});
   btn.style.background='rgba(45,212,160,0.15)';btn.style.color='var(--teal)';btn.style.border='1px solid rgba(45,212,160,0.3)';
   renderClients();
 }
 
 function renderClients(){
-  const filtered=currentFilter==='all'?allClients:allClients.filter(c=>c.statut===currentFilter);
+  const search=(document.getElementById('searchClients')?.value||'').toLowerCase();
+  const filtered=allClients.filter(c=>{
+    const matchFilter=currentFilter==='all'||c.statut===currentFilter;
+    const matchSearch=!search||c.nom?.toLowerCase().includes(search)||c.responsable?.toLowerCase().includes(search)||c.email?.toLowerCase().includes(search);
+    return matchFilter&&matchSearch;
+  });
   const el=document.getElementById('clientsTable');
-  if(!filtered.length){el.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:24px">Aucun client</td></tr>';return;}
+  if(!filtered.length){el.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:24px">Aucun client trouvé</td></tr>';return;}
   el.innerHTML=filtered.map(c=>{
     const sc=c.statut==='actif'?'badge-green':c.statut==='suspendu'?'badge-amber':'badge-red';
     const pc=c.paiement==='ok'?'badge-green':c.paiement==='retard'?'badge-amber':'badge-red';
     const renouv=c.renouvellement?new Date(c.renouvellement).toLocaleDateString('fr-FR'):'—';
-    const diffJ=c.renouvellement?Math.ceil((new Date(c.renouvellement)-new Date())/86400000):null;
-    const renewWarn=diffJ!==null&&diffJ<=7;
+    const diff=c.renouvellement?Math.ceil((new Date(c.renouvellement)-new Date())/86400000):null;
+    const link=`https://hygipro.vercel.app?client=${c.slug||''}`;
     return`<tr>
-      <td><div style="font-weight:600">${c.nom}</div><div style="font-size:10px;color:var(--teal);margin-top:2px">🔗 ?client=${c.slug||'—'}</div><div style="font-size:11px;color:var(--muted)">${c.ville||''}</div></td>
-      <td><div>${c.responsable||'—'}</div><div style="font-size:11px;color:var(--muted)">${c.email||''}</div></td>
+      <td>
+        <div style="font-weight:600">${c.nom}</div>
+        <div style="font-size:10px;color:var(--teal);margin-top:2px;cursor:pointer" onclick="navigator.clipboard.writeText('${link}');showToast('🔗 Lien copié !','ok',2000)" title="Cliquer pour copier">🔗 ?client=${c.slug||'—'} 📋</div>
+        <div style="font-size:11px;color:var(--muted)">${c.ville||''}</div>
+      </td>
+      <td>
+        <div>${c.responsable||'—'}</div>
+        <div style="font-size:11px;color:var(--muted)">${c.email||''}</div>
+        <div style="font-size:11px;color:var(--muted)">${c.tel||''}</div>
+      </td>
       <td><span class="badge ${PLAN_COLOR[c.plan]||'badge-blue'}">${PLAN_LABEL[c.plan]||c.plan} · ${PLAN_PRIX[c.plan]||'—'}€</span></td>
-      <td><span style="color:${renewWarn?'var(--amber)':'var(--text)'}">${renouv}</span>${renewWarn?'<div style="font-size:10px;color:var(--amber)">⚠ Dans '+diffJ+'j</div>':''}</td>
+      <td>
+        <div style="color:${diff!==null&&diff<=7?'var(--amber)':'var(--text)'}">${renouv}</div>
+        ${diff!==null&&diff<=7?`<div style="font-size:10px;color:var(--amber)">⚠ J−${diff}</div>`:''}
+      </td>
       <td>
         <span class="badge ${sc}">${c.statut}</span>
-        ${c.paiement!=='ok'?'<br><span class="badge '+pc+'" style="margin-top:4px">'+c.paiement+'</span>':''}
+        ${c.paiement!=='ok'?`<br><span class="badge ${pc}" style="margin-top:4px">${c.paiement}</span>`:''}
       </td>
       <td style="white-space:nowrap">
-        <button class="btn btn-sm" onclick="editClient('${c.id}')" style="background:rgba(96,165,250,0.15);color:var(--blue);border:1px solid rgba(96,165,250,0.3);margin-right:4px">✏️</button>
-        ${c.statut==='actif'?`<button class="btn btn-sm" onclick="suspendreClient('${c.id}')" style="background:rgba(245,158,11,0.15);color:var(--amber);border:1px solid rgba(245,158,11,0.3)">⏸</button>`:`<button class="btn btn-sm" onclick="activerClient('${c.id}')" style="background:rgba(52,211,153,0.15);color:var(--green);border:1px solid rgba(52,211,153,0.3)">▶️</button>`}
+        <div style="display:flex;gap:4px;flex-wrap:wrap">
+          <button class="btn-sm btn-blue" onclick="editClient('${c.id}')">✏️</button>
+          <button class="btn-sm btn-purple" onclick="openEmailModal('${c.id}','','')">📧</button>
+          ${c.statut==='actif'?`<button class="btn-sm btn-amber" onclick="suspendreClient('${c.id}')">⏸</button>`:`<button class="btn-sm btn-green" onclick="activerClient('${c.id}')">▶️</button>`}
+          <button class="btn-sm" onclick="genFactureRapide('${c.id}')" style="background:rgba(167,139,250,0.15);color:var(--purple);border:1px solid rgba(167,139,250,0.3)">🧾</button>
+        </div>
       </td>
     </tr>`;
-  }).join('');
-}
-
-async function loadDashboard(){
-  const actifs=allClients.filter(c=>c.statut==='actif').length;
-  const suspendus=allClients.filter(c=>c.statut==='suspendu').length;
-  const impayes=allClients.filter(c=>c.paiement==='impayé'||c.paiement==='retard').length;
-  const mrr=allClients.filter(c=>c.statut==='actif').reduce((s,c)=>s+(PLAN_PRIX[c.plan]||0),0);
-  document.getElementById('kpiActifs').textContent=actifs;
-  document.getElementById('kpiSuspendus').textContent=suspendus;
-  document.getElementById('kpiImpayes').textContent=impayes;
-  document.getElementById('kpiRevenu').textContent=mrr+'€';
-  const el=document.getElementById('latestClients');
-  const latest=allClients.slice(0,5);
-  if(!latest.length){el.innerHTML='<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:20px">Aucun client</td></tr>';return;}
-  el.innerHTML=latest.map(c=>{
-    const sc=c.statut==='actif'?'badge-green':c.statut==='suspendu'?'badge-amber':'badge-red';
-    return`<tr>
-      <td><div style="font-weight:600">${c.nom}</div><div style="font-size:11px;color:var(--muted)">${c.responsable||''}</div></td>
-      <td><span class="badge ${PLAN_COLOR[c.plan]||'badge-blue'}">${PLAN_LABEL[c.plan]||c.plan}</span></td>
-      <td><span class="badge ${sc}">${c.statut}</span></td>
-      <td style="color:var(--muted)">${c.created_at?new Date(c.created_at).toLocaleDateString('fr-FR'):'—'}</td>
-    </tr>`;
-  }).join('');
-}
-
-async function loadAbonnements(){
-  const starter=allClients.filter(c=>c.plan==='starter'&&c.statut==='actif').length;
-  const pro=allClients.filter(c=>c.plan==='pro'&&c.statut==='actif').length;
-  const premium=allClients.filter(c=>c.plan==='premium'&&c.statut==='actif').length;
-  document.getElementById('nbStarter').textContent=starter;
-  document.getElementById('nbPro').textContent=pro;
-  document.getElementById('nbPremium').textContent=premium;
-  const in30=allClients.filter(c=>{
-    if(!c.renouvellement)return false;
-    const diff=Math.ceil((new Date(c.renouvellement)-new Date())/86400000);
-    return diff>=0&&diff<=30;
-  }).sort((a,b)=>new Date(a.renouvellement)-new Date(b.renouvellement));
-  const el=document.getElementById('renouvTable');
-  if(!in30.length){el.innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:20px">Aucun renouvellement dans les 30 jours</td></tr>';return;}
-  el.innerHTML=in30.map(c=>{
-    const diff=Math.ceil((new Date(c.renouvellement)-new Date())/86400000);
-    const pc=c.paiement==='ok'?'badge-green':c.paiement==='retard'?'badge-amber':'badge-red';
-    return`<tr>
-      <td><b>${c.nom}</b></td>
-      <td><span class="badge ${PLAN_COLOR[c.plan]||'badge-blue'}">${PLAN_LABEL[c.plan]}</span></td>
-      <td><span style="color:${diff<=7?'var(--amber)':'var(--text)'}">Le ${new Date(c.renouvellement).toLocaleDateString('fr-FR')}</span> <span style="font-size:11px;color:var(--muted)">(J−${diff})</span></td>
-      <td style="font-weight:700;color:var(--teal)">${PLAN_PRIX[c.plan]||'—'} €</td>
-      <td><span class="badge ${pc}">${c.paiement||'—'}</span></td>
-    </tr>`;
-  }).join('');
-}
-
-async function loadImpayes(){
-  const impayes=allClients.filter(c=>c.paiement==='impayé'||c.paiement==='retard');
-  const el=document.getElementById('impayesList');
-  if(!impayes.length){el.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted)">🎉 Aucun impayé en cours</div>';return;}
-  el.innerHTML=impayes.map(c=>{
-    const pc=c.paiement==='impayé'?'badge-red':'badge-amber';
-    return`<div class="card" style="margin-bottom:12px"><div class="card-body" style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
-      <div>
-        <div style="font-size:15px;font-weight:700">${c.nom}</div>
-        <div style="font-size:12px;color:var(--muted)">${c.responsable||''} · ${c.email||''} · ${c.tel||''}</div>
-        <div style="margin-top:6px"><span class="badge ${pc}">${c.paiement}</span> <span class="badge ${PLAN_COLOR[c.plan]||'badge-blue'}">${PLAN_LABEL[c.plan]} · ${PLAN_PRIX[c.plan]}€/mois</span></div>
-      </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn btn-sm" onclick="suspendreClient('${c.id}')" style="background:rgba(245,158,11,0.15);color:var(--amber);border:1px solid rgba(245,158,11,0.3)">⏸ Suspendre</button>
-        <button class="btn btn-sm" onclick="marquerPaye('${c.id}')" style="background:rgba(52,211,153,0.15);color:var(--green);border:1px solid rgba(52,211,153,0.3)">✅ Marquer payé</button>
-      </div>
-    </div></div>`;
   }).join('');
 }
 
@@ -428,47 +550,56 @@ async function addClient(){
   const slug=document.getElementById('newClientSlug').value.trim();
   const resp=document.getElementById('newClientResponsable').value.trim();
   const email=document.getElementById('newClientEmail').value.trim();
-  if(!nom||!slug||!resp||!email){alert('Champs obligatoires manquants (nom, slug, responsable, email)');return;}
+  if(!nom||!slug||!resp||!email){showToast('Champs obligatoires manquants','danger');return;}
   const debut=document.getElementById('newClientDebut').value||new Date().toISOString().split('T')[0];
   const renouv=new Date(debut);renouv.setMonth(renouv.getMonth()+1);
+  const plan=document.getElementById('newClientPlan').value;
   const{error}=await db.from('saas_clients').insert({
     nom,slug,responsable:resp,email,
     tel:document.getElementById('newClientTel').value||null,
     ville:document.getElementById('newClientVille').value||null,
-    plan:document.getElementById('newClientPlan').value,
-    statut:'actif',paiement:'ok',
+    plan,statut:'actif',paiement:'ok',
     date_debut:debut,
     renouvellement:renouv.toISOString().split('T')[0],
     notes:document.getElementById('newClientNotes').value||null,
   });
-  if(error){alert('Erreur : '+error.message);return;}
+  if(error){showToast('Erreur : '+error.message,'danger');return;}
   closeModal('modalAddClient');
   ['newClientNom','newClientSlug','newClientResponsable','newClientEmail','newClientTel','newClientVille','newClientNotes'].forEach(id=>document.getElementById(id).value='');
-  await loadClients();
-  const btn=document.querySelector('.nav-link[onclick*="clients"]');
-  if(btn)showTab('clients',btn);
+  // Email bienvenue
+  if(document.getElementById('sendWelcome').checked&&email){
+    await sendEmailJS(email,resp||nom,'Bienvenue sur HygiPro ! 🎉',
+      `Bonjour ${resp||nom},\n\nVotre application HygiPro est prête !\n\n🔗 Votre lien d'accès : https://hygipro.vercel.app?client=${slug}\n\n📋 Plan souscrit : ${PLAN_LABEL[plan]} — ${PLAN_PRIX[plan]}€/mois\n\nEn cas de question, contactez-nous.\n\nCordialement,\nL'équipe HygiPro`,
+      '','');
+    showToast('✅ Client créé + email de bienvenue envoyé !','ok',4000);
+  }else{
+    showToast('✅ Client créé avec succès !','ok',3000);
+  }
+  await loadAll();
+  showTab('clients',document.querySelectorAll('.nav-link')[3]);
 }
 
 function editClient(id){
   const c=allClients.find(cl=>cl.id===id);if(!c)return;
   document.getElementById('editClientId').value=id;
   document.getElementById('editClientNom').value=c.nom||'';
+  document.getElementById('editClientSlug').value=c.slug||'';
   document.getElementById('editClientResponsable').value=c.responsable||'';
-  document.getElementById('editClientEmail').value=c.email||'';
   document.getElementById('editClientTel').value=c.tel||'';
+  document.getElementById('editClientEmail').value=c.email||'';
   document.getElementById('editClientPlan').value=c.plan||'pro';
   document.getElementById('editClientStatut').value=c.statut||'actif';
   document.getElementById('editClientRenouvellement').value=c.renouvellement||'';
   document.getElementById('editClientPaiement').value=c.paiement||'ok';
   document.getElementById('editClientNotes').value=c.notes||'';
-  document.getElementById('btnBlock').textContent=c.statut==='actif'?'⏸ Suspendre':'▶️ Réactiver';
   openModal('modalEditClient');
 }
 
 async function saveEditClient(){
   const id=document.getElementById('editClientId').value;
-  await db.from('saas_clients').update({
+  const{error}=await db.from('saas_clients').update({
     nom:document.getElementById('editClientNom').value,
+    slug:document.getElementById('editClientSlug').value,
     responsable:document.getElementById('editClientResponsable').value,
     email:document.getElementById('editClientEmail').value,
     tel:document.getElementById('editClientTel').value,
@@ -478,41 +609,262 @@ async function saveEditClient(){
     paiement:document.getElementById('editClientPaiement').value,
     notes:document.getElementById('editClientNotes').value,
   }).eq('id',id);
+  if(error){showToast('Erreur : '+error.message,'danger');return;}
   closeModal('modalEditClient');
-  await loadClients();
+  showToast('✅ Client mis à jour','ok',3000);
+  await loadAll();renderClients();
 }
 
-function toggleBlock(){
+async function resilierClient(){
   const id=document.getElementById('editClientId').value;
   const c=allClients.find(cl=>cl.id===id);
-  if(!c)return;
-  if(c.statut==='actif')suspendreClient(id);
-  else activerClient(id);
+  if(!confirm(`Résilier définitivement "${c?.nom}" ? Cette action est irréversible.`))return;
+  await db.from('saas_clients').update({statut:'resilié',paiement:'ok'}).eq('id',id);
+  // Email résiliation
+  if(c?.email){
+    await sendEmailJS(c.email,c.responsable||c.nom,'Résiliation de votre abonnement HygiPro',
+      `Bonjour ${c.responsable||c.nom},\n\nNous vous confirmons la résiliation de votre abonnement HygiPro.\n\nVotre accès a été désactivé.\n\nCordialement,\nL'équipe HygiPro`,'','');
+  }
   closeModal('modalEditClient');
+  showToast('❌ Client résilié','warn',3000);
+  await loadAll();renderClients();
 }
 
 async function suspendreClient(id){
-  if(!confirm('Suspendre ce client ? Son accès HygiPro sera bloqué.'))return;
+  const c=allClients.find(cl=>cl.id===id);
+  if(!confirm(`Suspendre l'accès de "${c?.nom}" ?`))return;
   await db.from('saas_clients').update({statut:'suspendu'}).eq('id',id);
-  await loadClients();
+  if(c?.email){
+    await sendEmailJS(c.email,c.responsable||c.nom,'Suspension de votre abonnement HygiPro ⏸',
+      `Bonjour ${c.responsable||c.nom},\n\nVotre accès HygiPro a été temporairement suspendu en raison d'un impayé.\n\nPour rétablir votre accès, veuillez régulariser votre situation.\n\nCordialement,\nL'équipe HygiPro`,'','');
+  }
+  showToast('⏸ Client suspendu + email envoyé','warn',3000);
+  await loadAll();renderClients();
 }
 
 async function activerClient(id){
   await db.from('saas_clients').update({statut:'actif',paiement:'ok'}).eq('id',id);
-  await loadClients();
+  showToast('✅ Client réactivé','ok',3000);
+  await loadAll();renderClients();
+}
+
+function renderImpayes(){
+  const impayes=allClients.filter(c=>c.paiement==='impayé'||c.paiement==='retard');
+  const el=document.getElementById('impayesList');
+  if(!impayes.length){el.innerHTML='<div style="text-align:center;padding:60px;color:var(--muted)"><div style="font-size:40px;margin-bottom:12px">🎉</div><div style="font-size:16px;font-weight:600">Aucun impayé en cours</div></div>';return;}
+  el.innerHTML=impayes.map(c=>{
+    const pc=c.paiement==='impayé'?'badge-red':'badge-amber';
+    const renouv=c.renouvellement?new Date(c.renouvellement).toLocaleDateString('fr-FR'):'—';
+    return`<div class="card" style="margin-bottom:12px"><div class="card-body">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px">
+        <div>
+          <div style="font-size:16px;font-weight:700">${c.nom}</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:4px">${c.responsable||''} · ${c.email||''} · ${c.tel||''}</div>
+          <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+            <span class="badge ${pc}">${c.paiement}</span>
+            <span class="badge ${PLAN_COLOR[c.plan]}">${PLAN_LABEL[c.plan]} · ${PLAN_PRIX[c.plan]}€/mois</span>
+            <span style="font-size:12px;color:var(--muted)">Renouvellement : ${renouv}</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-sm btn-purple" onclick="openEmailModal('${c.id}','Rappel paiement HygiPro','Bonjour ${c.responsable||c.nom},\\n\\nNous vous rappelons que votre abonnement HygiPro est en attente de paiement.\\n\\nMontant dû : ${PLAN_PRIX[c.plan]}€\\n\\nMerci de régulariser votre situation.\\n\\nCordialement,\\nHygiPro')">📧 Relance</button>
+          <button class="btn btn-sm btn-amber" onclick="suspendreClient('${c.id}')">⏸ Suspendre</button>
+          <button class="btn btn-sm btn-green" onclick="marquerPaye('${c.id}')">✅ Marquer payé</button>
+        </div>
+      </div>
+    </div></div>`;
+  }).join('');
 }
 
 async function marquerPaye(id){
   await db.from('saas_clients').update({paiement:'ok'}).eq('id',id);
-  await loadClients();
-  loadImpayes();
+  showToast('✅ Paiement enregistré','ok',3000);
+  await loadAll();renderImpayes();
 }
 
-// Init date fields
-document.getElementById('newClientDebut').value=new Date().toISOString().split('T')[0];
+// FACTURES
+function calcTVA(){
+  const ht=parseFloat(document.getElementById('factMontantHT').value)||0;
+  const tva=ht*0.20;
+  const ttc=ht+tva;
+  document.getElementById('factHT').textContent=ht.toFixed(2)+'€';
+  document.getElementById('factTVA').textContent=tva.toFixed(2)+'€';
+  document.getElementById('factTTC').textContent=ttc.toFixed(2)+'€';
+}
 
-// Enter key on login
-document.getElementById('adminPassword').addEventListener('keypress',e=>{if(e.key==='Enter')loginAdmin();});
+function genFactureRapide(clientId){
+  openModal('modalGenFacture');
+  setTimeout(()=>{
+    document.getElementById('factClient').value=clientId;
+    document.getElementById('factClient').dispatchEvent(new Event('change'));
+  },100);
+}
+
+async function genererFacture(sendEmail){
+  const clientId=document.getElementById('factClient').value;
+  const c=allClients.find(cl=>cl.id===clientId);
+  if(!c){showToast('Client introuvable','danger');return;}
+  const mois=document.getElementById('factMois').value;
+  const ht=parseFloat(document.getElementById('factMontantHT').value)||0;
+  const tva=ht*0.20;
+  const ttc=ht+tva;
+  const desc=document.getElementById('factDesc').value||`Abonnement HygiPro ${PLAN_LABEL[c.plan]} — ${mois}`;
+  const num='FAC-'+Date.now().toString().slice(-6);
+  const dateFacture=new Date().toLocaleDateString('fr-FR');
+  const moisLabel=new Date(mois+'-01').toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
+
+  // Save to DB
+  await db.from('saas_factures').insert({
+    numero:num,client_id:clientId,client_nom:c.nom,mois,
+    montant_ht:ht,tva,montant_ttc:ttc,
+    description:desc,statut:'envoyée',
+  }).catch(()=>{});
+
+  // Generate PDF
+  const w=window.open('','_blank');
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Facture ${num}</title>
+  <style>*{box-sizing:border-box}body{font-family:Arial,sans-serif;max-width:700px;margin:40px auto;color:#1a1a2e;padding:20px}
+  .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:32px;padding-bottom:20px;border-bottom:3px solid #2dd4a0}
+  .logo{font-size:26px;font-weight:800;color:#2dd4a0}.fact-num{font-size:13px;color:#64748b;text-align:right}
+  .fact-num strong{font-size:18px;color:#1a1a2e;display:block}
+  .parties{display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-bottom:32px}
+  .partie h3{font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:#64748b;margin-bottom:8px}
+  .partie p{font-size:14px;color:#1a1a2e;margin-bottom:4px}
+  table{width:100%;border-collapse:collapse;margin-bottom:24px}
+  th{background:#f1f5f9;padding:12px;text-align:left;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.3px;color:#475569}
+  td{padding:14px 12px;border-bottom:1px solid #e2e8f0;font-size:14px}
+  .totals{margin-left:auto;width:280px}
+  .total-row{display:flex;justify-content:space-between;padding:8px 0;font-size:14px;border-bottom:1px solid #e2e8f0}
+  .total-ttc{display:flex;justify-content:space-between;padding:12px 0;font-size:18px;font-weight:800;color:#2dd4a0}
+  .footer{margin-top:40px;padding-top:20px;border-top:1px solid #e2e8f0;font-size:11px;color:#94a3b8;text-align:center}
+  .badge-paid{display:inline-block;background:#d1fae5;color:#065f46;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700}
+  @media print{body{margin:0}}</style></head><body>
+  <div class="header">
+    <div><div class="logo">HygiPro</div><div style="font-size:12px;color:#64748b;margin-top:4px">Système HACCP & Hygiène alimentaire</div></div>
+    <div class="fact-num"><strong>FACTURE ${num}</strong>Date : ${dateFacture}<br>Période : ${moisLabel}</div>
+  </div>
+  <div class="parties">
+    <div class="partie"><h3>Émetteur</h3><p><strong>HygiPro</strong></p><p>hygipro.vercel.app</p></div>
+    <div class="partie"><h3>Client</h3><p><strong>${c.nom}</strong></p><p>${c.responsable||''}</p><p>${c.email||''}</p><p>${c.ville||''}</p></div>
+  </div>
+  <table><tr><th>Description</th><th>Quantité</th><th>Prix unitaire HT</th><th>Total HT</th></tr>
+  <tr><td>${desc}</td><td>1</td><td>${ht.toFixed(2)}€</td><td>${ht.toFixed(2)}€</td></tr></table>
+  <div class="totals">
+    <div class="total-row"><span>Sous-total HT</span><span>${ht.toFixed(2)}€</span></div>
+    <div class="total-row"><span>TVA (20%)</span><span>${tva.toFixed(2)}€</span></div>
+    <div class="total-ttc"><span>Total TTC</span><span>${ttc.toFixed(2)}€</span></div>
+  </div>
+  <div style="margin-top:24px;padding:16px;background:#f8fafc;border-radius:8px;font-size:13px;color:#475569">
+    <strong>Modalités de paiement :</strong> Virement bancaire · Délai : 30 jours
+  </div>
+  <div class="footer">HygiPro · Facture générée automatiquement · ${dateFacture}</div>
+  <script>window.onload=()=>{window.print();}<\/script></body></html>`);
+  w.document.close();
+
+  if(sendEmail&&c.email){
+    await sendEmailJS(c.email,c.responsable||c.nom,`Votre facture HygiPro — ${moisLabel}`,
+      `Bonjour ${c.responsable||c.nom},\n\nVeuillez trouver ci-joint votre facture HygiPro pour ${moisLabel}.\n\n📋 N° Facture : ${num}\n💰 Montant TTC : ${ttc.toFixed(2)}€\n📅 Période : ${moisLabel}\n\nCordialement,\nL'équipe HygiPro`,
+      ttc.toFixed(2),moisLabel);
+    showToast('🧾 Facture générée + email envoyé !','ok',4000);
+  }else{
+    showToast('🧾 Facture générée !','ok',3000);
+  }
+  closeModal('modalGenFacture');
+  await loadAll();
+}
+
+function renderFactures(){
+  const el=document.getElementById('facturesTable');
+  if(!allFactures.length){el.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:24px">Aucune facture générée</td></tr>';return;}
+  el.innerHTML=allFactures.map(f=>{
+    const sc=f.statut==='payée'?'badge-green':f.statut==='envoyée'?'badge-blue':'badge-red';
+    const c=allClients.find(cl=>cl.id===f.client_id);
+    const moisLabel=f.mois?new Date(f.mois+'-01').toLocaleDateString('fr-FR',{month:'long',year:'numeric'}):'—';
+    return`<tr>
+      <td style="font-weight:700;color:var(--teal)">${f.numero}</td>
+      <td>${f.client_nom||c?.nom||'—'}</td>
+      <td>${moisLabel}</td>
+      <td>${f.montant_ht?.toFixed(2)||'—'}€</td>
+      <td>${f.tva?.toFixed(2)||'—'}€</td>
+      <td style="font-weight:700;color:var(--teal)">${f.montant_ttc?.toFixed(2)||'—'}€</td>
+      <td><span class="badge ${sc}">${f.statut}</span></td>
+      <td style="white-space:nowrap">
+        <div style="display:flex;gap:4px">
+          ${f.statut!=='payée'?`<button class="btn-sm btn-green" onclick="marquerFacturePaye('${f.id}')">✅ Payée</button>`:''}
+          ${c?.email?`<button class="btn-sm btn-purple" onclick="openEmailModal('${c.id}','Votre facture HygiPro ${f.numero}','Bonjour,\\n\\nVeuillez trouver votre facture N°${f.numero} pour ${moisLabel}.\\n\\nMontant TTC : ${f.montant_ttc?.toFixed(2)||'—'}€\\n\\nCordialement,\\nHygiPro')">📧</button>`:''}
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+async function marquerFacturePaye(id){
+  await db.from('saas_factures').update({statut:'payée'}).eq('id',id);
+  showToast('✅ Facture marquée comme payée','ok',3000);
+  await loadAll();renderFactures();
+}
+
+function renderAbonnements(){
+  const el=document.getElementById('aboTable');
+  if(!allClients.length){el.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:24px">Aucun client</td></tr>';return;}
+  el.innerHTML=allClients.filter(c=>c.statut==='actif').map(c=>{
+    const renouv=c.renouvellement?new Date(c.renouvellement).toLocaleDateString('fr-FR'):'—';
+    const diff=c.renouvellement?Math.ceil((new Date(c.renouvellement)-new Date())/86400000):null;
+    const pc=c.paiement==='ok'?'badge-green':c.paiement==='retard'?'badge-amber':'badge-red';
+    return`<tr>
+      <td><b>${c.nom}</b><br><span style="font-size:11px;color:var(--muted)">${c.email||''}</span></td>
+      <td><span class="badge ${PLAN_COLOR[c.plan]}">${PLAN_LABEL[c.plan]} · ${PLAN_PRIX[c.plan]}€/mois</span></td>
+      <td style="color:var(--muted)">${c.date_debut?new Date(c.date_debut).toLocaleDateString('fr-FR'):'—'}</td>
+      <td style="color:${diff!==null&&diff<=7?'var(--amber)':'var(--text)'}">
+        ${renouv}${diff!==null&&diff<=7?`<br><span style="font-size:10px;color:var(--amber)">⚠ J−${diff}</span>`:''}
+      </td>
+      <td><span class="badge ${pc}">${c.paiement}</span></td>
+      <td style="white-space:nowrap">
+        <div style="display:flex;gap:4px">
+          <button class="btn-sm btn-purple" onclick="genFactureRapide('${c.id}')">🧾 Facturer</button>
+          ${c.paiement!=='ok'?`<button class="btn-sm btn-green" onclick="marquerPaye('${c.id}')">✅ Payé</button>`:''}
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// EMAIL
+function openEmailModal(clientId,subject,message){
+  const c=allClients.find(cl=>cl.id===clientId);
+  if(!c?.email){showToast('Pas d\'email pour ce client','danger');return;}
+  document.getElementById('emailClientId').value=clientId;
+  document.getElementById('emailTo').value=c.email;
+  document.getElementById('emailSubject').value=subject;
+  document.getElementById('emailMessage').value=message;
+  openModal('modalEmail');
+}
+
+async function sendEmail(){
+  const clientId=document.getElementById('emailClientId').value;
+  const c=allClients.find(cl=>cl.id===clientId);
+  const subject=document.getElementById('emailSubject').value;
+  const message=document.getElementById('emailMessage').value;
+  if(!subject||!message){showToast('Sujet et message requis','danger');return;}
+  await sendEmailJS(c.email,c.responsable||c.nom,subject,message,'','');
+  closeModal('modalEmail');
+}
+
+async function sendEmailJS(toEmail,toName,subject,message,montant,mois){
+  try{
+    await emailjs.send(EJS_SERVICE,EJS_TEMPLATE,{
+      to_email:toEmail,to_name:toName,
+      subject,message,montant,mois
+    });
+    showToast('📧 Email envoyé à '+toEmail,'ok',4000);
+  }catch(e){
+    console.error('EmailJS error:',e);
+    showToast('❌ Erreur envoi email : '+e.text,'danger',5000);
+  }
+}
+
+// INIT
+document.getElementById('newClientDebut').value=new Date().toISOString().split('T')[0];
 </script>
 </body>
 </html>
