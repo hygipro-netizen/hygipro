@@ -854,14 +854,20 @@ async function sendEmail(){
 
 async function sendEmailJS(toEmail,toName,subject,message,montant,mois){
   try{
-    await emailjs.send(EJS_SERVICE,EJS_TEMPLATE,{
-      to_email:toEmail,to_name:toName,
-      subject,message,montant,mois
+    console.log('📧 Envoi email à:',toEmail,'sujet:',subject);
+    const result=await emailjs.send(EJS_SERVICE,EJS_TEMPLATE,{
+      to_email:toEmail,
+      to_name:toName,
+      subject:subject,
+      message:message,
+      montant:montant,
+      mois:mois
     });
+    console.log('✅ Email envoyé:',result);
     showToast('📧 Email envoyé à '+toEmail,'ok',4000);
   }catch(e){
-    console.error('EmailJS error:',e);
-    showToast('❌ Erreur envoi email : '+e.text,'danger',5000);
+    console.error('❌ EmailJS erreur:',e);
+    showToast('❌ Erreur email : '+(e.text||e.message||JSON.stringify(e)),'danger',6000);
   }
 }
 
