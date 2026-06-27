@@ -890,41 +890,40 @@ async function sendEmail(){
 
 async function sendEmailJS(toEmail,toName,subject,message,montant,mois,htmlContent){
   try{
-    console.log('📧 Envoi Resend à:',toEmail,'sujet:',subject);
-    const body={
-      from:'HygiPro <onboarding@resend.dev>',
-      to:[toEmail],
-      subject:subject,
-      html:htmlContent||`
-        <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#1a1a2e">
-          <div style="background:#060f1e;padding:24px;text-align:center;border-radius:12px 12px 0 0">
-            <div style="font-size:24px;font-weight:800;color:#2dd4a0">HygiPro</div>
-            <div style="font-size:12px;color:#7ba7c4;margin-top:4px">Système HACCP & Hygiène alimentaire</div>
-          </div>
-          <div style="background:#f8fafc;padding:28px;border-radius:0 0 12px 12px;border:1px solid #e2e8f0">
-            <p style="font-size:15px;margin-bottom:16px">Bonjour <strong>${toName}</strong>,</p>
-            <div style="background:white;border-radius:8px;padding:20px;border:1px solid #e2e8f0;white-space:pre-line;font-size:14px;line-height:1.7">${message}</div>
-            ${montant?`<div style="margin-top:16px;background:#e6faf4;border:1px solid #2dd4a0;border-radius:8px;padding:16px;text-align:center">
-              <div style="font-size:11px;color:#065f46;text-transform:uppercase;font-weight:700;margin-bottom:4px">Montant TTC</div>
-              <div style="font-size:28px;font-weight:800;color:#065f46">${montant}€</div>
-            </div>`:''}
-            <div style="margin-top:20px;padding-top:16px;border-top:1px solid #e2e8f0;font-size:12px;color:#94a3b8;text-align:center">
-              HygiPro · Système de traçabilité HACCP · hygipro.vercel.app
-            </div>
-          </div>
-        </div>`,
-    };
-    const res=await fetch('https://api.resend.com/emails',{
+    console.log('📧 Envoi email à:',toEmail,'sujet:',subject);
+    const res=await fetch('/api/send-email',{
       method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+RESEND_KEY},
-      body:JSON.stringify(body)
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        to:toEmail,
+        toName:toName,
+        subject:subject,
+        html:htmlContent||`
+          <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#1a1a2e">
+            <div style="background:#060f1e;padding:24px;text-align:center;border-radius:12px 12px 0 0">
+              <div style="font-size:24px;font-weight:800;color:#2dd4a0">HygiPro</div>
+              <div style="font-size:12px;color:#7ba7c4;margin-top:4px">Système HACCP & Hygiène alimentaire</div>
+            </div>
+            <div style="background:#f8fafc;padding:28px;border-radius:0 0 12px 12px;border:1px solid #e2e8f0">
+              <p style="font-size:15px;margin-bottom:16px">Bonjour <strong>${toName}</strong>,</p>
+              <div style="background:white;border-radius:8px;padding:20px;border:1px solid #e2e8f0;white-space:pre-line;font-size:14px;line-height:1.7">${message}</div>
+              ${montant?`<div style="margin-top:16px;background:#e6faf4;border:1px solid #2dd4a0;border-radius:8px;padding:16px;text-align:center">
+                <div style="font-size:11px;color:#065f46;text-transform:uppercase;font-weight:700;margin-bottom:4px">Montant TTC</div>
+                <div style="font-size:28px;font-weight:800;color:#065f46">${montant}€</div>
+              </div>`:''}
+              <div style="margin-top:20px;padding-top:16px;border-top:1px solid #e2e8f0;font-size:12px;color:#94a3b8;text-align:center">
+                HygiPro · Système de traçabilité HACCP · hygipro.vercel.app
+              </div>
+            </div>
+          </div>`
+      })
     });
     const data=await res.json();
-    if(!res.ok)throw new Error(data.message||JSON.stringify(data));
+    if(!res.ok)throw new Error(data.error||'Erreur envoi');
     console.log('✅ Email envoyé:',data);
     showToast('📧 Email envoyé à '+toEmail,'ok',4000);
   }catch(e){
-    console.error('❌ Resend erreur:',e);
+    console.error('❌ Erreur email:',e);
     showToast('❌ Erreur email : '+e.message,'danger',6000);
   }
 }
