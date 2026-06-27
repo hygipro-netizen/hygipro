@@ -369,7 +369,7 @@ const db=supabase.createClient(SUPA_URL,SUPA_KEY);
 const EJS_SERVICE='service_tvxdil9';
 const EJS_TEMPLATE='template_04mofjd';
 const EJS_KEY='7kVoTf5LrAc4KCOpG';
-emailjs.init(EJS_KEY);
+emailjs.init({publicKey: EJS_KEY});
 
 const PLAN_PRIX={starter:39,pro:69,premium:99};
 const PLAN_LABEL={starter:'Starter',pro:'Pro',premium:'Premium'};
