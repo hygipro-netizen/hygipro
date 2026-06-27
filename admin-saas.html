@@ -429,7 +429,7 @@ async function addClient(){
   if(!nom||!resp||!email){alert('Champs obligatoires manquants');return;}
   const debut=document.getElementById('newClientDebut').value||new Date().toISOString().split('T')[0];
   const renouv=new Date(debut);renouv.setMonth(renouv.getMonth()+1);
-  await db.from('saas_clients').insert({
+  const{error}=await db.from('saas_clients').insert({
     nom,responsable:resp,email,
     tel:document.getElementById('newClientTel').value||null,
     ville:document.getElementById('newClientVille').value||null,
@@ -439,11 +439,14 @@ async function addClient(){
     renouvellement:renouv.toISOString().split('T')[0],
     notes:document.getElementById('newClientNotes').value||null,
   });
+  if(error){alert('Erreur : '+error.message);return;}
   closeModal('modalAddClient');
-  document.getElementById('newClientNom').value='';document.getElementById('newClientResponsable').value='';
-  document.getElementById('newClientEmail').value='';document.getElementById('newClientTel').value='';
-  document.getElementById('newClientVille').value='';document.getElementById('newClientNotes').value='';
+  // Reset fields
+  ['newClientNom','newClientResponsable','newClientEmail','newClientTel','newClientVille','newClientNotes'].forEach(id=>document.getElementById(id).value='');
+  // Reload and switch to clients tab
   await loadClients();
+  const btn=document.querySelector('.nav-link[onclick*="clients"]');
+  if(btn)showTab('clients',btn);
 }
 
 function editClient(id){
