@@ -435,13 +435,16 @@ function closeModal(id){document.getElementById(id).classList.remove('open');}
 document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)closeModal(m.id);}));
 
 async function loadAll(){
-  const[{data:clients},{data:factures}]=await Promise.all([
-    db.from('saas_clients').select('*').order('created_at',{ascending:false}),
-    db.from('saas_factures').select('*').order('created_at',{ascending:false}).catch(()=>({data:[]}))
-  ]);
-  allClients=clients||[];
-  allFactures=factures||[];
+  try{
+    const{data:clients}=await db.from('saas_clients').select('*').order('created_at',{ascending:false});
+    allClients=clients||[];
+  }catch(e){allClients=[];}
+  try{
+    const{data:factures}=await db.from('saas_factures').select('*').order('created_at',{ascending:false});
+    allFactures=factures||[];
+  }catch(e){allFactures=[];}
   renderDashboard();
+  renderClients();
   updateBadges();
 }
 
