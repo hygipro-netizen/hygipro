@@ -122,9 +122,17 @@ const PMS_METIERS={
   },
 };
 
+// ============================================================
+// RENDU PMS — version sobre & paginée (Phase 1)
+// Palette institutionnelle, logo discret, pagination blindée.
+// La section DONNÉES ci-dessus (PMS_METIERS, DANGERS_*) est inchangée.
+// ============================================================
+
+const DOTS='..................................................';
+
 function rows3(arr){return arr.map(d=>`<tr><td><strong>${d[0]}</strong></td><td>${d[1]}</td><td>${d[2]}</td></tr>`).join('');}
 function fichesHtml(fiches){
-  return fiches.map(f=>`<div class="mp"><h3>${f.nom}</h3><p><strong>Contamination :</strong> ${f.contam}</p><p><strong>Multiplication :</strong> ${f.multi}</p><p><strong>Mesures de maîtrise :</strong></p><ul>${f.mesures.map(m=>`<li>${m}</li>`).join('')}</ul></div>`).join('');
+  return fiches.map(f=>`<div class="mp avoid"><h4>${f.nom}</h4><p><strong>Contamination :</strong> ${f.contam}</p><p><strong>Multiplication :</strong> ${f.multi}</p><p class="mpm"><strong>Mesures de maîtrise :</strong></p><ul>${f.mesures.map(m=>`<li>${m}</li>`).join('')}</ul></div>`).join('');
 }
 
 function buildPMSHtml(cfg){
@@ -132,329 +140,449 @@ function buildPMSHtml(cfg){
   const dateGen=new Date().toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
   const logoUrl='https://hygipro.vercel.app/logo.png';
 
-  const usersRows=(cfg.users||[]).map(u=>`<tr><td>${u.name}</td><td>${u.role||'—'}</td><td>${BLANK}</td><td>${BLANK}</td></tr>`).join('')
-    ||`<tr><td>${BLANK}</td><td>${BLANK}</td><td>${BLANK}</td><td>${BLANK}</td></tr><tr><td>${BLANK}</td><td>${BLANK}</td><td>${BLANK}</td><td>${BLANK}</td></tr>`;
-  const zonesRows=(cfg.zones||[]).map(z=>`<tr><td>${z.name}</td><td>${z.threshold_min!=null?z.threshold_min+'°C':BLANK}</td><td>${z.threshold_max!=null?z.threshold_max+'°C':BLANK}</td><td>2x/jour</td></tr>`).join('')
-    ||`<tr><td>${BLANK}</td><td>${BLANK}</td><td>${BLANK}</td><td>${BLANK}</td></tr>`;
+  const usersRows=(cfg.users||[]).map(u=>`<tr><td>${u.name}</td><td>${u.role||'—'}</td><td>${DOTS.slice(0,20)}</td><td>${DOTS.slice(0,20)}</td></tr>`).join('')
+    ||`<tr><td>${DOTS.slice(0,24)}</td><td>${DOTS.slice(0,16)}</td><td>${DOTS.slice(0,20)}</td><td>${DOTS.slice(0,20)}</td></tr><tr><td>${DOTS.slice(0,24)}</td><td>${DOTS.slice(0,16)}</td><td>${DOTS.slice(0,20)}</td><td>${DOTS.slice(0,20)}</td></tr>`;
+  const zonesRows=(cfg.zones||[]).map(z=>`<tr><td>${z.name}</td><td>${z.threshold_min!=null?z.threshold_min+'°C':DOTS.slice(0,12)}</td><td>${z.threshold_max!=null?z.threshold_max+'°C':DOTS.slice(0,12)}</td><td>2×/jour</td></tr>`).join('')
+    ||`<tr><td>${DOTS.slice(0,28)}</td><td>${DOTS.slice(0,12)}</td><td>${DOTS.slice(0,12)}</td><td>${DOTS.slice(0,12)}</td></tr>`;
   const nettRows=(cfg.nettoyage||[]).map(n=>`<tr><td>${n.zone||''}</td><td>${n.surface||''}</td><td>${n.frequence||''}</td><td>${n.produit||''}</td><td>${n.dilution||'PAE'}</td></tr>`).join('')
     ||`<tr><td colspan="5" style="text-align:center;color:#94a3b8">Plan de nettoyage à configurer dans HygiPro</td></tr>`;
-  const tempRows=M.temperatures.map(t=>`<tr><td>${t[0]}</td><td>${t[1]}</td></tr>`).join('');
-  const prpoRows=M.prpo.map(p=>`<tr><td><strong>${p[0]}</strong></td><td>${p[1]}</td><td>${p[2]}</td><td>${p[3]}</td></tr>`).join('');
+  const tempRows=M.temperatures.map(t=>`<tr><td>${t[0]}</td><td class="tc"><strong>${t[1]}</strong></td></tr>`).join('');
+  const prpoRows=M.prpo.map(p=>`<tr><td><strong>${p[0]}</strong></td><td>${p[1]}</td><td class="tc">${p[2]}</td><td>${p[3]}</td></tr>`).join('');
   const diagList=M.diagrammes.map((d,i)=>`<li>Annexe ${13+i} : Diagramme de fabrication — ${d}</li>`).join('');
 
+  // Fiches MP paginées : 3 par page (garantit le tenir même pour les fiches longues)
+  const FICHES_PAR_PAGE=3;
+  const fichesPages=[];
+  for(let i=0;i<M.fiches.length;i+=FICHES_PAR_PAGE) fichesPages.push(M.fiches.slice(i,i+FICHES_PAR_PAGE));
+  const fichesSections=fichesPages.map((chunk,idx)=>`
+  <section class="page">
+    ${pageHead('III · Fiches matières premières',logoUrl)}
+    <h1>III.3 Fiches matières premières${fichesPages.length>1?` <span class="sub">(${idx+1}/${fichesPages.length})</span>`:''}</h1>
+    ${idx===0?`<p>Pour chaque famille de matières premières : sources de contamination, conditions de multiplication et mesures de maîtrise.</p>`:`<p class="cont">Suite des fiches matières premières.</p>`}
+    ${fichesHtml(chunk)}
+    ${pageFoot()}
+  </section>`).join('');
+
+  // Grille de relevé température vierge (2 blocs : jours 1-16 / 17-31)
+  function tempGrid(title,temps){
+    function block(s,e){
+      const days=[];for(let d=s+1;d<=e;d++)days.push(d);
+      const th=days.map(d=>`<th>${d}</th>`).join('');
+      const rows=temps.map(t=>`<tr><td class="gt">${t}</td>${days.map(()=>'<td></td>').join('')}</tr>`).join('');
+      return `<table class="grid"><thead><tr><th class="gt">J/T</th>${th}</tr></thead><tbody>${rows}</tbody></table>`;
+    }
+    return `<p class="gtitle"><strong>${title}</strong></p><p class="gsub">Mois : ____________  Année : ________</p>${block(0,16)}<div class="gspace"></div>${block(16,31)}`;
+  }
+
   const cerfaPage=cfg.cerfa?`
-  <div class="page">
-    <div class="phead"><div class="phead-title">Déclaration d'activité — CERFA</div><img src="${logoUrl}" class="phead-logo"></div>
-    <h1>Déclaration d'activité (CERFA 13984 / 16243)</h1>
-    <div class="info-box">Tout établissement manipulant des denrées d'origine animale doit déclarer son activité à la DDPP avant ouverture, et à chaque changement d'exploitant, d'adresse ou d'activité (Règlement CE 852/2004). Depuis le 1er janvier 2023, le formulaire commun est le CERFA n°16243 (mesdemarches.agriculture.gouv.fr).</div>
-    <h2>Démarche</h2>
-    <ol>
-      <li>Télécharger / remplir le formulaire sur entreprendre.service-public.fr ou mesdemarches.agriculture.gouv.fr</li>
+  <section class="page">
+    ${pageHead("Déclaration d'activité · CERFA",logoUrl)}
+    <h1>Déclaration d'activité (CERFA n°16243)</h1>
+    <div class="box info avoid"><span class="bt">Cadre réglementaire</span> Tout établissement manipulant des denrées d'origine animale doit déclarer son activité à la DDPP avant ouverture, et à chaque changement d'exploitant, d'adresse ou d'activité (CE 852/2004). Depuis le 1<sup>er</sup> janvier 2023, le formulaire commun est le CERFA n°16243.</div>
+    <h3>Démarche</h3>
+    <ul>
+      <li>Remplir le formulaire sur entreprendre.service-public.fr ou mesdemarches.agriculture.gouv.fr</li>
       <li>Renseigner l'identification de l'établissement (SIRET, adresse, responsable)</li>
-      <li>Cocher les activités correspondantes</li>
-      <li>Dater et signer</li>
-      <li>Transmettre à la DDPP du département</li>
-      <li>Conserver le récépissé (demandé lors des contrôles)</li>
-    </ol>
-    <h2>Coordonnées de la DDPP</h2>
-    <table>
-      <tr><td style="width:35%"><strong>Direction (DDPP)</strong></td><td>${cfg.ddppNom||BLANK}</td></tr>
-      <tr><td><strong>Adresse</strong></td><td>${cfg.ddppAdresse||BLANK}</td></tr>
-      <tr><td><strong>Téléphone</strong></td><td>${cfg.ddppTel||BLANK}</td></tr>
-      <tr><td><strong>Email</strong></td><td>${cfg.ddppEmail||BLANK}</td></tr>
-    </table>
-    <p style="margin-top:14px"><strong>Déclaration faite le :</strong> ${BLANK} &nbsp; <strong>N° récépissé :</strong> ${BLANK}</p>
-    <div class="warn-box" style="margin-top:16px">📎 Joindre l'accusé de réception de la déclaration signée par la DDPP à cet endroit.</div>
-    <div style="border:2px dashed #cbd5e1;border-radius:8px;height:170px;display:flex;align-items:center;justify-content:center;color:#cbd5e1;margin:12px 40px;font-size:13px">Espace récépissé</div>
-  </div>`:'';
+      <li>Cocher les activités, dater et signer</li>
+      <li>Transmettre à la DDPP du département et conserver le récépissé</li>
+    </ul>
+    <h3>Coordonnées de la DDPP</h3>
+    <table><tbody>
+      <tr><td style="width:35%"><strong>Direction (DDPP)</strong></td><td>${cfg.ddppNom||DOTS}</td></tr>
+      <tr><td><strong>Adresse</strong></td><td>${cfg.ddppAdresse||DOTS}</td></tr>
+      <tr><td><strong>Téléphone</strong></td><td>${cfg.ddppTel||DOTS.slice(0,30)}</td></tr>
+      <tr><td><strong>Email</strong></td><td>${cfg.ddppEmail||DOTS.slice(0,36)}</td></tr>
+    </tbody></table>
+    <p><strong>Déclaration faite le :</strong> ${DOTS.slice(0,26)} &nbsp; <strong>N° récépissé :</strong> ${DOTS.slice(0,26)}</p>
+    <div class="box crit avoid"><span class="bt">Pièce à joindre</span> Joindre l'accusé de réception de la déclaration signée par la DDPP ci-dessous.</div>
+    <div class="recepisse">Espace récépissé DDPP</div>
+    ${pageFoot()}
+  </section>`:'';
 
   return `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>PMS — ${cfg.nom}</title>
 <style>
-*{box-sizing:border-box}
-body{font-family:Arial,sans-serif;color:#1a1a2e;font-size:12.5px;line-height:1.5;margin:0}
-.cover{display:flex;flex-direction:column;min-height:1120px;page-break-after:always;background:#060f1e;color:#fff;position:relative;overflow:hidden}
-.cover-top{flex:0 0 42%;padding:50px;display:flex;flex-direction:column;justify-content:center;position:relative}
-.cover-logo{position:absolute;top:40px;right:50px;text-align:center}
-.cover-logo img{height:90px}
-.cover-logo .txt{font-size:20px;font-weight:800;margin-top:6px}
-.cover-logo .txt span{color:#2dd4a0}
-.cover h1.big{font-size:50px;font-weight:800;line-height:1.05;margin:0}
-.cover .sub{font-size:21px;color:#2dd4a0;font-weight:700;margin-top:16px}
-.cover-divider{height:6px;background:#2dd4a0}
-.cover-bottom{flex:1;background:#fff;color:#1a1a2e;padding:46px 50px}
-.cover-field{font-size:16px;margin-bottom:15px;border-bottom:1px solid #e2e8f0;padding-bottom:9px}
-.cover-field b{color:#475569}
-.cover-badges{display:flex;gap:10px;margin-top:26px;flex-wrap:wrap}
-.cover-badge{border:1.5px solid #94a3b8;border-radius:20px;padding:6px 16px;font-size:11px;font-weight:700;color:#475569}
-.page{padding:0 0 40px;max-width:900px;margin:0 auto;page-break-after:always}
-.phead{background:#060f1e;color:#fff;padding:16px 40px;display:flex;justify-content:space-between;align-items:center;margin-bottom:22px}
-.phead-title{font-size:16px;font-weight:700}
-.phead-logo{height:40px}
-.page>h1,.page>h2,.page>p,.page>ul,.page>ol,.page>table,.page>.mp,.page>.info-box,.page>.warn-box,.page>.ok-box,.page>div{margin-left:40px;margin-right:40px}
-h1{font-size:21px;font-weight:800;color:#060f1e;border-bottom:3px solid #2dd4a0;padding-bottom:8px;margin-bottom:14px;margin-top:8px}
-h2{font-size:15px;font-weight:700;color:#1e3a5f;background:#f1f5f9;padding:8px 12px;border-left:4px solid #2dd4a0;margin:16px 40px 9px}
-h3{font-size:13.5px;font-weight:700;color:#2dd4a0;margin:11px 0 4px}
-p{margin-bottom:7px;color:#374151}
-ul,ol{margin:6px 0 10px;padding-left:22px}
-li{margin-bottom:3px;color:#374151}
-table{width:calc(100% - 80px);border-collapse:collapse;margin:10px 40px 16px;font-size:11.5px}
-th{background:#1e3a5f;color:#fff;padding:7px 9px;text-align:left}
-td{padding:6px 9px;border-bottom:1px solid #e2e8f0;vertical-align:top}
-tr:nth-child(even) td{background:#f8fafc}
-.danger th{background:#dc2626}
-.two-col{display:grid;grid-template-columns:1fr 2fr;margin:10px 40px 16px;border:1px solid #e2e8f0;font-size:11.5px}
-.two-col .c{padding:7px 9px;border-bottom:1px solid #e2e8f0}
-.mp{background:#f8fafc;border-left:3px solid #2dd4a0;border-radius:0 6px 6px 0;padding:9px 14px;margin:8px 40px}
-.mp h3{margin-top:0}
-.mp p{font-size:11.5px;margin-bottom:3px}
-.mp ul{font-size:11.5px;margin-top:2px}
-.info-box{background:#dbeafe;border:1px solid #60a5fa;border-radius:6px;padding:9px 14px;margin:8px 40px;font-size:11.5px}
-.warn-box{background:#fef3c7;border:1px solid #f59e0b;border-radius:6px;padding:9px 14px;margin:8px 40px;font-size:11.5px}
-.ok-box{background:#d1fae5;border:1px solid #2dd4a0;border-radius:6px;padding:9px 14px;margin:8px 40px;font-size:11.5px}
-.fill{color:#1e3a5f;font-weight:600}
-.footer{text-align:center;font-size:10px;color:#94a3b8;margin:26px 40px 0;padding-top:12px;border-top:1px solid #e2e8f0}
-.toc-line{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px dotted #e2e8f0;font-size:12.5px}
-@media print{.page{page-break-after:always}}
+/* ===== Palette sobre institutionnelle ===== */
+:root{--navy:#1F3864;--accent:#2E75B6;--ink:#222;--muted:#595959;--line:#BFBFBF;--zebra:#F4F6F9;--red:#C00000;--logo:url('${logoUrl}')}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Calibri,Arial,sans-serif;color:var(--ink);font-size:11pt;line-height:1.5}
+
+/* ===== Page A4 ===== */
+.page{width:210mm;min-height:284mm;padding:13mm 15mm;margin:0 auto;position:relative;display:flex;flex-direction:column;page-break-after:always;background:#fff}
+.page:last-child{page-break-after:auto}
+.pbody{flex:1}
+
+/* ===== En-tête / pied de page (répétés par section) ===== */
+.phead{display:flex;align-items:center;justify-content:space-between;border-bottom:1.5px solid var(--navy);padding-bottom:3mm;margin-bottom:7mm}
+.phead .pl{display:flex;align-items:center;gap:8px}
+.phead .logo{width:22px;height:30px;background:var(--logo) center/contain no-repeat}
+.phead .pt{font-size:8.5pt;color:var(--muted)}
+.phead .pr{font-size:8.5pt;color:var(--muted)}
+.pfoot{margin-top:8mm;border-top:1px solid var(--line);padding-top:2.5mm;display:flex;justify-content:space-between;font-size:8pt;color:var(--muted)}
+
+/* ===== Couverture ===== */
+.cover{width:210mm;min-height:297mm;padding:40mm 22mm;margin:0 auto;display:flex;flex-direction:column;page-break-after:always;background:#fff;text-align:center}
+.cover .clogo{width:64px;height:84px;background:var(--logo) center/contain no-repeat;margin:0 auto 16mm}
+.cover h1.ct{font-size:32pt;font-weight:800;color:var(--navy);letter-spacing:.5px}
+.cover .cmet{font-size:18pt;color:var(--accent);margin-top:4mm;margin-bottom:18mm}
+.cover .cfield{font-size:13pt;margin-bottom:5mm}
+.cover .cfield b{color:var(--navy)}
+.cover .cver{font-size:11pt;color:var(--muted);margin-top:6mm}
+.cover .cbadge{margin-top:auto;font-size:9.5pt;color:var(--muted);border-top:1px solid var(--line);padding-top:6mm}
+
+/* ===== Titres ===== */
+h1{font-size:17pt;font-weight:800;color:var(--navy);border-bottom:2.5px solid var(--accent);padding-bottom:2mm;margin-bottom:4mm;page-break-after:avoid}
+h1 .sub{font-size:11pt;color:var(--muted);font-weight:600}
+h2{font-size:13pt;font-weight:700;color:var(--accent);margin:6mm 0 2.5mm;page-break-after:avoid}
+h3{font-size:11.5pt;font-weight:700;color:#404040;margin:4mm 0 2mm;page-break-after:avoid}
+h4{font-size:11pt;font-weight:700;color:var(--navy);margin-bottom:2mm}
+p{margin-bottom:2.5mm;color:#333;text-align:justify}
+p.cont{color:var(--muted);font-style:italic}
+ul{margin:1.5mm 0 3mm 6mm}
+li{margin-bottom:1mm}
+sup{font-size:7pt}
+
+/* ===== Tableaux ===== */
+table{width:100%;border-collapse:collapse;margin:2.5mm 0 5mm;font-size:9.5pt}
+th{background:var(--navy);color:#fff;font-weight:600;text-align:left;padding:6px 9px;border:.5px solid var(--navy);font-size:8.5pt;text-transform:uppercase;letter-spacing:.3px}
+td{padding:6px 9px;border:.5px solid var(--line);color:#333;vertical-align:top}
+tr:nth-child(even) td{background:var(--zebra)}
+td.tc{text-align:center;white-space:nowrap}
+table.danger th{background:var(--red);border-color:var(--red)}
+
+/* ===== Méthode 5M ===== */
+.m5{border:.5px solid var(--line);margin:2.5mm 0 5mm;font-size:9.5pt}
+.m5 .r{display:flex;border-bottom:.5px solid var(--line)}
+.m5 .r:last-child{border-bottom:none}
+.m5 .k{width:32%;padding:6px 9px;background:var(--zebra);font-weight:700;color:var(--navy)}
+.m5 .v{width:68%;padding:6px 9px;color:#333}
+
+/* ===== Fiches matières premières ===== */
+.mp{background:var(--zebra);border-left:3px solid var(--accent);padding:6px 11px;margin:3mm 0;border-radius:0 3px 3px 0}
+.mp h4{margin-bottom:1.5mm}
+.mp p{font-size:9.5pt;margin-bottom:1mm}
+.mp p.mpm{margin-top:1.5mm}
+.mp ul{font-size:9.5pt;margin-top:.5mm}
+
+/* ===== Encadrés ===== */
+.box{padding:7px 12px;margin:3mm 0;font-size:9.5pt;border-left:4px solid}
+.box .bt{display:block;font-weight:700;font-size:8.5pt;text-transform:uppercase;margin-bottom:1.5mm}
+.box.info{background:#EAF1FB;border-left-color:var(--accent)}.box.info .bt{color:var(--navy)}
+.box.crit{background:#FDECEA;border-left-color:var(--red);color:#7a1c12}.box.crit .bt{color:var(--red)}
+.box.ok{background:#EAF6EF;border-left-color:#2E8B57}.box.ok .bt{color:#1E6B43}
+
+/* ===== Sommaire ===== */
+.toc{margin:0}
+.toc .row{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px dotted var(--line);font-size:10.5pt}
+.toc .row .t{color:var(--navy)}
+.toc .row .s{padding-left:6mm;color:var(--muted)}
+.toc .row .pg{color:var(--accent);font-weight:700}
+
+/* ===== Grilles de relevé ===== */
+.gtitle{margin:2mm 0 1mm;color:var(--navy)}
+.gsub{font-size:9pt;color:var(--muted);margin-bottom:2mm}
+.gspace{height:3mm}
+table.grid{font-size:7.5pt}
+table.grid th{padding:3px 2px;text-align:center;font-size:7pt}
+table.grid td{padding:5px 2px}
+table.grid td.gt,table.grid th.gt{background:var(--zebra);color:var(--navy);font-weight:700;text-align:center;width:9%}
+table.grid th.gt{background:var(--navy);color:#fff}
+
+/* ===== Récépissé / signature ===== */
+.recepisse{border:1.5px dashed #cbd5e1;border-radius:6px;height:36mm;display:flex;align-items:center;justify-content:center;color:#9aa7b8;font-size:10pt;margin:3mm 0}
+.signline{margin-top:14mm;border-top:1px solid #94a3b8;width:78mm;padding-top:2mm;font-size:9.5pt;color:var(--muted)}
+
+/* ===== PAGINATION BLINDÉE (le coeur de la correction) ===== */
+tr,.mp,.box,.m5,.signline{page-break-inside:avoid}
+thead{display:table-header-group}
+h1,h2,h3,h4{page-break-after:avoid}
+.avoid{page-break-inside:avoid}
+@media print{
+  .page,.cover{margin:0}
+  tr,.mp,.box,.m5{page-break-inside:avoid}
+  thead{display:table-header-group}
+  h1,h2,h3,h4{page-break-after:avoid}
+}
 </style></head><body>
 
+<!-- COUVERTURE (sobre) -->
 <div class="cover">
-  <div class="cover-top">
-    <div class="cover-logo"><img src="${logoUrl}"><div class="txt">HYGI<span>PRO</span></div></div>
-    <h1 class="big">Plan de<br>Maîtrise<br>Sanitaire</h1>
-    <div class="sub">${M.sousTitre}</div>
-  </div>
-  <div class="cover-divider"></div>
-  <div class="cover-bottom">
-    <div class="cover-field"><b>Établissement :</b> ${cfg.nom}</div>
-    ${cfg.raisonSociale?`<div class="cover-field"><b>Raison sociale :</b> ${cfg.raisonSociale}${cfg.formeJuridique?' ('+cfg.formeJuridique+')':''}</div>`:''}
-    <div class="cover-field"><b>Adresse :</b> ${cfg.adresse||'—'}</div>
-    <div class="cover-field"><b>Responsable :</b> ${cfg.responsable||'—'}</div>
-    <div class="cover-field"><b>SIRET :</b> ${cfg.siret||'—'}</div>
-    <div class="cover-field"><b>Date :</b> ${dateGen} &nbsp;·&nbsp; <b>Version :</b> 1.0</div>
-    <div class="cover-badges"><div class="cover-badge">CE 852/2004</div><div class="cover-badge">DGAL/SDSSA 2022-349</div><div class="cover-badge">HACCP</div></div>
-  </div>
+  <div class="clogo"></div>
+  <h1 class="ct">Plan de Maîtrise Sanitaire</h1>
+  <div class="cmet">${M.label}</div>
+  <div class="cfield"><b>Établissement :</b> ${cfg.nom||DOTS.slice(0,30)}</div>
+  <div class="cfield"><b>Responsable :</b> ${cfg.responsable||DOTS.slice(0,30)}</div>
+  <div class="cver">Version 1.0 — ${dateGen}</div>
+  <div class="cbadge">Conforme Règlement CE 852/2004 · Note de service DGAL/SDSSA 2022-349 · HACCP<br>Édité par SASU DarTech Solution</div>
 </div>
 
-<div class="page">
-  <div class="phead"><div class="phead-title">Sommaire</div><img src="${logoUrl}" class="phead-logo"></div>
+<!-- SOMMAIRE -->
+<section class="page">
+  ${pageHead('Sommaire',logoUrl)}
   <h1>Sommaire</h1>
-  <p style="font-size:11.5px;color:#64748b">Le plan de maîtrise sanitaire présenté reprend la structure proposée par l'annexe II de la note de service DGAL/SDSSA 2022-349 relative à la procédure d'agrément sanitaire.</p>
-  <div style="margin:0 40px">
-    <div class="toc-line"><span>I. Description des activités</span><span>3</span></div>
-    <div class="toc-line"><span>II. Bonnes pratiques d'hygiène</span><span>4</span></div>
-    <div class="toc-line"><span>&nbsp;&nbsp;1. Le personnel</span><span>4</span></div>
-    <div class="toc-line"><span>&nbsp;&nbsp;2. Maintenance des locaux, équipements et matériel</span><span>5</span></div>
-    <div class="toc-line"><span>&nbsp;&nbsp;3. Mesures d'hygiène avant, pendant et après la production</span><span>6</span></div>
-    <div class="toc-line"><span>&nbsp;&nbsp;4. Plan de lutte contre les nuisibles</span><span>7</span></div>
-    <div class="toc-line"><span>&nbsp;&nbsp;5. Approvisionnement en eau</span><span>7</span></div>
-    <div class="toc-line"><span>&nbsp;&nbsp;6. La maîtrise des températures</span><span>8</span></div>
-    <div class="toc-line"><span>III. Procédures basées sur les principes HACCP</span><span>10</span></div>
-    <div class="toc-line"><span>&nbsp;&nbsp;1. Champ d'application</span><span>10</span></div>
-    <div class="toc-line"><span>&nbsp;&nbsp;2. Analyse des dangers (bio / chimiques / physiques)</span><span>11</span></div>
-    <div class="toc-line"><span>&nbsp;&nbsp;3. Fiches matières premières & étapes</span><span>13</span></div>
-    <div class="toc-line"><span>&nbsp;&nbsp;4. Points déterminants (CCP / PrPo)</span><span>18</span></div>
-    <div class="toc-line"><span>IV. Traçabilité & gestion des non-conformes (TIAC)</span><span>20</span></div>
-    <div class="toc-line"><span>V. Annexes</span><span>22</span></div>
+  <p style="font-size:9.5pt;color:var(--muted)">Structure conforme à l'annexe II de la note de service DGAL/SDSSA 2022-349.</p>
+  <div class="toc">
+    <div class="row"><span class="t">I. Description des activités</span><span class="pg">3</span></div>
+    <div class="row"><span class="t">II. Bonnes pratiques d'hygiène</span><span class="pg">4</span></div>
+    <div class="row"><span class="t s">1. Le personnel</span><span class="pg">4</span></div>
+    <div class="row"><span class="t s">2. Maintenance des locaux & équipements</span><span class="pg">5</span></div>
+    <div class="row"><span class="t s">3. Plan de nettoyage et de désinfection</span><span class="pg">5</span></div>
+    <div class="row"><span class="t s">4. Lutte contre les nuisibles</span><span class="pg">6</span></div>
+    <div class="row"><span class="t s">5. Approvisionnement en eau</span><span class="pg">6</span></div>
+    <div class="row"><span class="t s">6. Maîtrise des températures</span><span class="pg">7</span></div>
+    <div class="row"><span class="t">III. Procédures basées sur les principes HACCP</span><span class="pg">8</span></div>
+    <div class="row"><span class="t s">1. Champ d'application & analyse des dangers</span><span class="pg">8</span></div>
+    <div class="row"><span class="t s">3. Fiches matières premières & étapes</span><span class="pg">10</span></div>
+    <div class="row"><span class="t s">4. Points déterminants (CCP / PrPo)</span><span class="pg">13</span></div>
+    <div class="row"><span class="t">IV. Traçabilité & non-conformes (TIAC)</span><span class="pg">15</span></div>
+    ${cfg.cerfa?`<div class="row"><span class="t">Déclaration d'activité — CERFA</span><span class="pg">16</span></div>`:''}
+    <div class="row"><span class="t">Fiches de relevé de température</span><span class="pg">17</span></div>
+    <div class="row"><span class="t">V. Annexes</span><span class="pg">18</span></div>
+    <div class="row"><span class="t">Validation et engagement</span><span class="pg">19</span></div>
   </div>
-</div>
+  <div class="box info avoid" style="margin-top:6mm"><span class="bt">Note importante</span> Ce document doit être complété, paraphé et maintenu à jour à chaque modification des processus de fabrication ou de la structure de l'établissement.</div>
+  ${pageFoot()}
+</section>
 
-<div class="page">
-  <div class="phead"><div class="phead-title">I. Description des activités</div><img src="${logoUrl}" class="phead-logo"></div>
+<!-- I. DESCRIPTION -->
+<section class="page">
+  ${pageHead('I · Description des activités',logoUrl)}
   <h1>I. Description des activités</h1>
-  <h2>1. Organisation générale</h2>
-  <table>
-    <tr><th colspan="2">ÉTABLISSEMENT</th></tr>
+  <h2>Organisation générale</h2>
+  <table><tbody>
+    <tr><td colspan="2" style="background:var(--navy);color:#fff;font-weight:700;text-transform:uppercase;font-size:8.5pt">Établissement</td></tr>
     <tr><td style="width:38%"><strong>Nom commercial</strong></td><td>${cfg.nom}</td></tr>
     ${cfg.raisonSociale?`<tr><td><strong>Raison sociale</strong></td><td>${cfg.raisonSociale}</td></tr>`:''}
     ${cfg.formeJuridique?`<tr><td><strong>Forme juridique</strong></td><td>${cfg.formeJuridique}</td></tr>`:''}
-    <tr><td><strong>Adresse</strong></td><td>${cfg.adresse||BLANK}</td></tr>
-    <tr><td><strong>N° SIRET</strong></td><td>${cfg.siret||BLANK}</td></tr>
-    <tr><td><strong>Téléphone</strong></td><td>${[cfg.tel?'Port. '+cfg.tel:'',cfg.telFixe?'Fixe '+cfg.telFixe:''].filter(Boolean).join(' · ')||BLANK}</td></tr>
-    <tr><td><strong>Courriel</strong></td><td>${cfg.email||BLANK}</td></tr>
-    <tr><td><strong>Date d'ouverture de l'établissement</strong></td><td>${BLANK}</td></tr>
-    <tr><td><strong>Responsable légal</strong></td><td>${cfg.responsable||BLANK}</td></tr>
-    <tr><td><strong>Horaires de travail</strong></td><td>${BLANK}</td></tr>
+    <tr><td><strong>Adresse</strong></td><td>${cfg.adresse||DOTS}</td></tr>
+    <tr><td><strong>N° SIRET</strong></td><td>${cfg.siret||DOTS.slice(0,30)}</td></tr>
+    <tr><td><strong>Téléphone</strong></td><td>${[cfg.tel?'Port. '+cfg.tel:'',cfg.telFixe?'Fixe '+cfg.telFixe:''].filter(Boolean).join(' · ')||DOTS.slice(0,30)}</td></tr>
+    <tr><td><strong>Courriel</strong></td><td>${cfg.email||DOTS.slice(0,34)}</td></tr>
+    <tr><td><strong>Date d'ouverture</strong></td><td>${DOTS.slice(0,26)}</td></tr>
+    <tr><td><strong>Responsable légal</strong></td><td>${cfg.responsable||DOTS.slice(0,30)}</td></tr>
+    <tr><td><strong>Horaires de travail</strong></td><td>${DOTS.slice(0,32)}</td></tr>
     <tr><td><strong>Activité</strong></td><td>${M.label}</td></tr>
-  </table>
-  <p><strong>Déclaration d'activité CERFA faite le :</strong> <span class="fill">${BLANK}</span></p>
-  <p style="font-size:11px;color:#94a3b8">(Mettre l'accusé de réception de la déclaration signée par la DDPP en annexe.)</p>
-</div>
+  </tbody></table>
+  <p><strong>Déclaration d'activité CERFA faite le :</strong> ${DOTS.slice(0,26)}</p>
+  <div class="box info avoid"><span class="bt">Rappel</span> Joindre l'accusé de réception de la déclaration signée par la DDPP en annexe.</div>
+  ${pageFoot()}
+</section>
 
-<div class="page">
-  <div class="phead"><div class="phead-title">II. Bonnes pratiques d'hygiène</div><img src="${logoUrl}" class="phead-logo"></div>
+<!-- II.1 PERSONNEL -->
+<section class="page">
+  ${pageHead("II · Bonnes pratiques d'hygiène",logoUrl)}
   <h1>II. Bonnes pratiques d'hygiène</h1>
-  <h2>1. Le personnel</h2>
-  <h3>Plan de formation</h3>
-  <p>Conformément au décret n°2011-731, au moins une personne peut justifier d'une formation en matière d'hygiène alimentaire adaptée à l'activité (stage effectué par <span class="fill">${BLANK}</span> le <span class="fill">${BLANK}</span>). Lors de l'arrivée d'un nouveau membre, une formation orale est dispensée par le gérant. En cas de nécessité, les employés suivront une formation externe.</p>
-  <table><tr><th>Nom</th><th>Poste</th><th>Formation hygiène</th><th>Date / À jour</th></tr>${usersRows}</table>
+  <h2>1. Le personnel — Plan de formation</h2>
+  <p>Conformément au décret n°2011-731, au moins une personne peut justifier d'une formation en hygiène alimentaire adaptée à l'activité (stage effectué par ${DOTS.slice(0,26)} le ${DOTS.slice(0,18)}). À l'arrivée d'un nouveau membre, une formation orale est dispensée par le gérant.</p>
+  <table><thead><tr><th>Nom</th><th>Poste</th><th>Formation hygiène</th><th>Date / À jour</th></tr></thead><tbody>${usersRows}</tbody></table>
   <h3>Tenue du personnel</h3>
-  <p>La tenue se compose : veste ou tee-shirt, pantalon, charlotte ou toque, chaussures de sécurité blanches adaptées au travail agro-alimentaire. Changée tous les jours. Port de bijoux strictement interdit (tolérance alliance lisse sans pierre). Interdiction de fumer/vapoter dans les locaux. Interdiction de manger et boire en production.</p>
+  <p>Veste ou tee-shirt, pantalon, charlotte ou toque, chaussures de sécurité blanches adaptées au travail agro-alimentaire. Changée tous les jours. Port de bijoux interdit (tolérance alliance lisse sans pierre). Interdiction de fumer/vapoter, manger et boire en production.</p>
   <h3>Lavage des mains</h3>
-  <p>Obligatoire à l'eau et au savon, systématiquement : prise de poste, après WC, après les pauses, avant de manipuler les denrées, après toute interruption ou opération salissante.</p>
-  <table><tr><th>Étape</th><th>Méthode</th></tr>
+  <p>Obligatoire à l'eau et au savon, systématiquement : prise de poste, après WC, après les pauses, avant de manipuler les denrées, après toute opération salissante.</p>
+  <table><thead><tr><th style="width:12%">Étape</th><th>Méthode</th></tr></thead><tbody>
     <tr><td>1</td><td>Mouiller les mains et les avant-bras</td></tr>
     <tr><td>2</td><td>Prendre une dose de savon liquide bactéricide</td></tr>
     <tr><td>3</td><td>Frotter mains et avant-bras, vérifier les ongles, 30 secondes minimum</td></tr>
     <tr><td>4</td><td>Rincer abondamment</td></tr>
     <tr><td>5</td><td>Sécher avec un essuie-main à usage unique</td></tr>
-  </table>
-  <h3>État de santé du personnel</h3>
-  <p>Préalablement à l'embauche et tous les deux ans (Code du Travail), visite médicale auprès de la Médecine du travail attestant l'aptitude à la manipulation des denrées.</p>
-  <h3>Traitement des plaies et blessures</h3>
-  <p>Nettoyer et désinfecter immédiatement. Pansement + gant jetable renouvelé. Consulter un médecin si la plaie est profonde.</p>
-</div>
+  </tbody></table>
+  <h3>État de santé et plaies</h3>
+  <p>Visite médicale à l'embauche puis tous les 2 ans (Code du Travail). Toute plaie est nettoyée et désinfectée immédiatement : pansement + gant jetable renouvelé ; consulter un médecin si la plaie est profonde.</p>
+  ${pageFoot()}
+</section>
 
-<div class="page">
-  <div class="phead"><div class="phead-title">II. Bonnes pratiques d'hygiène</div><img src="${logoUrl}" class="phead-logo"></div>
-  <h1>II.2 Maintenance des locaux, équipements et matériel</h1>
-  <p>La maintenance curative peut être gérée de deux manières : en interne par le responsable (travaux simples) ; en externe par un prestataire (matériel de production, système frigorifique).</p>
-  <p>Maintenance préventive pour les équipements suivants (à compléter avec les équipements présents et les sociétés prestataires) :</p>
-  <table><tr><th>Équipements</th><th>Organisme de révision</th><th>Téléphone</th><th>Fréquence</th></tr>
-    <tr><td>Installation frigorifique</td><td>${BLANK}</td><td>${BLANK}</td><td>1 fois par an</td></tr>
-    <tr><td>Hotte d'extraction</td><td>${BLANK}</td><td>${BLANK}</td><td>2 fois par an</td></tr>
-    <tr><td>${BLANK}</td><td>${BLANK}</td><td>${BLANK}</td><td>${BLANK}</td></tr>
-  </table>
-</div>
+<!-- II.2-3 LOCAUX & NETTOYAGE -->
+<section class="page">
+  ${pageHead("II · Bonnes pratiques d'hygiène",logoUrl)}
+  <h1>II.2 Locaux & nettoyage</h1>
+  <h2>2. Maintenance des locaux et équipements</h2>
+  <p>Maintenance curative en interne (travaux simples) ou externe par un prestataire (matériel de production, frigorifique). Maintenance préventive à compléter :</p>
+  <table><thead><tr><th>Équipements</th><th>Organisme de révision</th><th>Téléphone</th><th>Fréquence</th></tr></thead><tbody>
+    <tr><td>Installation frigorifique</td><td>${DOTS.slice(0,20)}</td><td>${DOTS.slice(0,16)}</td><td>1×/an</td></tr>
+    <tr><td>Hotte d'extraction</td><td>${DOTS.slice(0,20)}</td><td>${DOTS.slice(0,16)}</td><td>2×/an</td></tr>
+    <tr><td>${DOTS.slice(0,20)}</td><td>${DOTS.slice(0,20)}</td><td>${DOTS.slice(0,16)}</td><td>${DOTS.slice(0,12)}</td></tr>
+  </tbody></table>
+  <h2>3. Plan de nettoyage et de désinfection</h2>
+  <p>Trois phases : pré-opérationnel (désinfection avant utilisation), opérationnel (surface, produit, matériel, mode, temps d'action), post-opérationnel (vérification et renouvellement).</p>
+  <table><thead><tr><th>Zone</th><th>Surface</th><th>Fréquence</th><th>Produit</th><th>Dilution</th></tr></thead><tbody>${nettRows}</tbody></table>
+  <div class="box ok avoid"><span class="bt">Méthode TACT — cercle de Sinner</span> Température, Action mécanique, Concentration, Temps : 4 facteurs indissociables. Débarrasser les souillures → appliquer/brosser → laisser agir → rincer → sécher (papier à usage unique).</div>
+  <div class="box info avoid"><span class="bt">Enregistrement</span> Les validations de nettoyage sont enregistrées avec signature dans HygiPro. Fiches techniques et de sécurité consultables sur site.</div>
+  ${pageFoot()}
+</section>
 
-<div class="page">
-  <div class="phead"><div class="phead-title">II. Bonnes pratiques d'hygiène</div><img src="${logoUrl}" class="phead-logo"></div>
-  <h1>II.3 Mesures d'hygiène avant, pendant et après la production</h1>
-  <p>Le plan de nettoyage et de désinfection comprend 3 phases : <strong>pré-opérationnel</strong> (désinfection avant utilisation), <strong>opérationnel</strong> (surface, produit, matériel, mode opératoire, temps d'action), <strong>post-opérationnel</strong> (vérification visuelle et renouvellement si nécessaire).</p>
-  <table><tr><th>Zone</th><th>Surface</th><th>Fréquence</th><th>Produit</th><th>Dilution</th></tr>${nettRows}</table>
-  <div class="ok-box">✓ Méthode TACT — cercle de Sinner : Température, Action mécanique, Concentration, Temps. 4 facteurs indissociables.</div>
-  <p><strong>Méthode :</strong> 1) Débarrasser les souillures visibles. 2) Appliquer le nettoyant/désinfectant, brosser/frotter. 3) Laisser agir. 4) Rincer abondamment. 5) Racler/sécher (papier à usage unique).</p>
-  <div class="info-box">ℹ️ Les validations de nettoyage sont enregistrées avec signature dans HygiPro. Fiches techniques et de sécurité consultables sur site.</div>
-</div>
-
-<div class="page">
-  <div class="phead"><div class="phead-title">II. Bonnes pratiques d'hygiène</div><img src="${logoUrl}" class="phead-logo"></div>
-  <h1>II.4 Plan de lutte contre les nuisibles</h1>
-  <p>La société prestataire <span class="fill">${cfg.deratisation||BLANK}</span> est en charge de la lutte contre les nuisibles (rongeurs et blattes). Il est prévu <span class="fill">${cfg.deratFreq||BLANK}</span> passage(s) par an. Les fiches techniques et le plan d'appâtage sont tenus à disposition. En cas d'infestation, appel immédiat au prestataire et fiche de non-conformité. Bons d'intervention archivés.</p>
-  <div class="warn-box">⚠️ En cas de présence avérée d'insectes volants, un DEIV (destructeur électrique d'insectes volants) sera installé.</div>
-  <h1 style="margin-top:24px">II.5 Approvisionnement en eau</h1>
-  <p>L'établissement est raccordé au réseau d'eau public. Le gérant atteste ne pas utiliser d'eau d'une autre origine. Eau contrôlée par les services de la commune.</p>
+<!-- II.4-5 NUISIBLES & EAU -->
+<section class="page">
+  ${pageHead("II · Bonnes pratiques d'hygiène",logoUrl)}
+  <h1>II.4 Nuisibles & eau</h1>
+  <h2>4. Lutte contre les nuisibles</h2>
+  <p>La société prestataire ${DOTS.slice(0,26)} est en charge de la lutte (rongeurs et blattes), avec ${DOTS.slice(0,12)} passage(s)/an. Fiches techniques et plan d'appâtage tenus à disposition. En cas d'infestation : appel immédiat et fiche de non-conformité.</p>
+  <div class="box crit avoid"><span class="bt">Insectes volants</span> En cas de présence avérée, un destructeur électrique d'insectes volants (DEIV) sera installé.</div>
+  <h2>5. Approvisionnement en eau</h2>
+  <p>Établissement raccordé au réseau d'eau public. Le gérant atteste ne pas utiliser d'eau d'une autre origine. Eau contrôlée par les services de la commune.</p>
   <ul><li>Ne jamais utiliser d'eaux non contrôlées (forage non analysé)</li><li>Limiter la condensation par calorifugeage des tuyauteries</li><li>Ne jamais laisser d'eau stagner</li></ul>
-</div>
+  ${pageFoot()}
+</section>
 
-<div class="page">
-  <div class="phead"><div class="phead-title">II. Bonnes pratiques d'hygiène</div><img src="${logoUrl}" class="phead-logo"></div>
-  <h1>II.6 La maîtrise des températures</h1>
-  <p>Pendant toutes les étapes, la chaîne du froid doit être respectée (pas de rupture au-delà de 30 min hors froid).</p>
+<!-- II.6 TEMPÉRATURES -->
+<section class="page">
+  ${pageHead("II · Bonnes pratiques d'hygiène",logoUrl)}
+  <h1>II.6 Maîtrise des températures</h1>
   <h3>Contrôle à réception</h3>
-  <table><tr><th>Points de contrôle</th><th>Action en cas de non-conformité</th></tr>
-    <tr><td>Produit : aspect, odeur, couleur</td><td>Refuser si la qualité n'est pas conforme</td></tr>
-    <tr><td>Emballage : aspect</td><td>Refuser (conserve cabossée, rouillée, emballage percé)</td></tr>
-    <tr><td>Étiquetage : DLC/DDM, n° lot</td><td>Refuser sans étiquette de traçabilité ou information manquante</td></tr>
-    <tr><td>Température</td><td>Refuser si la température est non conforme</td></tr>
-  </table>
-  <h3>Températures maximales des denrées (${M.label})</h3>
-  <table><tr><th>Denrée</th><th>Température</th></tr>${tempRows}</table>
+  <table><thead><tr><th>Points de contrôle</th><th>Action si non-conformité</th></tr></thead><tbody>
+    <tr><td>Produit : aspect, odeur, couleur</td><td>Refuser si non conforme</td></tr>
+    <tr><td>Emballage : aspect</td><td>Refuser (cabossé, rouillé, percé)</td></tr>
+    <tr><td>Étiquetage : DLC/DDM, n° lot</td><td>Refuser sans traçabilité</td></tr>
+    <tr><td>Température</td><td>Refuser si non conforme</td></tr>
+  </tbody></table>
+  <h3>Températures maximales des denrées — ${M.label}</h3>
+  <table><thead><tr><th>Denrée</th><th class="tc" style="width:30%">Température</th></tr></thead><tbody>${tempRows}</tbody></table>
+  ${pageFoot()}
+</section>
+
+<!-- II.6 (suite) enceintes -->
+<section class="page">
+  ${pageHead("II · Bonnes pratiques d'hygiène",logoUrl)}
+  <h1>II.6 Températures <span class="sub">(suite)</span></h1>
   <h3>Enceintes réfrigérées de l'établissement</h3>
-  <table><tr><th>Zone / Meuble</th><th>Seuil min</th><th>Seuil max</th><th>Relevé</th></tr>${zonesRows}</table>
-  <div class="info-box">ℹ️ Relevés effectués 2x/jour et enregistrés dans HygiPro. En cas de non-conformité, fiche complétée et société de maintenance contactée.</div>
-</div>
+  <table><thead><tr><th>Zone / Meuble</th><th>Seuil min</th><th>Seuil max</th><th>Relevé</th></tr></thead><tbody>${zonesRows}</tbody></table>
+  <div class="box info avoid"><span class="bt">Suivi</span> Relevés effectués 2×/jour et enregistrés dans HygiPro. En cas de non-conformité, fiche complétée et société de maintenance contactée.</div>
+  ${pageFoot()}
+</section>
 
-<div class="page">
-  <div class="phead"><div class="phead-title">III. Procédures HACCP</div><img src="${logoUrl}" class="phead-logo"></div>
-  <h1>III. Procédures basées sur les principes HACCP</h1>
-  <h2>1. Le champ d'application</h2>
-  <p><strong>Descriptif des produits fabriqués :</strong> ${M.produits}</p>
-  <p><strong>Diagrammes de fabrication validés :</strong> simplifiés, reprennent les étapes de fabrication sans détail des paramètres (détaillés dans l'analyse des dangers).</p>
+<!-- III.1-2 HACCP : champ + dangers bio -->
+<section class="page">
+  ${pageHead('III · Procédures HACCP',logoUrl)}
+  <h1>III. Procédures HACCP</h1>
+  <h2>1. Champ d'application</h2>
+  <p><strong>Produits fabriqués :</strong> ${M.produits}</p>
+  <p><strong>Diagrammes de fabrication validés :</strong> simplifiés, ils reprennent les étapes sans détail des paramètres.</p>
   <ul>${diagList}</ul>
-  <h2>2. Analyse des dangers</h2>
-  <p>Trois types de dangers : (micro)biologiques, chimiques, physiques.</p>
-  <h3>Le danger biologique — sur la matière première</h3>
-  <table class="danger"><tr><th>Dangers</th><th>Principales origines</th><th>Dangerosité / sévérité</th></tr>${rows3(DANGERS_BIO_MP)}</table>
-</div>
+  <h2>2. Analyse des dangers — danger biologique (matière première)</h2>
+  <table class="danger"><thead><tr><th>Dangers</th><th>Principales origines</th><th>Dangerosité / sévérité</th></tr></thead><tbody>${rows3(DANGERS_BIO_MP.slice(0,6))}</tbody></table>
+  ${pageFoot()}
+</section>
 
-<div class="page">
-  <div class="phead"><div class="phead-title">III. Procédures HACCP</div><img src="${logoUrl}" class="phead-logo"></div>
-  <h1>III.2 Dangers chimiques et physiques</h1>
-  <h3>Les dangers chimiques</h3>
-  <table class="danger"><tr><th>Dangers</th><th>Principales origines</th><th>Sévérité</th></tr>${rows3(DANGERS_CHIM)}</table>
-  <p style="font-size:11.5px"><strong>Mesures de maîtrise :</strong> référencement de fournisseurs connus ; certificat d'aptitude au contact alimentaire ; appel à un professionnel pour la lutte contre les nuisibles ; plan de nettoyage selon les préconisations du fabricant.</p>
-  <h3>Les dangers physiques</h3>
-  <table class="danger"><tr><th>Matériau</th><th>Danger potentiel</th><th>Fréquence</th></tr>${DANGERS_PHYS.map(d=>`<tr><td><strong>${d[0]}</strong></td><td>${d[1]}</td><td>${d[2]}</td></tr>`).join('')}</table>
-  <h3>L'analyse des dangers — méthode des 5M</h3>
-  <div class="two-col">
-    <div class="c"><strong>Matière première</strong></div><div class="c">Contamination en amont (conformité à réception, décontamination, traçabilité, chaîne du froid)</div>
-    <div class="c"><strong>Milieu</strong></div><div class="c">Risques liés à l'agencement, l'environnement (locaux, nuisibles, nettoyage, désinfection)</div>
-    <div class="c"><strong>Matériel</strong></div><div class="c">Contaminations dues au matériel et ustensiles (conformité, maintenance, nettoyage)</div>
-    <div class="c"><strong>Main-d'œuvre</strong></div><div class="c">Risques humains : maladies, mauvaise pratique d'hygiène, lavage des mains</div>
-    <div class="c"><strong>Méthode</strong></div><div class="c">Organisation du travail (stockage, traitement des denrées, cuisson)</div>
+<!-- III dangers bio (suite) -->
+<section class="page">
+  ${pageHead('III · Procédures HACCP',logoUrl)}
+  <h1>III. Dangers biologiques <span class="sub">(suite)</span></h1>
+  <table class="danger"><thead><tr><th>Dangers</th><th>Principales origines</th><th>Dangerosité / sévérité</th></tr></thead><tbody>${rows3(DANGERS_BIO_MP.slice(6))}</tbody></table>
+  <div class="box info avoid"><span class="bt">Lecture du tableau</span> La sévérité traduit la dangerosité potentielle du germe. Les mesures de maîtrise sont détaillées dans les fiches matières premières et la maîtrise des étapes.</div>
+  ${pageFoot()}
+</section>
+
+<!-- III dangers chimiques -->
+<section class="page">
+  ${pageHead('III · Procédures HACCP',logoUrl)}
+  <h1>III.2 Dangers chimiques</h1>
+  <table class="danger"><thead><tr><th>Dangers</th><th>Principales origines</th><th>Sévérité</th></tr></thead><tbody>${rows3(DANGERS_CHIM)}</tbody></table>
+  <div class="box info avoid"><span class="bt">Mesures de maîtrise</span> Référencement de fournisseurs connus ; certificat d'aptitude au contact alimentaire ; appel à un professionnel pour les nuisibles ; plan de nettoyage selon les préconisations du fabricant.</div>
+  ${pageFoot()}
+</section>
+
+<!-- III dangers physiques + 5M -->
+<section class="page">
+  ${pageHead('III · Procédures HACCP',logoUrl)}
+  <h1>III.2 Dangers physiques</h1>
+  <table class="danger"><thead><tr><th>Matériau</th><th>Danger potentiel</th><th>Fréquence</th></tr></thead><tbody>${DANGERS_PHYS.map(d=>`<tr><td><strong>${d[0]}</strong></td><td>${d[1]}</td><td>${d[2]}</td></tr>`).join('')}</tbody></table>
+  <h3>Analyse des dangers — méthode des 5M</h3>
+  <div class="m5 avoid">
+    <div class="r"><div class="k">Matière première</div><div class="v">Contamination en amont (conformité à réception, décontamination, traçabilité, chaîne du froid)</div></div>
+    <div class="r"><div class="k">Milieu</div><div class="v">Agencement, environnement (locaux, nuisibles, nettoyage, désinfection)</div></div>
+    <div class="r"><div class="k">Matériel</div><div class="v">Matériel et ustensiles (conformité, maintenance, nettoyage)</div></div>
+    <div class="r"><div class="k">Main-d'œuvre</div><div class="v">Risques humains : maladies, mauvaise pratique d'hygiène, lavage des mains</div></div>
+    <div class="r"><div class="k">Méthode</div><div class="v">Organisation du travail (stockage, traitement des denrées, cuisson)</div></div>
   </div>
-</div>
+  ${pageFoot()}
+</section>
 
-<div class="page">
-  <div class="phead"><div class="phead-title">III. Fiches matières premières</div><img src="${logoUrl}" class="phead-logo"></div>
-  <h1>III.3 Fiches matières premières — Dangers & mesures</h1>
-  ${fichesHtml(M.fiches)}
-</div>
+${fichesSections}
 
-<div class="page">
-  <div class="phead"><div class="phead-title">III. Maîtrise des étapes</div><img src="${logoUrl}" class="phead-logo"></div>
+<!-- III maîtrise des étapes -->
+<section class="page">
+  ${pageHead('III · Maîtrise des étapes',logoUrl)}
   <h1>III.3 Maîtrise des étapes de fabrication</h1>
   <h3>Congélation / Décongélation</h3>
   <p>Congélation lente = altération (rupture des cellules). Décongélation à température ambiante = multiplication en surface. Congélation ventilée immédiate, produits protégés (film). Décongélation en enceinte réfrigérée (+4°C max) ou au micro-ondes. Ne jamais recongeler. Stockage FIFO.</p>
   <h3>Cuisson</h3>
   <p>Maîtriser le couple temps-température. Vérifier le thermostat. Exemples : crème pâtissière 1 min 30 après la première bulle (90°C à cœur) ; crème anglaise 8 min à 195°C four (85°C à cœur).</p>
   <h3>Refroidissement rapide</h3>
-  <p>Franchir la zone +63°C à +10°C en moins de 2h (étalement sur plaque, cellule de refroidissement, immersion glace). Stocker ensuite au froid (+3°C max).</p>
-  <h3>Gestion des déchets et des poubelles</h3>
-  <p>Évacuation rapide vers les poubelles du laboratoire. Sacs à usage unique. Poubelle à ouverture non manuelle. Se laver les mains après manipulation. Nettoyage quotidien. Éloigner des sources de chaleur (>20°C) et des denrées sensibles.</p>
-  <h3>Locaux de fabrication</h3>
-  <p>Nettoyer/désinfecter sols, murs, plafonds. Ne jamais balayer à sec en présence de denrées sensibles. Protéger les ouvertures (grilles, moustiquaires). Sols en pente vers les évacuations. Calorifuger les gaines.</p>
-  <h3>Plan de travail et ustensiles</h3>
-  <p>Plans de travail des produits sensibles à l'abri des courants d'air. Séparer les opérations souillantes (épluchage, cassage des œufs). Nettoyer/désinfecter avant usage. Ne jamais travailler sur un plan fissuré.</p>
-  <h3>Air</h3>
-  <p>Nettoyer sols, plans, matériel. Limiter les allers-venues dans les zones sales. Stocker les bases protégées de l'air (film/couvercle). Vérifier les filtres de ventilation/climatisation.</p>
-</div>
+  <p>Franchir la zone +63°C à +10°C en moins de 2h (étalement sur plaque, cellule, immersion glace). Stocker ensuite au froid (+3°C max).</p>
+  <h3>Déchets et poubelles</h3>
+  <p>Évacuation rapide vers les poubelles du laboratoire. Sacs à usage unique. Poubelle à ouverture non manuelle. Lavage des mains après manipulation. Nettoyage quotidien.</p>
+  <h3>Locaux, plan de travail et air</h3>
+  <p>Nettoyer/désinfecter sols, murs, plafonds ; ne jamais balayer à sec près des denrées sensibles. Séparer les opérations souillantes. Ne jamais travailler sur un plan fissuré. Vérifier les filtres de ventilation/climatisation.</p>
+  ${pageFoot()}
+</section>
 
-<div class="page">
-  <div class="phead"><div class="phead-title">III. Points déterminants</div><img src="${logoUrl}" class="phead-logo"></div>
+<!-- III.4 CCP/PrPo -->
+<section class="page">
+  ${pageHead('III · Points déterminants',logoUrl)}
   <h1>III.4 Points déterminants (CCP / PrPo)</h1>
-  <p>Chaque étape donne lieu à une évaluation (arbre de décision) pour déterminer si un CCP ou un PrPo est présent.</p>
   <h3>Objectifs et seuils de maîtrise</h3>
-  <table><tr><th>Point déterminant</th><th>Objectif</th><th>Seuil de maîtrise</th><th>Justification</th></tr>${prpoRows}</table>
-  <p style="font-size:11px;color:#64748b">* BOF = Beurre, Œuf, Fromage</p>
+  <table><thead><tr><th>Point déterminant</th><th>Objectif</th><th class="tc">Seuil</th><th>Justification</th></tr></thead><tbody>${prpoRows}</tbody></table>
+  <p style="font-size:8.5pt;color:var(--muted)">* BOF = Beurre, Œuf, Fromage</p>
   <h3>Procédures de surveillance</h3>
-  <table><tr><th>Qui</th><th>Quoi</th><th>Où</th><th>Quand</th><th>Comment</th></tr>
-    <tr><td>Personnel de réception</td><td>Température des produits</td><td>Camion / réception</td><td>Chaque livraison</td><td>Thermomètre / sonde — HygiPro</td></tr>
-    <tr><td>Première personne le matin</td><td>Température des enceintes</td><td>Chaque enceinte froide</td><td>Matin et après-midi</td><td>Relevé — HygiPro</td></tr>
-  </table>
+  <table><thead><tr><th>Qui</th><th>Quoi</th><th>Où</th><th>Quand</th><th>Comment</th></tr></thead><tbody>
+    <tr><td>Réception</td><td>T° produits</td><td>Camion / réception</td><td>Chaque livraison</td><td>Sonde — HygiPro</td></tr>
+    <tr><td>1<sup>re</sup> pers. matin</td><td>T° enceintes</td><td>Enceintes froides</td><td>Matin / après-midi</td><td>Relevé — HygiPro</td></tr>
+  </tbody></table>
   <h3>Actions correctives</h3>
-  <table><tr><th>Point déterminant</th><th>Sur les produits</th><th>Sur le procédé</th></tr>
-    <tr><td>Température de réception</td><td>Si &gt; seuil : produit refusé</td><td>Informer le fournisseur, actions correctives</td></tr>
-    <tr><td>Température de stockage</td><td>Si température à cœur &gt; seuil : vérifier, changer, jeter si &gt; limite</td><td>Faire intervenir un frigoriste</td></tr>
-  </table>
-</div>
+  <table><thead><tr><th>Point déterminant</th><th>Sur les produits</th><th>Sur le procédé</th></tr></thead><tbody>
+    <tr><td>T° de réception</td><td>Si &gt; seuil : produit refusé</td><td>Informer le fournisseur</td></tr>
+    <tr><td>T° de stockage</td><td>Si T° à cœur &gt; seuil : vérifier, jeter si &gt; limite</td><td>Faire intervenir un frigoriste</td></tr>
+  </tbody></table>
+  ${pageFoot()}
+</section>
 
-<div class="page">
-  <div class="phead"><div class="phead-title">IV. Traçabilité & non-conformes</div><img src="${logoUrl}" class="phead-logo"></div>
-  <h1>IV. Traçabilité & gestion des produits non-conformes</h1>
-  <h3>Traçabilité interne</h3>
+<!-- IV TRAÇABILITÉ -->
+<section class="page">
+  ${pageHead('IV · Traçabilité & non-conformes',logoUrl)}
+  <h1>IV. Traçabilité & gestion des non-conformes</h1>
+  <h2>Traçabilité interne</h2>
   <p>Numéro de lot des matières premières, DLC/DDM du fournisseur, numéro de lot du fournisseur, DLC, DDM. Archivage des bons de livraison : 6 mois.</p>
-  <h3>Gestion des produits non conformes</h3>
-  <p>Destruction lors du dépassement des valeurs : température des MP, température à cœur, critères organoleptiques. Retrait : empêcher la distribution. Rappel : obtenir le retour d'un produit dangereux mis à disposition.</p>
-  <h3>Procédure TIAC (Toxi-Infection Alimentaire Collective)</h3>
-  <p><strong>Définition :</strong> maladie infectieuse à déclaration obligatoire survenant lorsqu'il existe au moins 2 cas groupés avec manifestations similaires dues à une bactérie ou une toxine.</p>
-  <div class="warn-box">Que faire : jeter tous les restes après prélèvements ; n'utiliser aucun aliment tant que les résultats ne sont pas connus ; nettoyer et désinfecter ; revoir la formation ; mettre à jour les procédures ; contacter la DDPP locale et l'ARS.</div>
-  <h3>Allergènes (Règlement UE 1169/2011)</h3>
-  <p style="font-size:11.5px">Gluten · Crustacés · Œufs · Poissons · Arachides · Soja · Lait · Fruits à coque · Céleri · Moutarde · Sésame · Sulfites · Lupin · Mollusques</p>
-</div>
+  <h2>Gestion des produits non conformes</h2>
+  <p>Destruction au dépassement des valeurs : température des MP, température à cœur, critères organoleptiques. Retrait : empêcher la distribution. Rappel : obtenir le retour d'un produit dangereux mis à disposition.</p>
+  <h2>Procédure TIAC</h2>
+  <p><strong>Définition :</strong> maladie infectieuse à déclaration obligatoire survenant lorsqu'il existe au moins 2 cas groupés avec des manifestations similaires dues à une bactérie ou une toxine.</p>
+  <div class="box crit avoid"><span class="bt">Conduite à tenir</span> Jeter tous les restes après prélèvements ; n'utiliser aucun aliment tant que les résultats ne sont pas connus ; nettoyer et désinfecter ; revoir la formation ; mettre à jour les procédures ; contacter la DDPP locale et l'ARS.</div>
+  <h2>Allergènes (Règlement UE 1169/2011)</h2>
+  <p>Gluten · Crustacés · Œufs · Poissons · Arachides · Soja · Lait · Fruits à coque · Céleri · Moutarde · Sésame · Sulfites · Lupin · Mollusques</p>
+  ${pageFoot()}
+</section>
 
 ${cerfaPage}
 
-<div class="page">
-  <div class="phead"><div class="phead-title">V. Annexes</div><img src="${logoUrl}" class="phead-logo"></div>
+<!-- FICHES DE RELEVÉ (vierges) -->
+<section class="page">
+  ${pageHead('Fiches de relevé de température',logoUrl)}
+  <h1>Fiches de relevé de température</h1>
+  <p>Contrôler la température au moins une fois par jour, toujours au même moment. Inscrire la température relevée.</p>
+  ${tempGrid('Chambre froide positive (°C)',[8,6,4,2,0])}
+  <p class="gtitle" style="margin-top:4mm"><strong>Gestion des non-conformités (températures)</strong></p>
+  <table><thead><tr><th>Date</th><th>Problème rencontré</th><th>Action corrective</th><th>Par qui ?</th></tr></thead><tbody>
+    <tr><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td></tr>
+  </tbody></table>
+  ${pageFoot()}
+</section>
+
+<section class="page">
+  ${pageHead('Fiches de relevé de température',logoUrl)}
+  <h1>Relevé — Chambre froide négative</h1>
+  ${tempGrid('Chambre froide négative (°C)',[-18,-20,-22,-24])}
+  ${pageFoot()}
+</section>
+
+<!-- V ANNEXES -->
+<section class="page">
+  ${pageHead('V · Annexes',logoUrl)}
   <h1>V. Annexes</h1>
-  <p style="font-size:11.5px;color:#64748b">Procédures détaillées et diagrammes de fabrication à joindre.</p>
-  <ul style="font-size:12px;line-height:1.9">
+  <p>Procédures détaillées et diagrammes de fabrication à joindre.</p>
+  <ul style="line-height:1.9">
     <li>Annexe 1 : Plan de nettoyage et de désinfection</li>
     <li>Annexe 2 : Procédure « Tenue du personnel »</li>
     <li>Annexe 3 : Procédure « Lavage des mains »</li>
     <li>Annexe 4 : Procédure « Contrôle à réception »</li>
-    <li>Annexe 5 : Procédure « Surveillance des températures des enceintes »</li>
+    <li>Annexe 5 : Procédure « Surveillance des températures »</li>
     <li>Annexe 6 : Procédure « Décartonnage »</li>
     <li>Annexe 7 : Procédure « Ouverture des boîtes de conserve »</li>
     <li>Annexe 8 : Procédure « Décontamination des légumes »</li>
@@ -462,22 +590,32 @@ ${cerfaPage}
     <li>Annexe 10 : Procédure « Utilisation de la trancheuse »</li>
     <li>Annexe 11 : Procédure « Utilisation des torchons »</li>
     <li>Annexe 12 : Fiche de non-conformités</li>
-    ${M.diagrammes.map((d,i)=>`<li>Annexe ${13+i} : Diagramme de fabrication — ${d}</li>`).join('')}
+    ${diagList}
   </ul>
-</div>
+  ${pageFoot()}
+</section>
 
-<div class="page" style="page-break-after:auto">
-  <div class="phead"><div class="phead-title">Validation</div><img src="${logoUrl}" class="phead-logo"></div>
+<!-- VALIDATION -->
+<section class="page">
+  ${pageHead('Validation',logoUrl)}
   <h1>Validation et engagement</h1>
-  <table><tr><th>Version</th><th>Date</th><th>Modification</th><th>Validé par</th></tr>
-    <tr><td>1.0</td><td>${dateGen}</td><td>Création initiale</td><td>${cfg.responsable||BLANK}</td></tr>
-    <tr><td>${BLANK}</td><td>${BLANK}</td><td>${BLANK}</td><td>${BLANK}</td></tr>
-  </table>
-  <p style="margin-top:24px">Le responsable certifie que ce Plan de Maîtrise Sanitaire correspond aux pratiques réelles de l'établissement et s'engage à le mettre à jour en cas de modification des procédés.</p>
-  <div style="margin-top:46px;border-top:1px solid #94a3b8;width:280px;padding-top:8px;font-size:12px;color:#64748b">Signature et cachet du responsable</div>
-  <div class="footer">${cfg.nom} — Plan de Maîtrise Sanitaire v1.0 — ${dateGen}<br>Généré par HygiPro · hygi-pro.fr · Conforme CE 852/2004 · DGAL/SDSSA 2022-349</div>
-</div>
+  <table><thead><tr><th>Version</th><th>Date</th><th>Modification</th><th>Validé par</th></tr></thead><tbody>
+    <tr><td>1.0</td><td>${dateGen}</td><td>Création initiale</td><td>${cfg.responsable||DOTS.slice(0,16)}</td></tr>
+    <tr><td>${DOTS.slice(0,8)}</td><td>${DOTS.slice(0,12)}</td><td>${DOTS.slice(0,18)}</td><td>${DOTS.slice(0,16)}</td></tr>
+  </tbody></table>
+  <p style="margin-top:4mm">Le responsable certifie que ce Plan de Maîtrise Sanitaire correspond aux pratiques réelles de l'établissement et s'engage à le mettre à jour en cas de modification des procédés.</p>
+  <div class="signline">Signature et cachet du responsable</div>
+  ${pageFoot()}
+</section>
 
 <script>window.onload=function(){setTimeout(function(){window.print();},800);}<\/script>
 </body></html>`;
+}
+
+// En-tête / pied de page réutilisables
+function pageHead(bc,logoUrl){
+  return `<div class="phead"><div class="pl"><span class="logo"></span><span class="pt">HygiPro — Plan de Maîtrise Sanitaire</span></div><div class="pr">${bc}</div></div>`;
+}
+function pageFoot(){
+  return `<div class="pfoot"><span>Édité par SASU DarTech Solution</span><span>HACCP · Hygiène · Traçabilité</span></div>`;
 }

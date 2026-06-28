@@ -1186,7 +1186,7 @@ async function genererPMSClient(){
       image:{type:'jpeg',quality:0.95},
       html2canvas:{scale:2,useCORS:true,allowTaint:false},
       jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
-      pagebreak:{mode:['css','legacy']}
+      pagebreak:{mode:['css','legacy','avoid-all']}
     };
     pdfBlob=await html2pdf().set(opt).from(wrapper).outputPdf('blob');
   }catch(e){
