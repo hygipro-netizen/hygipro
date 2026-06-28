@@ -220,6 +220,7 @@ ol{margin-left:60px}
     <tr><td><strong>Activité</strong></td><td>${M.label}</td></tr>
     <tr><td><strong>Adresse</strong></td><td>${cfg.adresse||'—'}</td></tr>
     <tr><td><strong>Responsable</strong></td><td>${cfg.responsable||'—'}</td></tr>
+    ${cfg.tel||cfg.telFixe?`<tr><td><strong>Téléphone</strong></td><td>${[cfg.tel?'Port. '+cfg.tel:'',cfg.telFixe?'Fixe '+cfg.telFixe:''].filter(Boolean).join(' · ')}</td></tr>`:''}
     <tr><td><strong>SIRET</strong></td><td>${cfg.siret||'—'}</td></tr>
     <tr><td><strong>Surface laboratoire</strong></td><td>${cfg.surface?cfg.surface+' m²':'—'}</td></tr>
   </table>
