@@ -2560,6 +2560,13 @@ async function openDocViewer(url,title,filename){
   document.getElementById('modalDocViewer').style.display='flex';
   document.getElementById('docViewerBody').innerHTML='<div style="color:#7ba7c4;padding:40px;text-align:center">Chargement...</div>';
   const isImage=/\.(jpg|jpeg|png|gif|webp)$/i.test(filename)||/\.(jpg|jpeg|png|gif|webp)$/i.test(url);
+  const isHtml=/\.html?$/i.test(filename)||/\.html?(\?|$)/i.test(url);
+  if(isHtml){
+    // PMS et documents HTML : ouverture directe (permet l'impression PDF)
+    document.getElementById('modalDocViewer').style.display='none';
+    window.open(url,'_blank');
+    return;
+  }
   if(isImage){
     document.getElementById('docViewerPages').style.display='none';
     document.getElementById('docViewerBody').innerHTML=`<img src="${url}" style="max-width:100%;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,0.4)">`;

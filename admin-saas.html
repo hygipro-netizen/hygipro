@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>HygiPro — Back-office SaaS</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/pms-builder.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--bg:#060f1e;--card:#0d1f38;--border:#1e3a5f;--text:#e8f4f0;--muted:#7ba7c4;--teal:#2dd4a0;--red:#f87171;--amber:#f59e0b;--blue:#60a5fa;--green:#34d399;--purple:#a78bfa}
@@ -133,6 +134,7 @@ tr:hover td{background:rgba(45,212,160,0.02)}
       <div class="nav-section">Facturation</div>
       <button class="nav-link" onclick="showTab('factures',this)">🧾 Factures</button>
       <button class="nav-link" onclick="showTab('abonnements',this)">💳 Abonnements</button>
+      <button class="nav-link" onclick="showTab('pms',this)">📋 Générateur PMS</button>
     </div>
     <div class="sidebar-footer">
       <div style="font-size:11px;color:var(--muted);margin-bottom:8px" id="adminEmailDisplay"></div>
@@ -239,6 +241,70 @@ tr:hover td{background:rgba(45,212,160,0.02)}
           <tr><th>Client</th><th>Plan actuel</th><th>Depuis</th><th>Prochain renouvellement</th><th>Paiement</th><th>Actions</th></tr>
           <tbody id="aboTable"></tbody>
         </table>
+      </div>
+    </div>
+
+    <!-- GENERATEUR PMS -->
+    <div id="tab-pms" class="section-tab">
+      <div class="page-header">
+        <div><div class="page-title">📋 Générateur de PMS</div><div class="page-sub">Générez le Plan de Maîtrise Sanitaire d'un client — il apparaîtra dans son onglet Documents</div></div>
+      </div>
+
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-header"><div class="card-title">1️⃣ Sélectionnez le client</div></div>
+        <div class="form-group">
+          <label class="form-label">Client *</label>
+          <select class="form-input" id="pmsClient" onchange="onPmsClientChange()"><option value="">— Choisir un client —</option></select>
+        </div>
+        <div id="pmsClientInfo" style="display:none;background:rgba(45,212,160,0.06);border:1px solid rgba(45,212,160,0.2);border-radius:8px;padding:12px;font-size:13px;color:var(--muted)"></div>
+      </div>
+
+      <div id="pmsForm" style="display:none">
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-header"><div class="card-title">2️⃣ Type d'établissement</div></div>
+          <div class="form-group">
+            <label class="form-label">Métier / Activité *</label>
+            <select class="form-input" id="pmsMetier">
+              <option value="boulangerie">Boulangerie-Pâtisserie</option>
+              <option value="restaurant">Restaurant / Restauration</option>
+              <option value="boucherie">Boucherie-Charcuterie</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">SIRET</label><input class="form-input" id="pmsSiret" placeholder="123 456 789 00012"></div>
+            <div class="form-group"><label class="form-label">Surface labo (m²)</label><input class="form-input" id="pmsSurface" placeholder="40"></div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-header"><div class="card-title">3️⃣ Coordonnées DDPP <span style="font-size:10px;color:var(--muted);font-weight:400">(varie selon le département du client)</span></div></div>
+          <div style="background:rgba(96,165,250,0.08);border:1px solid rgba(96,165,250,0.2);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--muted);margin-bottom:14px">
+            💡 Pour trouver la DDPP du client : <a href="https://lannuaire.service-public.fr/recherche?whoWhat=DDPP" target="_blank" style="color:var(--blue)">lannuaire.service-public.fr</a> → cherchez "DDPP" + département
+          </div>
+          <div class="form-group"><label class="form-label">Nom de la DDPP</label><input class="form-input" id="pmsDdppNom" placeholder="DDPP du Val-de-Marne"></div>
+          <div class="form-group"><label class="form-label">Adresse DDPP</label><input class="form-input" id="pmsDdppAdresse" placeholder="3 bis rue des Archives, 94046 Créteil Cedex"></div>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">Téléphone DDPP</label><input class="form-input" id="pmsDdppTel" placeholder="01 45 13 92 30"></div>
+            <div class="form-group"><label class="form-label">Email DDPP</label><input class="form-input" id="pmsDdppEmail" placeholder="ddpp@..."></div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-header"><div class="card-title">4️⃣ Fournisseurs & prestataires</div></div>
+          <div class="form-group"><label class="form-label">Fournisseurs principaux</label><textarea class="form-input" id="pmsFournisseurs" rows="2" placeholder="Metro, Brake France, Transgourmet..."></textarea></div>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">Prestataire dératisation</label><input class="form-input" id="pmsDeratisation" placeholder="Anticimex, Rentokil..."></div>
+            <div class="form-group"><label class="form-label">Fréquence passage</label><input class="form-input" id="pmsDeratFreq" placeholder="Trimestrielle"></div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-header"><div class="card-title">5️⃣ Options</div></div>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;margin-bottom:8px"><input type="checkbox" id="pmsCerfa" checked> Inclure la page CERFA 13984 (déclaration DDPP)</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" id="pmsSaveDoc" checked> Sauvegarder dans l'onglet Documents du client</label>
+        </div>
+
+        <button class="btn btn-primary" onclick="genererPMSClient()" style="width:100%;justify-content:center;padding:14px;font-size:15px">📋 Générer le PMS</button>
       </div>
     </div>
 
@@ -410,6 +476,7 @@ function showTab(tab,el){
   if(tab==='impayes')renderImpayes();
   if(tab==='factures')renderFactures();
   if(tab==='abonnements')renderAbonnements();
+  if(tab==='pms')renderPmsClientSelect();
 }
 
 function openModal(id){
@@ -942,6 +1009,96 @@ async function sendEmailJS(toEmail,toName,subject,message,montant,mois,htmlConte
     console.error('❌ Erreur email:',e);
     showToast('❌ Erreur email : '+e.message,'danger',6000);
   }
+}
+
+// ============================================
+// GENERATEUR PMS MULTI-METIERS
+// ============================================
+function renderPmsClientSelect(){
+  const sel=document.getElementById('pmsClient');
+  sel.innerHTML='<option value="">— Choisir un client —</option>'+allClients.map(c=>`<option value="${c.id}" data-slug="${c.slug}">${c.nom} (${c.slug})</option>`).join('');
+  document.getElementById('pmsForm').style.display='none';
+  document.getElementById('pmsClientInfo').style.display='none';
+}
+function onPmsClientChange(){
+  const sel=document.getElementById('pmsClient');
+  const c=allClients.find(cl=>cl.id===sel.value);
+  if(!c){document.getElementById('pmsForm').style.display='none';document.getElementById('pmsClientInfo').style.display='none';return;}
+  document.getElementById('pmsClientInfo').style.display='block';
+  document.getElementById('pmsClientInfo').innerHTML=`🏪 <strong style="color:var(--text)">${c.nom}</strong> · 👤 ${c.responsable||'—'} · 📧 ${c.email||'—'} · 📍 ${c.ville||'Ville non renseignée'}`;
+  document.getElementById('pmsForm').style.display='block';
+  // Pré-remplir le métier selon le nom si possible
+  const nom=(c.nom||'').toLowerCase();
+  if(nom.includes('boucher')||nom.includes('charcut'))document.getElementById('pmsMetier').value='boucherie';
+  else if(nom.includes('restaur')||nom.includes('brasser')||nom.includes('bistro'))document.getElementById('pmsMetier').value='restaurant';
+  else document.getElementById('pmsMetier').value='boulangerie';
+}
+
+async function genererPMSClient(){
+  const sel=document.getElementById('pmsClient');
+  const client=allClients.find(cl=>cl.id===sel.value);
+  if(!client){showToast('Sélectionnez un client','danger');return;}
+  const slug=client.slug;
+  showToast('⏳ Génération du PMS en cours...','info',3000);
+
+  // Récupère les données du client depuis Supabase (filtrées par client_slug)
+  const[uz,uu,un]=await Promise.all([
+    db.from('zones').select('*').eq('client_slug',slug),
+    db.from('users').select('name,role').eq('client_slug',slug),
+    db.from('plan_nettoyage').select('*').eq('client_slug',slug),
+  ]);
+  const zones=uz.data||[],users=uu.data||[],nettoyage=un.data||[];
+
+  const metier=document.getElementById('pmsMetier').value;
+  const cfg={
+    nom:client.nom,
+    adresse:client.ville||'',
+    responsable:client.responsable||'',
+    email:client.email||'',
+    tel:client.tel||'',
+    siret:document.getElementById('pmsSiret').value,
+    surface:document.getElementById('pmsSurface').value,
+    metier,
+    ddppNom:document.getElementById('pmsDdppNom').value,
+    ddppAdresse:document.getElementById('pmsDdppAdresse').value,
+    ddppTel:document.getElementById('pmsDdppTel').value,
+    ddppEmail:document.getElementById('pmsDdppEmail').value,
+    fournisseurs:document.getElementById('pmsFournisseurs').value,
+    deratisation:document.getElementById('pmsDeratisation').value,
+    deratFreq:document.getElementById('pmsDeratFreq').value,
+    cerfa:document.getElementById('pmsCerfa').checked,
+    zones,users,nettoyage,
+  };
+
+  const html=buildPMSHtml(cfg);
+
+  // Sauvegarde dans Documents du client
+  if(document.getElementById('pmsSaveDoc').checked){
+    try{
+      const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+      const path='pms/'+slug+'_PMS_'+Date.now()+'.html';
+      const{error:upErr}=await db.storage.from('hygipro-photos').upload(path,blob,{upsert:true,contentType:'text/html'});
+      if(upErr){showToast('Erreur stockage : '+upErr.message,'danger',5000);return;}
+      const{data:u}=db.storage.from('hygipro-photos').getPublicUrl(path);
+      // Insert dans documents AVEC le client_slug
+      const METIER_LABEL={boulangerie:'Boulangerie-Pâtisserie',restaurant:'Restauration',boucherie:'Boucherie-Charcuterie'};
+      await db.from('documents').insert({
+        title:'Plan de Maîtrise Sanitaire — '+METIER_LABEL[metier],
+        category:'PMS',
+        file_url:u.publicUrl,
+        file_name:'PMS_'+slug+'.html',
+        allowed_roles:['admin','responsable'],
+        client_slug:slug,
+      });
+      showToast('✅ PMS généré et ajouté aux Documents du client !','ok',5000);
+    }catch(e){showToast('Erreur : '+e.message,'danger',5000);return;}
+  }
+
+  // Ouvre aussi le PMS pour aperçu/impression
+  const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  window.open(url,'_blank');
+  setTimeout(()=>URL.revokeObjectURL(url),20000);
 }
 
 // INIT
