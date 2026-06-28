@@ -305,7 +305,9 @@ tr:hover td{background:rgba(45,212,160,0.02)}
           <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" id="pmsSaveDoc" checked> Sauvegarder dans l'onglet Documents du client</label>
         </div>
 
-        <button class="btn btn-primary" onclick="genererPMSClient()" style="width:100%;justify-content:center;padding:14px;font-size:15px">📋 Générer le PMS</button>
+        <button class="btn btn-primary" onclick="genererPMSClient()" style="width:100%;justify-content:center;padding:14px;font-size:15px">📋 Générer le PMS (PDF auto)</button>
+        <button class="btn btn-outline" onclick="imprimerPMSClient()" style="width:100%;justify-content:center;padding:12px;font-size:14px;margin-top:8px">🖨️ Aperçu / Imprimer en PDF (fiable)</button>
+        <p style="font-size:12px;color:var(--muted);margin-top:6px;text-align:center">Si « PDF auto » donne une page blanche, utilisez « Imprimer en PDF » : le PMS s'ouvre et vous l'enregistrez via la fenêtre d'impression.</p>
       </div>
     </div>
 
@@ -1127,6 +1129,54 @@ function onPmsClientChange(){
   }
 }
 
+// Construit la config PMS à partir du client sélectionné + champs du formulaire
+async function buildPMSCfg(){
+  const sel=document.getElementById('pmsClient');
+  const client=allClients.find(cl=>cl.id===sel.value);
+  if(!client){showToast('Sélectionnez un client','danger');return null;}
+  const slug=client.slug;
+  const[uz,uu,un]=await Promise.all([
+    db.from('zones').select('*').eq('client_slug',slug),
+    db.from('users').select('name,role').eq('client_slug',slug),
+    db.from('plan_nettoyage').select('*').eq('client_slug',slug),
+  ]);
+  const zones=uz.data||[],users=uu.data||[],nettoyage=un.data||[];
+  const metier=document.getElementById('pmsMetier').value;
+  return {slug,metier,cfg:{
+    nom:client.nom,
+    raisonSociale:client.raison_sociale||'',
+    formeJuridique:client.forme_juridique||'',
+    adresse:[client.adresse,client.code_postal,client.ville].filter(Boolean).join(', '),
+    responsable:client.responsable||'',
+    email:client.email||'',
+    tel:client.tel||'',
+    telFixe:client.tel_fixe||'',
+    siret:document.getElementById('pmsSiret').value,
+    surface:document.getElementById('pmsSurface').value,
+    metier,
+    ddppNom:document.getElementById('pmsDdppNom').value,
+    ddppAdresse:document.getElementById('pmsDdppAdresse').value,
+    ddppTel:document.getElementById('pmsDdppTel').value,
+    ddppEmail:document.getElementById('pmsDdppEmail').value,
+    fournisseurs:document.getElementById('pmsFournisseurs').value,
+    deratisation:document.getElementById('pmsDeratisation').value,
+    deratFreq:document.getElementById('pmsDeratFreq').value,
+    cerfa:document.getElementById('pmsCerfa').checked,
+    zones,users,nettoyage,
+  }};
+}
+
+// Méthode FIABLE : ouvre le PMS dans une nouvelle fenêtre et déclenche l'impression
+// navigateur (Chrome → « Enregistrer au format PDF »). Pagination parfaite, jamais de page blanche.
+async function imprimerPMSClient(){
+  const r=await buildPMSCfg();
+  if(!r)return;
+  const html=buildPMSHtml(r.cfg); // contient déjà le script window.print()
+  const w=window.open('','_blank');
+  if(!w){showToast('Autorisez les fenêtres pop-up pour ce site','danger',5000);return;}
+  w.document.open();w.document.write(html);w.document.close();
+}
+
 async function genererPMSClient(){
   const sel=document.getElementById('pmsClient');
   const client=allClients.find(cl=>cl.id===sel.value);
@@ -1170,13 +1220,26 @@ async function genererPMSClient(){
 
   // Génère un PDF à partir du HTML (rendu propre, ouvrable partout)
   const METIER_LABEL={boulangerie:'Boulangerie-Pâtisserie',restaurant:'Restauration',boucherie:'Boucherie-Charcuterie'};
-  showToast('⏳ Création du PDF...','info',4000);
+  showToast('⏳ Création du PDF...','info',5000);
 
-  // Conteneur temporaire hors écran
-  const wrapper=document.createElement('div');
-  wrapper.style.cssText='position:fixed;left:-9999px;top:0;width:900px;background:#fff';
-  wrapper.innerHTML=html.replace(/<script[\s\S]*?<\/script>/gi,''); // retire le window.print
-  document.body.appendChild(wrapper);
+  // IMPORTANT : buildPMSHtml renvoie un DOCUMENT HTML complet (<html><head><style>…).
+  // On NE peut PAS l'injecter dans innerHTML d'un <div> (les balises head/style sont supprimées
+  // et le CSS est perdu → page blanche). On le rend dans une IFRAME où head+style fonctionnent.
+  const cleanHtml=html.replace(/<script[\s\S]*?<\/script>/gi,''); // retire le window.print
+  const iframe=document.createElement('iframe');
+  iframe.style.cssText='position:fixed;top:0;left:0;width:920px;height:1px;opacity:0;border:0;z-index:-1';
+  document.body.appendChild(iframe);
+  const idoc=iframe.contentDocument||iframe.contentWindow.document;
+  idoc.open();idoc.write(cleanHtml);idoc.close();
+
+  // Attendre le rendu + le chargement des images (logo)
+  await new Promise(res=>{
+    const imgs=idoc.images?Array.from(idoc.images):[];
+    let pending=imgs.length;
+    const done=()=>{if(--pending<=0)res();};
+    if(!pending){setTimeout(res,400);}
+    else{imgs.forEach(im=>{if(im.complete)done();else{im.onload=done;im.onerror=done;}});setTimeout(res,2500);}
+  });
 
   let pdfBlob;
   try{
@@ -1184,17 +1247,17 @@ async function genererPMSClient(){
       margin:0,
       filename:'PMS_'+slug+'.pdf',
       image:{type:'jpeg',quality:0.95},
-      html2canvas:{scale:2,useCORS:true,allowTaint:false},
+      html2canvas:{scale:2,useCORS:true,allowTaint:true,backgroundColor:'#ffffff',windowWidth:920},
       jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
       pagebreak:{mode:['css','legacy','avoid-all']}
     };
-    pdfBlob=await html2pdf().set(opt).from(wrapper).outputPdf('blob');
+    pdfBlob=await html2pdf().set(opt).from(idoc.body).outputPdf('blob');
   }catch(e){
-    document.body.removeChild(wrapper);
+    document.body.removeChild(iframe);
     showToast('Erreur PDF : '+e.message,'danger',5000);
     return;
   }
-  document.body.removeChild(wrapper);
+  document.body.removeChild(iframe);
 
   // Sauvegarde dans Documents du client
   if(document.getElementById('pmsSaveDoc').checked){
