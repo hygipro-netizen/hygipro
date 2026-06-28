@@ -357,9 +357,12 @@ tr:hover td{background:rgba(45,212,160,0.02)}
     <div style="font-size:12px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:0.4px;margin:16px 0 10px">👤 Contact responsable</div>
     <div class="form-row">
       <div class="form-group"><label class="form-label">Responsable *</label><input class="form-input" id="newClientResponsable" placeholder="Jean Martin"></div>
-      <div class="form-group"><label class="form-label">Téléphone</label><input class="form-input" id="newClientTel" placeholder="06 XX XX XX XX"></div>
+      <div class="form-group"><label class="form-label">Téléphone portable</label><input class="form-input" id="newClientTel" placeholder="06 XX XX XX XX"></div>
     </div>
-    <div class="form-group"><label class="form-label">Email *</label><input class="form-input" id="newClientEmail" type="email" placeholder="martin@boulangerie.fr"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Téléphone fixe</label><input class="form-input" id="newClientTelFixe" placeholder="01 XX XX XX XX"></div>
+      <div class="form-group"><label class="form-label">Email *</label><input class="form-input" id="newClientEmail" type="email" placeholder="martin@boulangerie.fr"></div>
+    </div>
 
     <div style="font-size:12px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:0.4px;margin:16px 0 10px">💳 Abonnement</div>
     <div class="form-row">
@@ -391,9 +394,12 @@ tr:hover td{background:rgba(45,212,160,0.02)}
     </div>
     <div class="form-row">
       <div class="form-group"><label class="form-label">Responsable</label><input class="form-input" id="editClientResponsable"></div>
-      <div class="form-group"><label class="form-label">Téléphone</label><input class="form-input" id="editClientTel"></div>
+      <div class="form-group"><label class="form-label">Téléphone portable</label><input class="form-input" id="editClientTel"></div>
     </div>
-    <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="editClientEmail" type="email"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Téléphone fixe</label><input class="form-input" id="editClientTelFixe"></div>
+      <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="editClientEmail" type="email"></div>
+    </div>
     <div class="form-row">
       <div class="form-group"><label class="form-label">Raison sociale</label><input class="form-input" id="editClientRaisonSociale"></div>
       <div class="form-group"><label class="form-label">Forme juridique</label>
@@ -677,6 +683,7 @@ async function addClient(){
   const{error}=await db.from('saas_clients').insert({
     nom,slug,responsable:resp,email,
     tel:document.getElementById('newClientTel').value||null,
+    tel_fixe:document.getElementById('newClientTelFixe').value||null,
     ville:document.getElementById('newClientVille').value||null,
     raison_sociale:document.getElementById('newClientRaisonSociale').value||null,
     forme_juridique:document.getElementById('newClientFormeJuridique').value||null,
@@ -706,7 +713,7 @@ async function addClient(){
   if(userErr){showToast('Client créé mais erreur compte responsable : '+userErr.message,'danger',5000);}
 
   closeModal('modalAddClient');
-  ['newClientNom','newClientSlug','newClientResponsable','newClientEmail','newClientTel','newClientVille','newClientNotes','newClientRaisonSociale','newClientSiret','newClientAdresse','newClientCP'].forEach(id=>document.getElementById(id).value='');
+  ['newClientNom','newClientSlug','newClientResponsable','newClientEmail','newClientTel','newClientTelFixe','newClientVille','newClientNotes','newClientRaisonSociale','newClientSiret','newClientAdresse','newClientCP'].forEach(id=>document.getElementById(id).value='');
 
   // Email bienvenue avec les identifiants de connexion
   if(document.getElementById('sendWelcome').checked&&email){
@@ -728,6 +735,7 @@ function editClient(id){
   document.getElementById('editClientSlug').value=c.slug||'';
   document.getElementById('editClientResponsable').value=c.responsable||'';
   document.getElementById('editClientTel').value=c.tel||'';
+  document.getElementById('editClientTelFixe').value=c.tel_fixe||'';
   document.getElementById('editClientEmail').value=c.email||'';
   document.getElementById('editClientRaisonSociale').value=c.raison_sociale||'';
   document.getElementById('editClientFormeJuridique').value=c.forme_juridique||'';
@@ -752,6 +760,7 @@ async function saveEditClient(){
     responsable:document.getElementById('editClientResponsable').value,
     email:document.getElementById('editClientEmail').value,
     tel:document.getElementById('editClientTel').value,
+    tel_fixe:document.getElementById('editClientTelFixe').value||null,
     raison_sociale:document.getElementById('editClientRaisonSociale').value||null,
     forme_juridique:document.getElementById('editClientFormeJuridique').value||null,
     siret:document.getElementById('editClientSiret').value||null,
