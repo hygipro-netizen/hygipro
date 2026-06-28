@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>HygiPro — Back-office SaaS</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script src="/pms-builder.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -1167,21 +1168,46 @@ async function genererPMSClient(){
 
   const html=buildPMSHtml(cfg);
 
+  // Génère un PDF à partir du HTML (rendu propre, ouvrable partout)
+  const METIER_LABEL={boulangerie:'Boulangerie-Pâtisserie',restaurant:'Restauration',boucherie:'Boucherie-Charcuterie'};
+  showToast('⏳ Création du PDF...','info',4000);
+
+  // Conteneur temporaire hors écran
+  const wrapper=document.createElement('div');
+  wrapper.style.cssText='position:fixed;left:-9999px;top:0;width:900px;background:#fff';
+  wrapper.innerHTML=html.replace(/<script[\s\S]*?<\/script>/gi,''); // retire le window.print
+  document.body.appendChild(wrapper);
+
+  let pdfBlob;
+  try{
+    const opt={
+      margin:0,
+      filename:'PMS_'+slug+'.pdf',
+      image:{type:'jpeg',quality:0.95},
+      html2canvas:{scale:2,useCORS:true,allowTaint:false},
+      jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
+      pagebreak:{mode:['css','legacy']}
+    };
+    pdfBlob=await html2pdf().set(opt).from(wrapper).outputPdf('blob');
+  }catch(e){
+    document.body.removeChild(wrapper);
+    showToast('Erreur PDF : '+e.message,'danger',5000);
+    return;
+  }
+  document.body.removeChild(wrapper);
+
   // Sauvegarde dans Documents du client
   if(document.getElementById('pmsSaveDoc').checked){
     try{
-      const blob=new Blob([html],{type:'text/html;charset=utf-8'});
-      const path='pms/'+slug+'_PMS_'+Date.now()+'.html';
-      const{error:upErr}=await db.storage.from('hygipro-photos').upload(path,blob,{upsert:true,contentType:'text/html'});
+      const path='pms/'+slug+'_PMS_'+Date.now()+'.pdf';
+      const{error:upErr}=await db.storage.from('hygipro-photos').upload(path,pdfBlob,{upsert:true,contentType:'application/pdf'});
       if(upErr){showToast('Erreur stockage : '+upErr.message,'danger',5000);return;}
       const{data:u}=db.storage.from('hygipro-photos').getPublicUrl(path);
-      // Insert dans documents AVEC le client_slug
-      const METIER_LABEL={boulangerie:'Boulangerie-Pâtisserie',restaurant:'Restauration',boucherie:'Boucherie-Charcuterie'};
       await db.from('documents').insert({
         title:'Plan de Maîtrise Sanitaire — '+METIER_LABEL[metier],
         category:'PMS',
         file_url:u.publicUrl,
-        file_name:'PMS_'+slug+'.html',
+        file_name:'PMS_'+slug+'.pdf',
         allowed_roles:['admin','responsable'],
         client_slug:slug,
       });
@@ -1189,11 +1215,10 @@ async function genererPMSClient(){
     }catch(e){showToast('Erreur : '+e.message,'danger',5000);return;}
   }
 
-  // Ouvre aussi le PMS pour aperçu/impression
-  const blob=new Blob([html],{type:'text/html;charset=utf-8'});
-  const url=URL.createObjectURL(blob);
+  // Ouvre le PDF pour aperçu
+  const url=URL.createObjectURL(pdfBlob);
   window.open(url,'_blank');
-  setTimeout(()=>URL.revokeObjectURL(url),20000);
+  setTimeout(()=>URL.revokeObjectURL(url),30000);
 }
 
 // INIT
