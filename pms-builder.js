@@ -202,94 +202,93 @@ function buildPMSHtml(cfg){
   return `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>PMS — ${cfg.nom}</title>
 <style>
 /* ===== Palette sobre institutionnelle ===== */
-:root{--navy:#1F3864;--accent:#2E75B6;--ink:#222;--muted:#595959;--line:#BFBFBF;--zebra:#F4F6F9;--red:#C00000;--logo:url('${logoUrl}')}
+:root{--navy:#1F3864;--accent:#2E75B6;--ink:#222;--muted:#595959;--line:#BFBFBF;--zebra:#F4F6F9;--red:#C00000}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Segoe UI',Calibri,Arial,sans-serif;color:var(--ink);font-size:11pt;line-height:1.5}
+body{font-family:'Segoe UI',Calibri,Arial,sans-serif;color:var(--ink);font-size:14px;line-height:1.5}
 
-/* ===== Page A4 ===== */
-.page{width:210mm;min-height:284mm;padding:13mm 15mm;margin:0 auto;position:relative;display:flex;flex-direction:column;page-break-after:always;background:#fff}
+/* ===== Page (px, sans flex — compatible html2canvas) ===== */
+.page{width:900px;max-width:900px;padding:0 48px 36px;margin:0 auto;page-break-after:always;background:#fff}
 .page:last-child{page-break-after:auto}
-.pbody{flex:1}
 
 /* ===== En-tête / pied de page (répétés par section) ===== */
-.phead{display:flex;align-items:center;justify-content:space-between;border-bottom:1.5px solid var(--navy);padding-bottom:3mm;margin-bottom:7mm}
+.phead{display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid var(--navy);padding:34px 0 11px;margin-bottom:26px}
 .phead .pl{display:flex;align-items:center;gap:8px}
-.phead .logo{width:22px;height:30px;background:var(--logo) center/contain no-repeat}
-.phead .pt{font-size:8.5pt;color:var(--muted)}
-.phead .pr{font-size:8.5pt;color:var(--muted)}
-.pfoot{margin-top:8mm;border-top:1px solid var(--line);padding-top:2.5mm;display:flex;justify-content:space-between;font-size:8pt;color:var(--muted)}
+.phead .logo{width:24px;height:32px;object-fit:contain}
+.phead .pt{font-size:11px;color:var(--muted)}
+.phead .pr{font-size:11px;color:var(--muted)}
+.pfoot{margin-top:34px;border-top:1px solid var(--line);padding-top:9px;display:flex;justify-content:space-between;font-size:10px;color:var(--muted)}
 
-/* ===== Couverture ===== */
-.cover{width:210mm;min-height:297mm;padding:40mm 22mm;margin:0 auto;display:flex;flex-direction:column;page-break-after:always;background:#fff;text-align:center}
-.cover .clogo{width:64px;height:84px;background:var(--logo) center/contain no-repeat;margin:0 auto 16mm}
-.cover h1.ct{font-size:32pt;font-weight:800;color:var(--navy);letter-spacing:.5px}
-.cover .cmet{font-size:18pt;color:var(--accent);margin-top:4mm;margin-bottom:18mm}
-.cover .cfield{font-size:13pt;margin-bottom:5mm}
+/* ===== Couverture (px) ===== */
+.cover{width:900px;max-width:900px;padding:150px 90px 60px;margin:0 auto;page-break-after:always;background:#fff;text-align:center}
+.cover .clogo{width:70px;height:92px;object-fit:contain;display:block;margin:0 auto 64px}
+.cover h1.ct{font-size:42px;font-weight:800;color:var(--navy);letter-spacing:.5px}
+.cover .cmet{font-size:24px;color:var(--accent);margin-top:14px;margin-bottom:70px}
+.cover .cfield{font-size:17px;margin-bottom:18px}
 .cover .cfield b{color:var(--navy)}
-.cover .cver{font-size:11pt;color:var(--muted);margin-top:6mm}
-.cover .cbadge{margin-top:auto;font-size:9.5pt;color:var(--muted);border-top:1px solid var(--line);padding-top:6mm}
+.cover .cver{font-size:14px;color:var(--muted);margin-top:22px}
+.cover .cbadge{margin-top:90px;font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:22px}
 
 /* ===== Titres ===== */
-h1{font-size:17pt;font-weight:800;color:var(--navy);border-bottom:2.5px solid var(--accent);padding-bottom:2mm;margin-bottom:4mm;page-break-after:avoid}
-h1 .sub{font-size:11pt;color:var(--muted);font-weight:600}
-h2{font-size:13pt;font-weight:700;color:var(--accent);margin:6mm 0 2.5mm;page-break-after:avoid}
-h3{font-size:11.5pt;font-weight:700;color:#404040;margin:4mm 0 2mm;page-break-after:avoid}
-h4{font-size:11pt;font-weight:700;color:var(--navy);margin-bottom:2mm}
-p{margin-bottom:2.5mm;color:#333;text-align:justify}
+h1{font-size:23px;font-weight:800;color:var(--navy);border-bottom:2.5px solid var(--accent);padding-bottom:7px;margin-bottom:15px;page-break-after:avoid}
+h1 .sub{font-size:15px;color:var(--muted);font-weight:600}
+h2{font-size:17px;font-weight:700;color:var(--accent);margin:22px 0 9px;page-break-after:avoid}
+h3{font-size:15px;font-weight:700;color:#404040;margin:15px 0 7px;page-break-after:avoid}
+h4{font-size:15px;font-weight:700;color:var(--navy);margin-bottom:7px}
+p{margin-bottom:9px;color:#333;text-align:justify}
 p.cont{color:var(--muted);font-style:italic}
-ul{margin:1.5mm 0 3mm 6mm}
-li{margin-bottom:1mm}
-sup{font-size:7pt}
+ul{margin:6px 0 11px 22px}
+li{margin-bottom:4px}
+sup{font-size:9px}
 
 /* ===== Tableaux ===== */
-table{width:100%;border-collapse:collapse;margin:2.5mm 0 5mm;font-size:9.5pt}
-th{background:var(--navy);color:#fff;font-weight:600;text-align:left;padding:6px 9px;border:.5px solid var(--navy);font-size:8.5pt;text-transform:uppercase;letter-spacing:.3px}
+table{width:100%;border-collapse:collapse;margin:9px 0 18px;font-size:12.5px}
+th{background:var(--navy);color:#fff;font-weight:600;text-align:left;padding:6px 9px;border:.5px solid var(--navy);font-size:11px;text-transform:uppercase;letter-spacing:.3px}
 td{padding:6px 9px;border:.5px solid var(--line);color:#333;vertical-align:top}
 tr:nth-child(even) td{background:var(--zebra)}
 td.tc{text-align:center;white-space:nowrap}
 table.danger th{background:var(--red);border-color:var(--red)}
 
 /* ===== Méthode 5M ===== */
-.m5{border:.5px solid var(--line);margin:2.5mm 0 5mm;font-size:9.5pt}
+.m5{border:.5px solid var(--line);margin:9px 0 18px;font-size:12.5px}
 .m5 .r{display:flex;border-bottom:.5px solid var(--line)}
 .m5 .r:last-child{border-bottom:none}
 .m5 .k{width:32%;padding:6px 9px;background:var(--zebra);font-weight:700;color:var(--navy)}
 .m5 .v{width:68%;padding:6px 9px;color:#333}
 
 /* ===== Fiches matières premières ===== */
-.mp{background:var(--zebra);border-left:3px solid var(--accent);padding:6px 11px;margin:3mm 0;border-radius:0 3px 3px 0}
-.mp h4{margin-bottom:1.5mm}
-.mp p{font-size:9.5pt;margin-bottom:1mm}
-.mp p.mpm{margin-top:1.5mm}
-.mp ul{font-size:9.5pt;margin-top:.5mm}
+.mp{background:var(--zebra);border-left:3px solid var(--accent);padding:8px 13px;margin:11px 0;border-radius:0 3px 3px 0}
+.mp h4{margin-bottom:6px}
+.mp p{font-size:12.5px;margin-bottom:4px}
+.mp p.mpm{margin-top:6px}
+.mp ul{font-size:12.5px;margin-top:2px}
 
 /* ===== Encadrés ===== */
-.box{padding:7px 12px;margin:3mm 0;font-size:9.5pt;border-left:4px solid}
-.box .bt{display:block;font-weight:700;font-size:8.5pt;text-transform:uppercase;margin-bottom:1.5mm}
+.box{padding:9px 14px;margin:11px 0;font-size:12.5px;border-left:4px solid}
+.box .bt{display:block;font-weight:700;font-size:11px;text-transform:uppercase;margin-bottom:5px}
 .box.info{background:#EAF1FB;border-left-color:var(--accent)}.box.info .bt{color:var(--navy)}
 .box.crit{background:#FDECEA;border-left-color:var(--red);color:#7a1c12}.box.crit .bt{color:var(--red)}
 .box.ok{background:#EAF6EF;border-left-color:#2E8B57}.box.ok .bt{color:#1E6B43}
 
 /* ===== Sommaire ===== */
 .toc{margin:0}
-.toc .row{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px dotted var(--line);font-size:10.5pt}
+.toc .row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px dotted var(--line);font-size:14px}
 .toc .row .t{color:var(--navy)}
-.toc .row .s{padding-left:6mm;color:var(--muted)}
+.toc .row .s{padding-left:22px;color:var(--muted)}
 .toc .row .pg{color:var(--accent);font-weight:700}
 
 /* ===== Grilles de relevé ===== */
-.gtitle{margin:2mm 0 1mm;color:var(--navy)}
-.gsub{font-size:9pt;color:var(--muted);margin-bottom:2mm}
-.gspace{height:3mm}
-table.grid{font-size:7.5pt}
-table.grid th{padding:3px 2px;text-align:center;font-size:7pt}
+.gtitle{margin:7px 0 4px;color:var(--navy)}
+.gsub{font-size:12px;color:var(--muted);margin-bottom:7px}
+.gspace{height:11px}
+table.grid{font-size:10px}
+table.grid th{padding:3px 2px;text-align:center;font-size:9px}
 table.grid td{padding:5px 2px}
 table.grid td.gt,table.grid th.gt{background:var(--zebra);color:var(--navy);font-weight:700;text-align:center;width:9%}
 table.grid th.gt{background:var(--navy);color:#fff}
 
 /* ===== Récépissé / signature ===== */
-.recepisse{border:1.5px dashed #cbd5e1;border-radius:6px;height:36mm;display:flex;align-items:center;justify-content:center;color:#9aa7b8;font-size:10pt;margin:3mm 0}
-.signline{margin-top:14mm;border-top:1px solid #94a3b8;width:78mm;padding-top:2mm;font-size:9.5pt;color:var(--muted)}
+.recepisse{border:1.5px dashed #cbd5e1;border-radius:6px;height:136px;display:flex;align-items:center;justify-content:center;color:#9aa7b8;font-size:13px;margin:11px 0}
+.signline{margin-top:53px;border-top:1px solid #94a3b8;width:295px;padding-top:7px;font-size:12.5px;color:var(--muted)}
 
 /* ===== PAGINATION BLINDÉE (le coeur de la correction) ===== */
 tr,.mp,.box,.m5,.signline{page-break-inside:avoid}
@@ -306,7 +305,7 @@ h1,h2,h3,h4{page-break-after:avoid}
 
 <!-- COUVERTURE (sobre) -->
 <div class="cover">
-  <div class="clogo"></div>
+  <img class="clogo" src="${logoUrl}" alt="HygiPro">
   <h1 class="ct">Plan de Maîtrise Sanitaire</h1>
   <div class="cmet">${M.label}</div>
   <div class="cfield"><b>Établissement :</b> ${cfg.nom||DOTS.slice(0,30)}</div>
@@ -319,7 +318,7 @@ h1,h2,h3,h4{page-break-after:avoid}
 <section class="page">
   ${pageHead('Sommaire',logoUrl)}
   <h1>Sommaire</h1>
-  <p style="font-size:9.5pt;color:var(--muted)">Structure conforme à l'annexe II de la note de service DGAL/SDSSA 2022-349.</p>
+  <p style="font-size:12.5px;color:var(--muted)">Structure conforme à l'annexe II de la note de service DGAL/SDSSA 2022-349.</p>
   <div class="toc">
     <div class="row"><span class="t">I. Description des activités</span><span class="pg">3</span></div>
     <div class="row"><span class="t">II. Bonnes pratiques d'hygiène</span><span class="pg">4</span></div>
@@ -339,7 +338,7 @@ h1,h2,h3,h4{page-break-after:avoid}
     <div class="row"><span class="t">V. Annexes</span><span class="pg">18</span></div>
     <div class="row"><span class="t">Validation et engagement</span><span class="pg">19</span></div>
   </div>
-  <div class="box info avoid" style="margin-top:6mm"><span class="bt">Note importante</span> Ce document doit être complété, paraphé et maintenu à jour à chaque modification des processus de fabrication ou de la structure de l'établissement.</div>
+  <div class="box info avoid" style="margin-top:22px"><span class="bt">Note importante</span> Ce document doit être complété, paraphé et maintenu à jour à chaque modification des processus de fabrication ou de la structure de l'établissement.</div>
   ${pageFoot()}
 </section>
 
@@ -349,7 +348,7 @@ h1,h2,h3,h4{page-break-after:avoid}
   <h1>I. Description des activités</h1>
   <h2>Organisation générale</h2>
   <table><tbody>
-    <tr><td colspan="2" style="background:var(--navy);color:#fff;font-weight:700;text-transform:uppercase;font-size:8.5pt">Établissement</td></tr>
+    <tr><td colspan="2" style="background:var(--navy);color:#fff;font-weight:700;text-transform:uppercase;font-size:11px">Établissement</td></tr>
     <tr><td style="width:38%"><strong>Nom commercial</strong></td><td>${cfg.nom}</td></tr>
     ${cfg.raisonSociale?`<tr><td><strong>Raison sociale</strong></td><td>${cfg.raisonSociale}</td></tr>`:''}
     ${cfg.formeJuridique?`<tr><td><strong>Forme juridique</strong></td><td>${cfg.formeJuridique}</td></tr>`:''}
@@ -520,7 +519,7 @@ ${fichesSections}
   <h1>III.4 Points déterminants (CCP / PrPo)</h1>
   <h3>Objectifs et seuils de maîtrise</h3>
   <table><thead><tr><th>Point déterminant</th><th>Objectif</th><th class="tc">Seuil</th><th>Justification</th></tr></thead><tbody>${prpoRows}</tbody></table>
-  <p style="font-size:8.5pt;color:var(--muted)">* BOF = Beurre, Œuf, Fromage</p>
+  <p style="font-size:11px;color:var(--muted)">* BOF = Beurre, Œuf, Fromage</p>
   <h3>Procédures de surveillance</h3>
   <table><thead><tr><th>Qui</th><th>Quoi</th><th>Où</th><th>Quand</th><th>Comment</th></tr></thead><tbody>
     <tr><td>Réception</td><td>T° produits</td><td>Camion / réception</td><td>Chaque livraison</td><td>Sonde — HygiPro</td></tr>
@@ -558,7 +557,7 @@ ${cerfaPage}
   <h1>Fiches de relevé de température</h1>
   <p>Contrôler la température au moins une fois par jour, toujours au même moment. Inscrire la température relevée.</p>
   ${tempGrid('Chambre froide positive (°C)',[8,6,4,2,0])}
-  <p class="gtitle" style="margin-top:4mm"><strong>Gestion des non-conformités (températures)</strong></p>
+  <p class="gtitle" style="margin-top:15px"><strong>Gestion des non-conformités (températures)</strong></p>
   <table><thead><tr><th>Date</th><th>Problème rencontré</th><th>Action corrective</th><th>Par qui ?</th></tr></thead><tbody>
     <tr><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td></tr>
   </tbody></table>
@@ -603,7 +602,7 @@ ${cerfaPage}
     <tr><td>1.0</td><td>${dateGen}</td><td>Création initiale</td><td>${cfg.responsable||DOTS.slice(0,16)}</td></tr>
     <tr><td>${DOTS.slice(0,8)}</td><td>${DOTS.slice(0,12)}</td><td>${DOTS.slice(0,18)}</td><td>${DOTS.slice(0,16)}</td></tr>
   </tbody></table>
-  <p style="margin-top:4mm">Le responsable certifie que ce Plan de Maîtrise Sanitaire correspond aux pratiques réelles de l'établissement et s'engage à le mettre à jour en cas de modification des procédés.</p>
+  <p style="margin-top:15px">Le responsable certifie que ce Plan de Maîtrise Sanitaire correspond aux pratiques réelles de l'établissement et s'engage à le mettre à jour en cas de modification des procédés.</p>
   <div class="signline">Signature et cachet du responsable</div>
   ${pageFoot()}
 </section>
@@ -614,7 +613,7 @@ ${cerfaPage}
 
 // En-tête / pied de page réutilisables
 function pageHead(bc,logoUrl){
-  return `<div class="phead"><div class="pl"><span class="logo"></span><span class="pt">HygiPro — Plan de Maîtrise Sanitaire</span></div><div class="pr">${bc}</div></div>`;
+  return `<div class="phead"><div class="pl"><img class="logo" src="${logoUrl}" alt=""><span class="pt">HygiPro — Plan de Maîtrise Sanitaire</span></div><div class="pr">${bc}</div></div>`;
 }
 function pageFoot(){
   return `<div class="pfoot"><span>Édité par SASU DarTech Solution</span><span>HACCP · Hygiène · Traçabilité</span></div>`;
