@@ -559,16 +559,32 @@ async function addClient(){
     notes:document.getElementById('newClientNotes').value||null,
   });
   if(error){showToast('Erreur : '+error.message,'danger');return;}
+
+  // ===== LIAISON SAAS → APP =====
+  // Crée automatiquement le compte responsable dans users avec un PIN aléatoire
+  const pinResp=String(Math.floor(100000+Math.random()*900000)); // 6 chiffres
+  const{error:userErr}=await db.from('users').insert({
+    name:resp,
+    role:'responsable',
+    pin:pinResp,
+    email:email.toLowerCase(),
+    client_slug:slug,
+    active:true,
+    permissions:{haccp:true,temperatures:true,labels:true,documents:true,reception:true,incidents:true,nettoyage:true},
+  });
+  if(userErr){showToast('Client créé mais erreur compte responsable : '+userErr.message,'danger',5000);}
+
   closeModal('modalAddClient');
   ['newClientNom','newClientSlug','newClientResponsable','newClientEmail','newClientTel','newClientVille','newClientNotes'].forEach(id=>document.getElementById(id).value='');
-  // Email bienvenue
+
+  // Email bienvenue avec les identifiants de connexion
   if(document.getElementById('sendWelcome').checked&&email){
-    await sendEmailJS(email,resp||nom,'Bienvenue sur HygiPro ! 🎉',
-      `Bonjour ${resp||nom},\n\nVotre application HygiPro est prête !\n\n🔗 Votre lien d'accès : https://hygipro.vercel.app?client=${slug}\n\n📋 Plan souscrit : ${PLAN_LABEL[plan]} — ${PLAN_PRIX[plan]}€/mois\n\nEn cas de question, contactez-nous.\n\nCordialement,\nL'équipe HygiPro`,
+    await sendEmailJS(email,resp||nom,'Bienvenue sur HygiPro ! 🎉 Vos identifiants',
+      `Bonjour ${resp||nom},\n\nVotre application HygiPro est prête ! 🎉\n\n━━━━━━━━━━━━━━━━━━━━━━\n🔐 VOS IDENTIFIANTS DE CONNEXION\n━━━━━━━━━━━━━━━━━━━━━━\n\n🔗 Lien d'accès : https://hygipro.vercel.app?client=${slug}\n\n👔 Mode : Responsable\n📧 Email : ${email}\n🔢 Code PIN : ${pinResp}\n\n⚠️ Conservez ce PIN précieusement. Vous pourrez le modifier depuis l'app (Admin → Salariés).\n\n━━━━━━━━━━━━━━━━━━━━━━\n📋 VOTRE ABONNEMENT\n━━━━━━━━━━━━━━━━━━━━━━\n\nPlan : ${PLAN_LABEL[plan]} — ${PLAN_PRIX[plan]}€/mois\n\n━━━━━━━━━━━━━━━━━━━━━━\n\nPremière connexion :\n1. Ouvrez le lien ci-dessus\n2. Cliquez sur "👔 Responsable"\n3. Entrez votre email + PIN\n4. Créez vos salariés depuis Admin → Salariés\n\nÀ bientôt,\nL'équipe HygiPro`,
       '','');
-    showToast('✅ Client créé + email de bienvenue envoyé !','ok',4000);
+    showToast('✅ Client créé + identifiants envoyés par email (PIN: '+pinResp+')','ok',6000);
   }else{
-    showToast('✅ Client créé avec succès !','ok',3000);
+    showToast('✅ Client créé ! PIN responsable : '+pinResp,'ok',6000);
   }
   await loadAll();
   showTab('clients',document.querySelectorAll('.nav-link')[1]);

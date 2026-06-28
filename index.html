@@ -1084,8 +1084,43 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
 const SUPA_URL='https://mzyrffxosabnmkcqduvc.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16eXJmZnhvc2Fibm1rY3FkdXZjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0NjkzMzYsImV4cCI6MjA5MTA0NTMzNn0.fbhCUI5EKvCO2k0014JWrOR-dqBF4XL1k6Tqdy4zIM8';
 const{createClient}=supabase;
-const db=createClient(SUPA_URL,SUPA_KEY);
+const _rawDb=createClient(SUPA_URL,SUPA_KEY);
 let currentUser=null,tempValues={},zoneConfigs=[],photoFile=null,alertInterval=null;
+// Slug du client actif (multi-clients) — capturé depuis ?client=xxx dans l'URL
+let currentClientSlug=new URLSearchParams(window.location.search).get('client')||null;
+
+// ============================================
+// WRAPPER MULTI-CLIENTS
+// Filtre automatiquement toutes les requêtes par client_slug.
+// Les tables listées ci-dessous sont "scopées" : lecture filtrée,
+// écriture enrichie avec le client_slug courant.
+// saas_clients n'est PAS scopée (c'est la table de gestion globale).
+// ============================================
+const SCOPED_TABLES=['users','zones','temperature_readings','plan_nettoyage','nettoyage_completions','haccp_tasks','haccp_completions','labels','documents','receptions','incidents','etiquettes_gen','cuisson_tracabilite','jours_fermeture'];
+
+const db={
+  from(table){
+    const q=_rawDb.from(table);
+    if(!currentClientSlug||!SCOPED_TABLES.includes(table))return q;
+    const slug=currentClientSlug;
+    // Intercepte select / insert / update / delete pour injecter client_slug
+    const origSelect=q.select.bind(q);
+    const origInsert=q.insert.bind(q);
+    const origUpdate=q.update.bind(q);
+    const origDelete=q.delete.bind(q);
+    q.select=function(...a){return origSelect(...a).eq('client_slug',slug);};
+    q.insert=function(rows,...a){
+      const add=r=>({...r,client_slug:r.client_slug||slug});
+      const enriched=Array.isArray(rows)?rows.map(add):add(rows);
+      return origInsert(enriched,...a);
+    };
+    q.update=function(vals,...a){return origUpdate(vals,...a).eq('client_slug',slug);};
+    q.delete=function(...a){return origDelete(...a).eq('client_slug',slug);};
+    return q;
+  },
+  storage:_rawDb.storage,
+  auth:_rawDb.auth,
+};
 
 function showToast(msg,type='info',dur=4000){
   const icons={danger:'🚨',warn:'⚠️',ok:'✅',info:'ℹ️'};
