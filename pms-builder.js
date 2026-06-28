@@ -197,6 +197,7 @@ ol{margin-left:60px}
   <div class="cover-divider"></div>
   <div class="cover-bottom">
     <div class="cover-field"><b>Établissement :</b> ${cfg.nom}</div>
+    ${cfg.raisonSociale?`<div class="cover-field"><b>Raison sociale :</b> ${cfg.raisonSociale}${cfg.formeJuridique?' ('+cfg.formeJuridique+')':''}</div>`:''}
     <div class="cover-field"><b>Adresse :</b> ${cfg.adresse||'—'}</div>
     <div class="cover-field"><b>Responsable :</b> ${cfg.responsable||'—'}</div>
     <div class="cover-field"><b>SIRET :</b> ${cfg.siret||'—'}</div>
@@ -213,7 +214,9 @@ ol{margin-left:60px}
   <div class="phead"><div class="phead-title">I. Présentation & Organisation</div><img src="${logoUrl}" class="phead-logo"></div>
   <h1>I. Description de l'établissement</h1>
   <table>
-    <tr><td style="width:35%"><strong>Raison sociale</strong></td><td>${cfg.nom}</td></tr>
+    <tr><td style="width:35%"><strong>Nom commercial</strong></td><td>${cfg.nom}</td></tr>
+    ${cfg.raisonSociale?`<tr><td><strong>Raison sociale</strong></td><td>${cfg.raisonSociale}</td></tr>`:''}
+    ${cfg.formeJuridique?`<tr><td><strong>Forme juridique</strong></td><td>${cfg.formeJuridique}</td></tr>`:''}
     <tr><td><strong>Activité</strong></td><td>${M.label}</td></tr>
     <tr><td><strong>Adresse</strong></td><td>${cfg.adresse||'—'}</td></tr>
     <tr><td><strong>Responsable</strong></td><td>${cfg.responsable||'—'}</td></tr>

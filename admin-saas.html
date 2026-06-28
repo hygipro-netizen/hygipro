@@ -315,17 +315,54 @@ tr:hover td{background:rgba(45,212,160,0.02)}
 <div class="modal-overlay" id="modalAddClient">
   <div class="modal">
     <div class="modal-title">🏪 Nouveau client <button class="modal-close" onclick="closeModal('modalAddClient')">✕</button></div>
+
+    <div style="font-size:12px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:10px">🏢 Établissement</div>
     <div class="form-row">
-      <div class="form-group"><label class="form-label">Nom établissement *</label><input class="form-input" id="newClientNom" placeholder="Boulangerie Martin"></div>
+      <div class="form-group"><label class="form-label">Nom commercial *</label><input class="form-input" id="newClientNom" placeholder="Boulangerie Martin"></div>
       <div class="form-group"><label class="form-label">Slug URL * <span style="font-size:9px;color:var(--muted)">ex: martin</span></label><input class="form-input" id="newClientSlug" placeholder="martin" oninput="this.value=this.value.toLowerCase().replace(/[^a-z0-9-]/g,'')"></div>
     </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Raison sociale</label><input class="form-input" id="newClientRaisonSociale" placeholder="SARL Martin & Fils"></div>
+      <div class="form-group"><label class="form-label">Forme juridique</label>
+        <select class="form-select" id="newClientFormeJuridique">
+          <option value="">—</option>
+          <option value="EI">EI / Auto-entrepreneur</option>
+          <option value="EURL">EURL</option>
+          <option value="SARL">SARL</option>
+          <option value="SAS">SAS</option>
+          <option value="SASU">SASU</option>
+          <option value="SA">SA</option>
+          <option value="Autre">Autre</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">SIRET</label><input class="form-input" id="newClientSiret" placeholder="123 456 789 00012" maxlength="17"></div>
+      <div class="form-group"><label class="form-label">Type d'activité</label>
+        <select class="form-select" id="newClientMetier">
+          <option value="boulangerie">Boulangerie-Pâtisserie</option>
+          <option value="restaurant">Restaurant / Restauration</option>
+          <option value="boucherie">Boucherie-Charcuterie</option>
+        </select>
+      </div>
+    </div>
+
+    <div style="font-size:12px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:0.4px;margin:16px 0 10px">📍 Adresse</div>
+    <div class="form-group"><label class="form-label">Adresse (n° et rue)</label><input class="form-input" id="newClientAdresse" placeholder="12 rue de la Paix"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Code postal</label><input class="form-input" id="newClientCP" placeholder="75001" maxlength="5" oninput="this.value=this.value.replace(/[^0-9]/g,'')"></div>
+      <div class="form-group"><label class="form-label">Ville</label><input class="form-input" id="newClientVille" placeholder="Paris"></div>
+    </div>
+
+    <div style="font-size:12px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:0.4px;margin:16px 0 10px">👤 Contact responsable</div>
     <div class="form-row">
       <div class="form-group"><label class="form-label">Responsable *</label><input class="form-input" id="newClientResponsable" placeholder="Jean Martin"></div>
       <div class="form-group"><label class="form-label">Téléphone</label><input class="form-input" id="newClientTel" placeholder="06 XX XX XX XX"></div>
     </div>
     <div class="form-group"><label class="form-label">Email *</label><input class="form-input" id="newClientEmail" type="email" placeholder="martin@boulangerie.fr"></div>
+
+    <div style="font-size:12px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:0.4px;margin:16px 0 10px">💳 Abonnement</div>
     <div class="form-row">
-      <div class="form-group"><label class="form-label">Ville</label><input class="form-input" id="newClientVille" placeholder="Paris"></div>
       <div class="form-group"><label class="form-label">Plan *</label>
         <select class="form-select" id="newClientPlan">
           <option value="starter">Starter — 39€/mois</option>
@@ -333,10 +370,10 @@ tr:hover td{background:rgba(45,212,160,0.02)}
           <option value="premium">Premium — 99€/mois</option>
         </select>
       </div>
+      <div class="form-group"><label class="form-label">Date de début</label><input class="form-input" id="newClientDebut" type="date"></div>
     </div>
-    <div class="form-group"><label class="form-label">Date de début</label><input class="form-input" id="newClientDebut" type="date"></div>
     <div class="form-group"><label class="form-label">Notes internes</label><textarea class="form-textarea" id="newClientNotes" placeholder="Notes..."></textarea></div>
-    <div style="display:flex;gap:8px">
+    <div style="display:flex;gap:8px;align-items:center">
       <button class="btn btn-primary" onclick="addClient()" style="flex:1;justify-content:center">✅ Créer le client</button>
       <div style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="sendWelcome" checked><label style="font-size:12px;color:var(--muted);cursor:pointer" for="sendWelcome">Envoyer email bienvenue</label></div>
     </div>
@@ -357,6 +394,27 @@ tr:hover td{background:rgba(45,212,160,0.02)}
       <div class="form-group"><label class="form-label">Téléphone</label><input class="form-input" id="editClientTel"></div>
     </div>
     <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="editClientEmail" type="email"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Raison sociale</label><input class="form-input" id="editClientRaisonSociale"></div>
+      <div class="form-group"><label class="form-label">Forme juridique</label>
+        <select class="form-select" id="editClientFormeJuridique">
+          <option value="">—</option><option value="EI">EI / Auto-entrepreneur</option><option value="EURL">EURL</option><option value="SARL">SARL</option><option value="SAS">SAS</option><option value="SASU">SASU</option><option value="SA">SA</option><option value="Autre">Autre</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">SIRET</label><input class="form-input" id="editClientSiret"></div>
+      <div class="form-group"><label class="form-label">Type d'activité</label>
+        <select class="form-select" id="editClientMetier">
+          <option value="boulangerie">Boulangerie-Pâtisserie</option><option value="restaurant">Restaurant / Restauration</option><option value="boucherie">Boucherie-Charcuterie</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">Adresse</label><input class="form-input" id="editClientAdresse"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Code postal</label><input class="form-input" id="editClientCP" maxlength="5" oninput="this.value=this.value.replace(/[^0-9]/g,'')"></div>
+      <div class="form-group"><label class="form-label">Ville</label><input class="form-input" id="editClientVille"></div>
+    </div>
     <div class="form-row">
       <div class="form-group"><label class="form-label">Plan</label>
         <select class="form-select" id="editClientPlan">
@@ -620,6 +678,12 @@ async function addClient(){
     nom,slug,responsable:resp,email,
     tel:document.getElementById('newClientTel').value||null,
     ville:document.getElementById('newClientVille').value||null,
+    raison_sociale:document.getElementById('newClientRaisonSociale').value||null,
+    forme_juridique:document.getElementById('newClientFormeJuridique').value||null,
+    siret:document.getElementById('newClientSiret').value||null,
+    metier:document.getElementById('newClientMetier').value||null,
+    adresse:document.getElementById('newClientAdresse').value||null,
+    code_postal:document.getElementById('newClientCP').value||null,
     plan,statut:'actif',paiement:'ok',
     date_debut:debut,
     renouvellement:renouv.toISOString().split('T')[0],
@@ -642,7 +706,7 @@ async function addClient(){
   if(userErr){showToast('Client créé mais erreur compte responsable : '+userErr.message,'danger',5000);}
 
   closeModal('modalAddClient');
-  ['newClientNom','newClientSlug','newClientResponsable','newClientEmail','newClientTel','newClientVille','newClientNotes'].forEach(id=>document.getElementById(id).value='');
+  ['newClientNom','newClientSlug','newClientResponsable','newClientEmail','newClientTel','newClientVille','newClientNotes','newClientRaisonSociale','newClientSiret','newClientAdresse','newClientCP'].forEach(id=>document.getElementById(id).value='');
 
   // Email bienvenue avec les identifiants de connexion
   if(document.getElementById('sendWelcome').checked&&email){
@@ -665,6 +729,13 @@ function editClient(id){
   document.getElementById('editClientResponsable').value=c.responsable||'';
   document.getElementById('editClientTel').value=c.tel||'';
   document.getElementById('editClientEmail').value=c.email||'';
+  document.getElementById('editClientRaisonSociale').value=c.raison_sociale||'';
+  document.getElementById('editClientFormeJuridique').value=c.forme_juridique||'';
+  document.getElementById('editClientSiret').value=c.siret||'';
+  document.getElementById('editClientMetier').value=c.metier||'boulangerie';
+  document.getElementById('editClientAdresse').value=c.adresse||'';
+  document.getElementById('editClientCP').value=c.code_postal||'';
+  document.getElementById('editClientVille').value=c.ville||'';
   document.getElementById('editClientPlan').value=c.plan||'pro';
   document.getElementById('editClientStatut').value=c.statut||'actif';
   document.getElementById('editClientRenouvellement').value=c.renouvellement||'';
@@ -681,6 +752,13 @@ async function saveEditClient(){
     responsable:document.getElementById('editClientResponsable').value,
     email:document.getElementById('editClientEmail').value,
     tel:document.getElementById('editClientTel').value,
+    raison_sociale:document.getElementById('editClientRaisonSociale').value||null,
+    forme_juridique:document.getElementById('editClientFormeJuridique').value||null,
+    siret:document.getElementById('editClientSiret').value||null,
+    metier:document.getElementById('editClientMetier').value||null,
+    adresse:document.getElementById('editClientAdresse').value||null,
+    code_postal:document.getElementById('editClientCP').value||null,
+    ville:document.getElementById('editClientVille').value||null,
     plan:document.getElementById('editClientPlan').value,
     statut:document.getElementById('editClientStatut').value,
     renouvellement:document.getElementById('editClientRenouvellement').value||null,
@@ -1025,13 +1103,18 @@ function onPmsClientChange(){
   const c=allClients.find(cl=>cl.id===sel.value);
   if(!c){document.getElementById('pmsForm').style.display='none';document.getElementById('pmsClientInfo').style.display='none';return;}
   document.getElementById('pmsClientInfo').style.display='block';
-  document.getElementById('pmsClientInfo').innerHTML=`🏪 <strong style="color:var(--text)">${c.nom}</strong> · 👤 ${c.responsable||'—'} · 📧 ${c.email||'—'} · 📍 ${c.ville||'Ville non renseignée'}`;
+  const adrComplete=[c.adresse,c.code_postal,c.ville].filter(Boolean).join(', ');
+  document.getElementById('pmsClientInfo').innerHTML=`🏪 <strong style="color:var(--text)">${c.nom}</strong> · 👤 ${c.responsable||'—'} · 📧 ${c.email||'—'}<br>📍 ${adrComplete||'Adresse non renseignée'} · 🏢 ${c.raison_sociale||'—'} · 🔢 SIRET ${c.siret||'—'}`;
   document.getElementById('pmsForm').style.display='block';
-  // Pré-remplir le métier selon le nom si possible
-  const nom=(c.nom||'').toLowerCase();
-  if(nom.includes('boucher')||nom.includes('charcut'))document.getElementById('pmsMetier').value='boucherie';
-  else if(nom.includes('restaur')||nom.includes('brasser')||nom.includes('bistro'))document.getElementById('pmsMetier').value='restaurant';
-  else document.getElementById('pmsMetier').value='boulangerie';
+  // Pré-remplir depuis les infos du client
+  document.getElementById('pmsSiret').value=c.siret||'';
+  if(c.metier)document.getElementById('pmsMetier').value=c.metier;
+  else{
+    const nom=(c.nom||'').toLowerCase();
+    if(nom.includes('boucher')||nom.includes('charcut'))document.getElementById('pmsMetier').value='boucherie';
+    else if(nom.includes('restaur')||nom.includes('brasser')||nom.includes('bistro'))document.getElementById('pmsMetier').value='restaurant';
+    else document.getElementById('pmsMetier').value='boulangerie';
+  }
 }
 
 async function genererPMSClient(){
@@ -1052,7 +1135,9 @@ async function genererPMSClient(){
   const metier=document.getElementById('pmsMetier').value;
   const cfg={
     nom:client.nom,
-    adresse:client.ville||'',
+    raisonSociale:client.raison_sociale||'',
+    formeJuridique:client.forme_juridique||'',
+    adresse:[client.adresse,client.code_postal,client.ville].filter(Boolean).join(', '),
     responsable:client.responsable||'',
     email:client.email||'',
     tel:client.tel||'',
