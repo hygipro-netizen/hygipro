@@ -221,31 +221,99 @@ body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%
 </head>
 <body>
 <div id="toastContainer"></div>
+<div id="splashScreen" style="position:fixed;inset:0;z-index:10000;background:linear-gradient(160deg,#020810,#060f1e);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .5s">
+  <img src="/logo.png" alt="HygiPro" style="width:130px;height:130px;object-fit:contain;animation:splashPop .8s ease">
+  <div style="margin-top:20px;font-size:32px;font-weight:800;color:#e8f4f0;animation:splashFade 1s ease .3s both">Hygi<span style="color:#2dd4a0">Pro</span></div>
+  <div style="margin-top:6px;font-size:12px;color:#7ba7c4;letter-spacing:2px;animation:splashFade 1s ease .5s both">HACCP · HYGIÈNE · TRAÇABILITÉ</div>
+  <div style="margin-top:32px;width:36px;height:36px;border:3px solid rgba(45,212,160,0.2);border-top-color:#2dd4a0;border-radius:50%;animation:spin .8s linear infinite"></div>
+</div>
+
 <div id="loginScreen" class="login-screen">
   <div class="login-logo-wrap">
     <div class="login-logo" style="background:none;border:none;box-shadow:none">
-      <img src="/logo.png" alt="HygiPro" style="width:110px;height:110px;object-fit:contain">
+      <img src="/logo.png" alt="HygiPro" style="width:90px;height:90px;object-fit:contain">
     </div>
     <div class="login-title" style="display:flex;align-items:center;gap:6px;justify-content:center">Hygi<span style="color:#2dd4a0">Pro</span></div>
     <div class="login-sub">HACCP · Hygiène · Traçabilité</div>
   </div>
-  <div class="login-card">
-    <div id="loginError" class="login-error"></div>
-    <div class="field-label">Votre nom</div>
-    <select id="userSelect" class="field-select"><option value="">Chargement...</option></select>
-    <div class="pin-label">Code PIN</div>
-    <div class="pin-display"><div class="pin-dot" id="pd0"></div><div class="pin-dot" id="pd1"></div><div class="pin-dot" id="pd2"></div><div class="pin-dot" id="pd3"></div><div class="pin-dot" id="pd4"></div><div class="pin-dot" id="pd5"></div></div>
+
+  <!-- ECRAN CHOIX MODE -->
+  <div id="modeChoice" class="login-card" style="max-width:360px">
+    <div style="font-size:15px;color:var(--muted);text-align:center;margin-bottom:20px">Comment souhaitez-vous vous connecter ?</div>
+    <button onclick="selectMode('responsable')" style="width:100%;display:flex;align-items:center;gap:14px;padding:18px;background:rgba(45,212,160,0.08);border:1.5px solid rgba(45,212,160,0.3);border-radius:var(--r-md);cursor:pointer;margin-bottom:12px;transition:all .15s">
+      <div style="width:44px;height:44px;border-radius:12px;background:rgba(45,212,160,0.15);display:flex;align-items:center;justify-content:center;font-size:22px">👔</div>
+      <div style="flex:1;text-align:left">
+        <div style="font-size:16px;font-weight:700;color:var(--text)">Responsable</div>
+        <div style="font-size:12px;color:var(--muted)">Gérant · Accès complet</div>
+      </div>
+      <div style="color:var(--teal);font-size:18px">→</div>
+    </button>
+    <button onclick="selectMode('salarie')" style="width:100%;display:flex;align-items:center;gap:14px;padding:18px;background:rgba(96,165,250,0.06);border:1.5px solid rgba(96,165,250,0.25);border-radius:var(--r-md);cursor:pointer;transition:all .15s">
+      <div style="width:44px;height:44px;border-radius:12px;background:rgba(96,165,250,0.12);display:flex;align-items:center;justify-content:center;font-size:22px">👤</div>
+      <div style="flex:1;text-align:left">
+        <div style="font-size:16px;font-weight:700;color:var(--text)">Salarié</div>
+        <div style="font-size:12px;color:var(--muted)">Employé · Tâches assignées</div>
+      </div>
+      <div style="color:#60a5fa;font-size:18px">→</div>
+    </button>
+  </div>
+
+  <!-- MODE RESPONSABLE -->
+  <div id="modeResponsable" class="login-card" style="display:none;max-width:360px">
+    <button onclick="backToModeChoice()" style="background:none;border:none;color:var(--muted);font-size:13px;cursor:pointer;margin-bottom:14px;padding:0">← Retour</button>
+    <div id="loginErrorResp" class="login-error"></div>
+    <div class="field-label">Email du responsable</div>
+    <input id="respEmail" type="email" class="field-select" placeholder="responsable@boulangerie.fr" style="margin-bottom:16px">
+    <div class="pin-label">Code PIN responsable</div>
+    <div class="pin-display"><div class="pin-dot" id="rpd0"></div><div class="pin-dot" id="rpd1"></div><div class="pin-dot" id="rpd2"></div><div class="pin-dot" id="rpd3"></div><div class="pin-dot" id="rpd4"></div><div class="pin-dot" id="rpd5"></div></div>
     <div class="pin-grid">
-      <button class="pin-btn" onclick="pinPress('1')">1</button><button class="pin-btn" onclick="pinPress('2')">2</button><button class="pin-btn" onclick="pinPress('3')">3</button>
-      <button class="pin-btn" onclick="pinPress('4')">4</button><button class="pin-btn" onclick="pinPress('5')">5</button><button class="pin-btn" onclick="pinPress('6')">6</button>
-      <button class="pin-btn" onclick="pinPress('7')">7</button><button class="pin-btn" onclick="pinPress('8')">8</button><button class="pin-btn" onclick="pinPress('9')">9</button>
-      <button class="pin-btn" onclick="pinPress('DEL')" style="font-size:18px;color:var(--muted)">⌫</button>
-      <button class="pin-btn" onclick="pinPress('0')">0</button>
-      <button class="pin-btn pin-btn-ok" onclick="doLogin()">OK ✓</button>
+      <button class="pin-btn" onclick="respPinPress('1')">1</button><button class="pin-btn" onclick="respPinPress('2')">2</button><button class="pin-btn" onclick="respPinPress('3')">3</button>
+      <button class="pin-btn" onclick="respPinPress('4')">4</button><button class="pin-btn" onclick="respPinPress('5')">5</button><button class="pin-btn" onclick="respPinPress('6')">6</button>
+      <button class="pin-btn" onclick="respPinPress('7')">7</button><button class="pin-btn" onclick="respPinPress('8')">8</button><button class="pin-btn" onclick="respPinPress('9')">9</button>
+      <button class="pin-btn" onclick="respPinPress('DEL')" style="font-size:18px;color:var(--muted)">⌫</button>
+      <button class="pin-btn" onclick="respPinPress('0')">0</button>
+      <button class="pin-btn pin-btn-ok" onclick="doLoginResponsable()">OK ✓</button>
     </div>
-    <div class="pin-hint">Connectez-vous avec votre PIN à 6 chiffres</div>
+  </div>
+
+  <!-- MODE SALARIE - Cards Netflix -->
+  <div id="modeSalarie" style="display:none;width:100%;max-width:480px">
+    <div class="login-card" style="max-width:none">
+      <button onclick="backToModeChoice()" style="background:none;border:none;color:var(--muted);font-size:13px;cursor:pointer;margin-bottom:14px;padding:0">← Retour</button>
+      <div id="salarieCardsView">
+        <div style="font-size:15px;color:var(--muted);text-align:center;margin-bottom:18px">Qui êtes-vous ?</div>
+        <div id="salarieCards" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+          <div style="text-align:center;color:var(--muted);grid-column:1/-1;padding:20px">Chargement...</div>
+        </div>
+      </div>
+      <div id="salariePinView" style="display:none">
+        <div style="text-align:center;margin-bottom:18px">
+          <div id="salarieAvatar" style="width:60px;height:60px;border-radius:50%;background:var(--teal);display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:800;color:#031a10;margin:0 auto 8px"></div>
+          <div id="salarieName" style="font-size:17px;font-weight:700;color:var(--text)"></div>
+          <button onclick="backToSalarieCards()" style="background:none;border:none;color:var(--muted);font-size:12px;cursor:pointer;margin-top:4px">Changer</button>
+        </div>
+        <div id="loginErrorSal" class="login-error"></div>
+        <div class="pin-label">Code PIN</div>
+        <div class="pin-display"><div class="pin-dot" id="spd0"></div><div class="pin-dot" id="spd1"></div><div class="pin-dot" id="spd2"></div><div class="pin-dot" id="spd3"></div><div class="pin-dot" id="spd4"></div><div class="pin-dot" id="spd5"></div></div>
+        <div class="pin-grid">
+          <button class="pin-btn" onclick="salPinPress('1')">1</button><button class="pin-btn" onclick="salPinPress('2')">2</button><button class="pin-btn" onclick="salPinPress('3')">3</button>
+          <button class="pin-btn" onclick="salPinPress('4')">4</button><button class="pin-btn" onclick="salPinPress('5')">5</button><button class="pin-btn" onclick="salPinPress('6')">6</button>
+          <button class="pin-btn" onclick="salPinPress('7')">7</button><button class="pin-btn" onclick="salPinPress('8')">8</button><button class="pin-btn" onclick="salPinPress('9')">9</button>
+          <button class="pin-btn" onclick="salPinPress('DEL')" style="font-size:18px;color:var(--muted)">⌫</button>
+          <button class="pin-btn" onclick="salPinPress('0')">0</button>
+          <button class="pin-btn pin-btn-ok" onclick="doLoginSalarie()">OK ✓</button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
+<style>
+@keyframes splashPop{0%{transform:scale(0.5);opacity:0}60%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}
+@keyframes splashFade{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.salarie-card{background:var(--bg2);border:1.5px solid var(--border2);border-radius:14px;padding:16px 8px;cursor:pointer;transition:all .15s;text-align:center}
+.salarie-card:active{transform:scale(0.95);border-color:var(--teal)}
+.salarie-card-avatar{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;margin:0 auto 8px;color:#fff}
+</style>
 
 <!-- ECRAN SUSPENSION ABONNEMENT -->
 <div id="suspendedScreen" style="display:none;position:fixed;inset:0;background:linear-gradient(160deg,#020810,#060f1e);z-index:9999;align-items:center;justify-content:center;flex-direction:column;padding:32px;text-align:center">
@@ -1065,6 +1133,11 @@ async function init(){
   const s=localStorage.getItem('hygipro_user');
   if(s){currentUser=JSON.parse(s);showApp();}
   await loadUsers();
+  // Masquer le splash après chargement (min 1.5s pour voir l'animation)
+  setTimeout(()=>{
+    const splash=document.getElementById('splashScreen');
+    if(splash){splash.style.opacity='0';setTimeout(()=>splash.style.display='none',500);}
+  },1500);
 }
 async function checkClientStatus(){
   // Récupère le slug depuis l'URL (?client=xxx)
@@ -1096,26 +1169,94 @@ async function checkClientStatus(){
   }
 }
 
+let allLoadedUsers=[];
 async function loadUsers(){
   const{data}=await db.from('users').select('*').eq('active',true).order('name');
-  const sel=document.getElementById('userSelect');
-  sel.innerHTML='<option value="">Sélectionner...</option>';
-  (data||[]).forEach(u=>{const o=document.createElement('option');o.value=u.id;o.textContent=u.name+(u.role==='admin'?' (Admin)':'');sel.appendChild(o);});
+  allLoadedUsers=data||[];
 }
 
-let pinValue='';
-function pinPress(v){if(v==='DEL')pinValue=pinValue.slice(0,-1);else if(pinValue.length<6)pinValue+=v;updatePinDisplay();if(pinValue.length===6)setTimeout(doLogin,300);}
-function updatePinDisplay(){for(let i=0;i<6;i++)document.getElementById('pd'+i).classList.toggle('filled',i<pinValue.length);}
-async function doLogin(){
-  const uid=document.getElementById('userSelect').value;
-  if(!uid){showLoginError('Sélectionnez votre nom');return;}
-  if(pinValue.length!==6){showLoginError('PIN à 6 chiffres requis');return;}
-  const{data}=await db.from('users').select('*').eq('id',uid).eq('pin',pinValue).single();
-  if(!data){showLoginError('PIN incorrect');pinValue='';updatePinDisplay();return;}
-  currentUser=data;localStorage.setItem('hygipro_user',JSON.stringify(data));showApp();
+// ===== CHOIX MODE =====
+function selectMode(mode){
+  document.getElementById('modeChoice').style.display='none';
+  document.querySelector('.login-logo-wrap').style.display='none';
+  if(mode==='responsable'){
+    document.getElementById('modeResponsable').style.display='block';
+  }else{
+    document.getElementById('modeSalarie').style.display='block';
+    renderSalarieCards();
+  }
 }
-function showLoginError(m){const e=document.getElementById('loginError');e.textContent=m;e.style.display='block';setTimeout(()=>e.style.display='none',3000);}
-function doLogout(){currentUser=null;localStorage.removeItem('hygipro_user');clearInterval(alertInterval);document.getElementById('app').classList.remove('visible');document.getElementById('loginScreen').style.display='flex';pinValue='';updatePinDisplay();}
+function backToModeChoice(){
+  document.getElementById('modeResponsable').style.display='none';
+  document.getElementById('modeSalarie').style.display='none';
+  document.getElementById('modeChoice').style.display='block';
+  document.querySelector('.login-logo-wrap').style.display='block';
+  respPinValue='';salPinValue='';selectedSalarie=null;
+  updateRespPin();updateSalPin();
+}
+
+// ===== MODE RESPONSABLE =====
+let respPinValue='';
+function respPinPress(v){if(v==='DEL')respPinValue=respPinValue.slice(0,-1);else if(respPinValue.length<6)respPinValue+=v;updateRespPin();if(respPinValue.length===6)setTimeout(doLoginResponsable,300);}
+function updateRespPin(){for(let i=0;i<6;i++){const el=document.getElementById('rpd'+i);if(el)el.classList.toggle('filled',i<respPinValue.length);}}
+async function doLoginResponsable(){
+  const email=document.getElementById('respEmail').value.trim().toLowerCase();
+  if(!email){showRespError('Entrez votre email');return;}
+  if(respPinValue.length!==6){showRespError('PIN à 6 chiffres requis');return;}
+  // Cherche un responsable/admin avec cet email et ce PIN
+  const{data}=await db.from('users').select('*').eq('pin',respPinValue).in('role',['admin','responsable']);
+  const user=(data||[]).find(u=>(u.email||'').toLowerCase()===email);
+  if(!user){showRespError('Email ou PIN incorrect');respPinValue='';updateRespPin();return;}
+  currentUser=user;localStorage.setItem('hygipro_user',JSON.stringify(user));showApp();
+}
+function showRespError(m){const e=document.getElementById('loginErrorResp');e.textContent=m;e.style.display='block';setTimeout(()=>e.style.display='none',3000);}
+
+// ===== MODE SALARIE (cards Netflix) =====
+let selectedSalarie=null;
+let salPinValue='';
+const avatarColors=['#2dd4a0','#60a5fa','#f59e0b','#a78bfa','#f87171','#34d399','#fb7185','#38bdf8'];
+function renderSalarieCards(){
+  const salaries=allLoadedUsers.filter(u=>u.role!=='admin');
+  const el=document.getElementById('salarieCards');
+  if(!salaries.length){el.innerHTML='<div style="text-align:center;color:var(--muted);grid-column:1/-1;padding:20px">Aucun salarié. Demandez au responsable de vous créer un compte.</div>';return;}
+  el.innerHTML=salaries.map((u,i)=>{
+    const ini=u.name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+    const color=avatarColors[i%avatarColors.length];
+    return`<div class="salarie-card" onclick="selectSalarie('${u.id}')">
+      <div class="salarie-card-avatar" style="background:${color}">${ini}</div>
+      <div style="font-size:13px;font-weight:600;color:var(--text)">${u.name}</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:2px">${u.role||''}</div>
+    </div>`;
+  }).join('');
+}
+function selectSalarie(id){
+  selectedSalarie=allLoadedUsers.find(u=>u.id===id);
+  if(!selectedSalarie)return;
+  const ini=selectedSalarie.name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+  const idx=allLoadedUsers.filter(u=>u.role!=='admin').findIndex(u=>u.id===id);
+  document.getElementById('salarieAvatar').textContent=ini;
+  document.getElementById('salarieAvatar').style.background=avatarColors[idx%avatarColors.length];
+  document.getElementById('salarieName').textContent=selectedSalarie.name;
+  document.getElementById('salarieCardsView').style.display='none';
+  document.getElementById('salariePinView').style.display='block';
+  salPinValue='';updateSalPin();
+}
+function backToSalarieCards(){
+  document.getElementById('salariePinView').style.display='none';
+  document.getElementById('salarieCardsView').style.display='block';
+  selectedSalarie=null;salPinValue='';updateSalPin();
+}
+function salPinPress(v){if(v==='DEL')salPinValue=salPinValue.slice(0,-1);else if(salPinValue.length<6)salPinValue+=v;updateSalPin();if(salPinValue.length===6)setTimeout(doLoginSalarie,300);}
+function updateSalPin(){for(let i=0;i<6;i++){const el=document.getElementById('spd'+i);if(el)el.classList.toggle('filled',i<salPinValue.length);}}
+async function doLoginSalarie(){
+  if(!selectedSalarie){showSalError('Sélectionnez votre profil');return;}
+  if(salPinValue.length!==6){showSalError('PIN à 6 chiffres requis');return;}
+  if(selectedSalarie.pin!==salPinValue){showSalError('PIN incorrect');salPinValue='';updateSalPin();return;}
+  currentUser=selectedSalarie;localStorage.setItem('hygipro_user',JSON.stringify(selectedSalarie));showApp();
+}
+function showSalError(m){const e=document.getElementById('loginErrorSal');e.textContent=m;e.style.display='block';setTimeout(()=>e.style.display='none',3000);}
+
+function doLogout(){currentUser=null;localStorage.removeItem('hygipro_user');clearInterval(alertInterval);document.getElementById('app').classList.remove('visible');document.getElementById('loginScreen').style.display='flex';backToModeChoice();}
 
 function showApp(){
   document.getElementById('loginScreen').style.display='none';
@@ -1124,7 +1265,7 @@ function showApp(){
   document.getElementById('topbarAvatar').textContent=ini;
   document.getElementById('topbarName').textContent=currentUser.name;
   const p=currentUser.permissions||{};
-  const isAdmin=currentUser.role==='admin';
+  const isAdmin=currentUser.role==='admin'||currentUser.role==='responsable';
   // Nav bar permissions
   if(!p.haccp&&!isAdmin){const el=document.getElementById('more-haccp');if(el)el.style.display='none';}
   if(!p.temperatures&&!isAdmin){const el=document.getElementById('nav-temp');if(el)el.classList.add('hidden');}
@@ -1471,7 +1612,7 @@ async function loadLabels(){
   const{data}=await db.from('labels').select('*').order('opened_at',{ascending:false}).limit(50);
   const el=document.getElementById('labelsList');
   if(!data||!data.length){el.innerHTML='<div class="empty"><div class="empty-ico">🏷️</div><div class="empty-title">Aucune traçabilité</div><div class="empty-sub">Appuyez sur + Traçabilité</div></div>';return;}
-  const isAdmin=currentUser.role==='admin';
+  const isAdmin=currentUser.role==='admin'||currentUser.role==='responsable';
   el.innerHTML=data.map(l=>{
     const diff=l.dlc?Math.ceil((new Date(l.dlc)-new Date())/86400000):null;
     const st=diff===null?'pending':diff<0?'danger':diff<=2?'warn':'ok';
