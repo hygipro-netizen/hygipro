@@ -182,7 +182,7 @@ async function genererPMS(){
 *{box-sizing:border-box}
 body{font-family:Arial,sans-serif;color:#1a1a2e;font-size:13px;line-height:1.5}
 .cover{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;text-align:center;border:3px solid #2dd4a0;margin:20px;border-radius:12px;padding:40px}
-.cover-logo{font-size:32px;font-weight:800;color:#2dd4a0;margin-bottom:8px}
+.cover-logo{font-size:32px;font-weight:800;color:#2dd4a0;margin-bottom:8px}.logo-img{height:80px;object-fit:contain}
 .cover-title{font-size:28px;font-weight:800;color:#060f1e;margin-bottom:8px}
 .cover-sub{font-size:16px;color:#475569;margin-bottom:32px}
 .cover-info{background:#f8fafc;border-radius:8px;padding:20px;text-align:left;width:100%;max-width:400px}
@@ -216,7 +216,7 @@ tr:nth-child(even) td{background:#f8fafc}
 
 <!-- PAGE DE GARDE -->
 <div class="cover page-break">
-  <div class="cover-logo">HygiPro</div>
+  <img src="https://hygipro.vercel.app/logo.png" alt="HygiPro" style="height:120px;margin-bottom:8px">
   <div class="cover-title">Plan de Maîtrise Sanitaire</div>
   <div class="cover-sub">${typeAct}</div>
   <div class="cover-info">
@@ -231,6 +231,16 @@ tr:nth-child(even) td{background:#f8fafc}
   </div>
   <div class="cover-badge">HACCP · Analyse des dangers et maîtrise des points critiques</div>
   <div style="margin-top:24px;font-size:11px;color:#94a3b8">Conforme DGAL/SDSSA 2022-349 · Règlement CE 852/2004<br>Généré par HygiPro le ${dateGen}</div>
+  <div style="margin-top:16px;background:#fff3cd;border:1px solid #f59e0b;border-radius:8px;padding:12px 16px;text-align:left;font-size:12px;color:#1a1a2e;max-width:400px">
+    <div style="font-weight:700;margin-bottom:6px">📋 CERFA N°13984*06 — Déclaration obligatoire</div>
+    <div>À déposer avant ouverture auprès de :</div>
+    <div style="margin-top:4px"><strong>DDPP 94 — Val-de-Marne</strong></div>
+    <div>3 bis rue des Archives — 94046 Créteil Cedex</div>
+    <div>📞 01 45 13 92 30</div>
+    <div>📧 ddpp@val-de-marne.gouv.fr</div>
+    <div>🌐 <a href="https://agriculture-portail.6tzen.fr/default/requests/cerfa13984/" target="_blank">Remplir le CERFA en ligne</a></div>
+    <div style="margin-top:6px;font-size:10px;color:#666">Renouveler en cas de changement d'exploitant, d'adresse ou d'activité</div>
+  </div>
 </div>
 
 <!-- SOMMAIRE -->
@@ -527,6 +537,67 @@ tr:nth-child(even) td{background:#f8fafc}
   <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">
     ${['Gluten (blé, seigle, orge, avoine)','Crustacés','Œufs','Poissons','Arachides','Soja','Lait (dont lactose)','Fruits à coque','Céleri','Moutarde','Graines de sésame','Anhydride sulfureux et sulfites','Lupin','Mollusques'].map(a=>`<span style="background:#fee2e2;color:#991b1b;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600">${a}</span>`).join('')}
   </div>
+</div>
+
+<!-- SECTIONS MANQUANTES -->
+<div class="page page-break">
+  <h1>VI. Sections complémentaires</h1>
+
+  <h2>Congélation et décongélation</h2>
+  <div class="info-box">La congélation est une technique de descente en température par action d'un froid négatif appliqué rapidement et précocement sur des denrées fraîches.</div>
+  <table>
+    <tr><th>Situation</th><th>Mesures de maîtrise</th></tr>
+    <tr><td><strong>Congélation</strong></td><td>Effectuer immédiatement après préparation ou cuisson. Ne congeler que des produits dont la qualité microbiologique est maîtrisée. Protéger dans un film ou caisson couvert. Utiliser un matériel adapté (congélateur ventilé, cellule rapide).</td></tr>
+    <tr><td><strong>Décongélation</strong></td><td>Uniquement en enceinte réfrigérée (+4°C max) — jamais à température ambiante. Ne jamais recongeler. Utiliser dans les 24h. Conserver la DLUO et l'identification du lot.</td></tr>
+    <tr><td><strong>Stockage surgelés</strong></td><td>≤ -18°C. Contrôler régulièrement les températures. Enregistrement quotidien dans HygiPro.</td></tr>
+  </table>
+
+  <h2>Gestion des déchets et poubelles</h2>
+  <div class="warn-box">⚠️ Les poubelles de voirie ne doivent pas pénétrer dans les locaux de fabrication</div>
+  <ul>
+    <li>Évacuation rapide des déchets du plan de travail vers les poubelles du laboratoire</li>
+    <li>Utiliser des sacs plastiques à usage unique</li>
+    <li>Se laver et se désinfecter les mains après manipulation du couvercle</li>
+    <li>Utiliser une poubelle à ouverture non manuelle (pédale)</li>
+    <li>Nettoyer et désinfecter quotidiennement les poubelles</li>
+    <li>Évacuer le contenu des poubelles vers la voirie le plus souvent possible</li>
+    <li>Éloigner les poubelles des sources de chaleur</li>
+  </ul>
+
+  <h2>Vente et gestion des invendus</h2>
+  <p>Les produits de pâtisserie sont ceux dont aucune opération ultérieure ne permettra de rabaisser leur quantité de germes (produits à base de crème pâtissière, crème au beurre, chantilly...).</p>
+  <ul>
+    <li>Nettoyer les vitrines AVANT la mise en place des produits</li>
+    <li>Protéger les produits finis (film, couvercle) ou traverser les zones souillées le plus rapidement possible</li>
+    <li>Préférer les porte-étiquettes indépendants</li>
+    <li>Séparer par exemple les sandwiches des pâtisseries fraîches</li>
+    <li>Assurer une gestion rationnelle des vitrines : réserver celles aux meilleures capacités aux produits les plus fragiles (+3°C max)</li>
+    <li>Vérifier la température des vitrines quotidiennement</li>
+    <li>En fin de service, remettre les invendus de la vitrine dans une enceinte froide (+3°C max)</li>
+    <li>Repérer le moment de mise en vente, de la durée de vente, de la date de fabrication du produit ou de ses bases</li>
+  </ul>
+
+  <h2>Plan de travail et ustensiles</h2>
+  <ul>
+    <li>Positionner les plans de travail des produits sensibles à l'abri des courants d'air</li>
+    <li>Ne jamais balayer à sec dans un local où sont travaillées des denrées sensibles</li>
+    <li>Séparer les opérations souillantes (cassage d'œufs, épluchage) des opérations d'assemblage</li>
+    <li>N'utiliser sur le plan de travail que des matériels et ustensiles correctement nettoyés et désinfectés</li>
+    <li>Nettoyer et désinfecter, puis laisser sécher par égouttage, retourné pour être à l'abri des poussières</li>
+    <li>Éviter d'utiliser des matériels endommagés pour les préparations sensibles</li>
+    <li>Préférer des machines dont la conception facilite le nettoyage</li>
+  </ul>
+
+  <h2>Manipulation et assemblage de produits sensibles</h2>
+  <p>Les produits sensibles sont ceux dont aucune opération ultérieure ne permettra de rabaisser leur quantité de germes (crème pâtissière, crème au beurre, chantilly, mousses...).</p>
+  <ul>
+    <li>Limiter le contact direct des mains avec le produit fabriqué</li>
+    <li>Porter un pansement et des gants en cas de brûlure ou blessure</li>
+    <li>Ne pas tousser, se gratter lors de ces opérations</li>
+    <li>Porter un masque en cas d'affection respiratoire</li>
+    <li>Porter un calot systématiquement</li>
+    <li>Déplacer les produits finis sensibles le plus rapidement possible en magasin ou dans des enceintes de stockage réfrigérées</li>
+  </ul>
 </div>
 
 <!-- SIGNATURES -->
