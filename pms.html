@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HygiPro — Générateur PMS</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#060f1e;--card:#0d1f38;--border:#1e3a5f;--text:#e8f4f0;--muted:#7ba7c4;--teal:#2dd4a0;--red:#f87171;--amber:#f59e0b;--blue:#60a5fa}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:24px}
+.container{max-width:700px;margin:0 auto}
+.header{text-align:center;margin-bottom:32px}
+.logo{font-size:28px;font-weight:800;color:var(--teal);margin-bottom:4px}
+.subtitle{font-size:14px;color:var(--muted)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:16px}
+.section-title{font-size:15px;font-weight:700;color:var(--teal);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.form-group{margin-bottom:14px}
+.form-label{display:block;font-size:11px;font-weight:700;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.4px}
+.form-input,.form-select,.form-textarea{width:100%;background:#080f1e;border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-size:14px;font-family:inherit}
+.form-textarea{resize:vertical;min-height:80px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;border:none;transition:all .15s}
+.btn-primary{background:var(--teal);color:#060f1e;width:100%;justify-content:center;font-size:16px;padding:16px}
+.info-box{background:rgba(45,212,160,0.08);border:1px solid rgba(45,212,160,0.25);border-radius:8px;padding:12px 14px;font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.6}
+.tag{display:inline-block;background:rgba(45,212,160,0.15);color:var(--teal);border-radius:6px;padding:2px 8px;font-size:11px;font-weight:600;margin:2px}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="logo">HygiPro</div>
+    <div class="subtitle">Générateur de Plan de Maîtrise Sanitaire (PMS)</div>
+    <div style="margin-top:8px;font-size:12px;color:var(--muted)">Conforme DGAL/SDSSA 2022-349 · CE 852/2004 · GBPH Boulangerie-Pâtisserie</div>
+  </div>
+
+  <!-- ETABLISSEMENT -->
+  <div class="card">
+    <div class="section-title">🏪 Informations de l'établissement</div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Nom de l'établissement *</label><input class="form-input" id="nomEtab" placeholder="Boulangerie Martin"></div>
+      <div class="form-group"><label class="form-label">Type d'activité</label>
+        <select class="form-select" id="typeActivite">
+          <option value="Boulangerie-Pâtisserie">Boulangerie-Pâtisserie</option>
+          <option value="Boulangerie">Boulangerie</option>
+          <option value="Pâtisserie">Pâtisserie</option>
+          <option value="Boulangerie-Pâtisserie-Sandwicherie">Boulangerie-Pâtisserie-Sandwicherie</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">Adresse complète *</label><input class="form-input" id="adresse" placeholder="12 rue de la Paix, 75001 Paris"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Responsable / Gérant *</label><input class="form-input" id="responsable" placeholder="Jean Martin"></div>
+      <div class="form-group"><label class="form-label">Téléphone</label><input class="form-input" id="telephone" placeholder="01 23 45 67 89"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="email" type="email" placeholder="martin@boulangerie.fr"></div>
+      <div class="form-group"><label class="form-label">SIRET</label><input class="form-input" id="siret" placeholder="123 456 789 00012"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Date de création PMS</label><input class="form-input" id="datePMS" type="date"></div>
+      <div class="form-group"><label class="form-label">Numéro de version</label><input class="form-input" id="version" value="1.0" placeholder="1.0"></div>
+    </div>
+  </div>
+
+  <!-- ORGANISATION -->
+  <div class="card">
+    <div class="section-title">👥 Organisation du personnel</div>
+    <div class="info-box">Ces informations seront complétées automatiquement depuis votre base de données HygiPro.</div>
+    <div class="form-group"><label class="form-label">Nombre de salariés total</label><input class="form-input" id="nbSalaries" type="number" placeholder="5"></div>
+    <div class="form-group"><label class="form-label">Responsable hygiène (référent HACCP)</label><input class="form-input" id="refHaccp" placeholder="Prénom Nom"></div>
+    <div class="form-group"><label class="form-label">Formations hygiène effectuées</label>
+      <textarea class="form-textarea" id="formations" placeholder="Ex: Formation HACCP - Jean Martin - 15/01/2025&#10;Formation hygiène alimentaire - Marie Dupont - 10/03/2025"></textarea>
+    </div>
+  </div>
+
+  <!-- LOCAUX -->
+  <div class="card">
+    <div class="section-title">🏗️ Locaux et équipements</div>
+    <div class="form-group"><label class="form-label">Description des locaux</label>
+      <textarea class="form-textarea" id="locaux" placeholder="Ex: Laboratoire de 40m², zone de vente de 25m², chambre froide positive, chambre froide négative..."></textarea>
+    </div>
+    <div class="form-group"><label class="form-label">Équipements principaux</label>
+      <textarea class="form-textarea" id="equipements" placeholder="Ex: Four à sole, laminoir, pétrin, chambre de pousse, trancheuse..."></textarea>
+    </div>
+    <div class="form-group"><label class="form-label">Prestataire dératisation / désinsectisation</label><input class="form-input" id="prestataire3D" placeholder="Ex: Anticimex, Rentokil..."></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Fréquence passage nuisibles</label><input class="form-input" id="freqNuisibles" placeholder="Ex: Trimestrielle"></div>
+      <div class="form-group"><label class="form-label">Dernier passage nuisibles</label><input class="form-input" id="dernierPassage" type="date"></div>
+    </div>
+  </div>
+
+  <!-- FOURNISSEURS -->
+  <div class="card">
+    <div class="section-title">📦 Fournisseurs principaux</div>
+    <div class="form-group"><label class="form-label">Fournisseur farine / produits secs</label><input class="form-input" id="fourn1" placeholder="Ex: Moulin Dupont, Grands Moulins de Paris..."></div>
+    <div class="form-group"><label class="form-label">Fournisseur produits frais / laitiers</label><input class="form-input" id="fourn2" placeholder="Ex: Metrostore, Brake France..."></div>
+    <div class="form-group"><label class="form-label">Fournisseur produits surgelés</label><input class="form-input" id="fourn3" placeholder="Ex: Transgourmet, METRO..."></div>
+    <div class="form-group"><label class="form-label">Autres fournisseurs</label><textarea class="form-textarea" id="fourn4" placeholder="Autres fournisseurs..."></textarea></div>
+  </div>
+
+  <!-- OPTIONS -->
+  <div class="card">
+    <div class="section-title">⚙️ Options du document</div>
+    <div class="info-box">
+      Le PMS généré inclura automatiquement :<br>
+      <span class="tag">✓ Analyse des dangers biologiques, chimiques, physiques</span>
+      <span class="tag">✓ Fiches par matière première (farines, œufs, lait, viandes...)</span>
+      <span class="tag">✓ Plan de nettoyage METRO</span>
+      <span class="tag">✓ Procédures HACCP boulangerie</span>
+      <span class="tag">✓ Températures réglementaires</span>
+      <span class="tag">✓ Procédure TIAC</span>
+      <span class="tag">✓ Gestion des non-conformes</span>
+    </div>
+    <div class="form-group"><label class="form-label">Activités complémentaires</label>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" id="actSandwich"> Sandwicherie</label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" id="actTraiteur"> Traiteur</label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" id="actSurGele"> Surgelés maison</label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" id="actLivraison"> Livraison</label>
+      </div>
+    </div>
+  </div>
+
+  <button class="btn btn-primary" onclick="genererPMS()">📋 Générer le PMS complet</button>
+  <div style="height:40px"></div>
+</div>
+
+<script>
+const SUPA_URL='https://mzyrffxosabnmkcqduvc.supabase.co';
+const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16eXJmZnhvc2Fibm1rY3FkdXZjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0NjkzMzYsImV4cCI6MjA5MTA0NTMzNn0.fbhCUI5EKvCO2k0014JWrOR-dqBF4XL1k6Tqdy4zIM8';
+const db=supabase.createClient(SUPA_URL,SUPA_KEY);
+
+// Set today's date
+document.getElementById('datePMS').value=new Date().toISOString().split('T')[0];
+
+async function genererPMS(){
+  const nom=document.getElementById('nomEtab').value.trim();
+  const resp=document.getElementById('responsable').value.trim();
+  if(!nom||!resp){alert('Nom établissement et responsable requis');return;}
+
+  // Load data from Supabase
+  const[{data:users},{data:zones},{data:nettoyage},{data:tempLast}]=await Promise.all([
+    db.from('users').select('name,role').eq('active',true),
+    db.from('zones').select('*').eq('active',true).order('name'),
+    db.from('plan_nettoyage').select('*').eq('actif',true).order('zone'),
+    db.from('temperature_readings').select('*').order('read_at',{ascending:false}).limit(30),
+  ]);
+
+  const dateGen=new Date().toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
+  const datePMS=new Date(document.getElementById('datePMS').value).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
+  const typeAct=document.getElementById('typeActivite').value;
+  const adresse=document.getElementById('adresse').value;
+  const tel=document.getElementById('telephone').value;
+  const email=document.getElementById('email').value;
+  const siret=document.getElementById('siret').value;
+  const version=document.getElementById('version').value;
+  const nbSal=document.getElementById('nbSalaries').value||'—';
+  const refHaccp=document.getElementById('refHaccp').value||resp;
+  const formations=document.getElementById('formations').value;
+  const locaux=document.getElementById('locaux').value;
+  const equip=document.getElementById('equipements').value;
+  const prest3D=document.getElementById('prestataire3D').value;
+  const freqNuis=document.getElementById('freqNuisibles').value;
+  const fourn1=document.getElementById('fourn1').value;
+  const fourn2=document.getElementById('fourn2').value;
+  const fourn3=document.getElementById('fourn3').value;
+
+  // Build users table
+  const usersRows=(users||[]).map(u=>`<tr><td>${u.name}</td><td>${u.role}</td><td>Attestation HACCP</td><td>✓</td></tr>`).join('');
+
+  // Build zones table
+  const zonesRows=(zones||[]).map(z=>`<tr><td>${z.name}</td><td>${z.role_assigned||'Tous'}</td><td>${z.threshold_min!==null?z.threshold_min+'°C':'—'}</td><td>${z.threshold_max!==null?z.threshold_max+'°C':'—'}</td><td>2 fois/jour</td></tr>`).join('');
+
+  // Build nettoyage table (group by zone)
+  const nettoyageRows=(nettoyage||[]).map(n=>`<tr><td>${n.zone}</td><td>${n.surface}</td><td>${n.frequence}</td><td>${n.produit}</td><td>${n.dilution||'Prêt à l\'emploi'}</td><td>${n.temps_contact||'—'}</td></tr>`).join('');
+
+  const html=`<!DOCTYPE html>
+<html lang="fr"><head><meta charset="UTF-8">
+<title>PMS — ${nom}</title>
+<style>
+*{box-sizing:border-box}
+body{font-family:Arial,sans-serif;color:#1a1a2e;font-size:13px;line-height:1.5}
+.cover{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;text-align:center;border:3px solid #2dd4a0;margin:20px;border-radius:12px;padding:40px}
+.cover-logo{font-size:32px;font-weight:800;color:#2dd4a0;margin-bottom:8px}
+.cover-title{font-size:28px;font-weight:800;color:#060f1e;margin-bottom:8px}
+.cover-sub{font-size:16px;color:#475569;margin-bottom:32px}
+.cover-info{background:#f8fafc;border-radius:8px;padding:20px;text-align:left;width:100%;max-width:400px}
+.cover-info p{margin:4px 0;font-size:14px}
+.cover-badge{background:#2dd4a0;color:white;border-radius:6px;padding:4px 12px;font-size:12px;font-weight:700;margin-top:16px;display:inline-block}
+.page-break{page-break-after:always}
+.page{padding:30px 40px;max-width:900px;margin:0 auto}
+h1{font-size:20px;font-weight:800;color:#060f1e;border-bottom:3px solid #2dd4a0;padding-bottom:8px;margin-bottom:16px;margin-top:24px}
+h2{font-size:16px;font-weight:700;color:#1e3a5f;background:#f1f5f9;padding:8px 12px;border-left:4px solid #2dd4a0;margin:16px 0 10px}
+h3{font-size:14px;font-weight:700;color:#2dd4a0;margin:14px 0 6px}
+p{margin-bottom:8px;color:#374151}
+ul{margin:6px 0 10px 20px}
+li{margin-bottom:3px;color:#374151}
+table{width:100%;border-collapse:collapse;margin:10px 0 16px;font-size:12px}
+th{background:#1e3a5f;color:white;padding:8px 10px;text-align:left;font-weight:700}
+td{padding:7px 10px;border-bottom:1px solid #e2e8f0}
+tr:nth-child(even) td{background:#f8fafc}
+.danger-table th{background:#dc2626}
+.warn-box{background:#fef3c7;border:1px solid #f59e0b;border-radius:6px;padding:10px 14px;margin:8px 0;font-size:12px}
+.ok-box{background:#d1fae5;border:1px solid #2dd4a0;border-radius:6px;padding:10px 14px;margin:8px 0;font-size:12px}
+.info-box{background:#dbeafe;border:1px solid #60a5fa;border-radius:6px;padding:10px 14px;margin:8px 0;font-size:12px}
+.sign-block{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:40px}
+.sign-line{border-top:1px solid #94a3b8;padding-top:8px;font-size:12px;color:#64748b}
+.footer{text-align:center;font-size:10px;color:#94a3b8;margin-top:24px;padding-top:12px;border-top:1px solid #e2e8f0}
+.toc{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:20px}
+.toc-item{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dotted #e2e8f0;font-size:13px}
+.toc-num{color:#94a3b8;font-weight:700}
+@media print{.cover{min-height:auto;margin:0;border-radius:0}.page-break{page-break-after:always}}
+</style>
+</head><body>
+
+<!-- PAGE DE GARDE -->
+<div class="cover page-break">
+  <div class="cover-logo">HygiPro</div>
+  <div class="cover-title">Plan de Maîtrise Sanitaire</div>
+  <div class="cover-sub">${typeAct}</div>
+  <div class="cover-info">
+    <p><strong>Établissement :</strong> ${nom}</p>
+    <p><strong>Adresse :</strong> ${adresse||'—'}</p>
+    <p><strong>Responsable :</strong> ${resp}</p>
+    ${tel?`<p><strong>Téléphone :</strong> ${tel}</p>`:''}
+    ${email?`<p><strong>Email :</strong> ${email}</p>`:''}
+    ${siret?`<p><strong>SIRET :</strong> ${siret}</p>`:''}
+    <p><strong>Date de rédaction :</strong> ${datePMS}</p>
+    <p><strong>Version :</strong> ${version}</p>
+  </div>
+  <div class="cover-badge">HACCP · Analyse des dangers et maîtrise des points critiques</div>
+  <div style="margin-top:24px;font-size:11px;color:#94a3b8">Conforme DGAL/SDSSA 2022-349 · Règlement CE 852/2004<br>Généré par HygiPro le ${dateGen}</div>
+</div>
+
+<!-- SOMMAIRE -->
+<div class="page page-break">
+  <h1>SOMMAIRE</h1>
+  <div class="toc">
+    <div class="toc-item"><span>I. Description des activités et organisation générale</span><span class="toc-num">3</span></div>
+    <div class="toc-item"><span>II. Documents relatifs aux bonnes pratiques d'hygiène</span><span class="toc-num">4</span></div>
+    <div class="toc-item"><span>&nbsp;&nbsp;&nbsp;1. Le personnel</span><span class="toc-num">4</span></div>
+    <div class="toc-item"><span>&nbsp;&nbsp;&nbsp;2. Maintenance des locaux et équipements</span><span class="toc-num">5</span></div>
+    <div class="toc-item"><span>&nbsp;&nbsp;&nbsp;3. Mesures d'hygiène avant, pendant et après la production</span><span class="toc-num">6</span></div>
+    <div class="toc-item"><span>&nbsp;&nbsp;&nbsp;4. Plan de lutte contre les nuisibles</span><span class="toc-num">7</span></div>
+    <div class="toc-item"><span>&nbsp;&nbsp;&nbsp;5. Approvisionnement en eau</span><span class="toc-num">7</span></div>
+    <div class="toc-item"><span>&nbsp;&nbsp;&nbsp;6. Maîtrise des températures</span><span class="toc-num">8</span></div>
+    <div class="toc-item"><span>&nbsp;&nbsp;&nbsp;7. Plan de nettoyage et désinfection</span><span class="toc-num">9</span></div>
+    <div class="toc-item"><span>III. Documents relatifs aux procédures HACCP</span><span class="toc-num">10</span></div>
+    <div class="toc-item"><span>&nbsp;&nbsp;&nbsp;1. Analyse des dangers biologiques, chimiques et physiques</span><span class="toc-num">10</span></div>
+    <div class="toc-item"><span>&nbsp;&nbsp;&nbsp;2. Points critiques (CCP et PrPo)</span><span class="toc-num">14</span></div>
+    <div class="toc-item"><span>&nbsp;&nbsp;&nbsp;3. Fiches matières premières</span><span class="toc-num">16</span></div>
+    <div class="toc-item"><span>IV. Traçabilité et gestion des non-conformes</span><span class="toc-num">22</span></div>
+    <div class="toc-item"><span>V. Procédure TIAC</span><span class="toc-num">24</span></div>
+  </div>
+</div>
+
+<!-- PARTIE I : DESCRIPTION -->
+<div class="page page-break">
+  <h1>I. Description des activités et organisation générale</h1>
+
+  <h2>1. Présentation de l'établissement</h2>
+  <table>
+    <tr><th colspan="2">Fiche d'identité</th></tr>
+    <tr><td><strong>Raison sociale</strong></td><td>${nom}</td></tr>
+    <tr><td><strong>Type d'activité</strong></td><td>${typeAct}</td></tr>
+    <tr><td><strong>Adresse</strong></td><td>${adresse||'—'}</td></tr>
+    <tr><td><strong>Responsable</strong></td><td>${resp}</td></tr>
+    <tr><td><strong>SIRET</strong></td><td>${siret||'—'}</td></tr>
+    <tr><td><strong>Référent HACCP</strong></td><td>${refHaccp}</td></tr>
+  </table>
+
+  <h2>2. Description des locaux</h2>
+  <p>${locaux||'Laboratoire de fabrication, zone de vente, chambre froide positive, zone de stockage sec.'}</p>
+
+  <h2>3. Équipements principaux</h2>
+  <p>${equip||'Four à sole, laminoir, pétrin, chambre de pousse, trancheuse, vitrine réfrigérée.'}</p>
+
+  <h2>4. Organisation du personnel</h2>
+  <table>
+    <tr><th>Nom</th><th>Poste</th><th>Formation hygiène</th><th>À jour</th></tr>
+    ${usersRows||`<tr><td colspan="4" style="text-align:center;color:#94a3b8">Données depuis HygiPro</td></tr>`}
+  </table>
+  ${formations?`<h3>Détail des formations</h3><p style="white-space:pre-line">${formations}</p>`:''}
+
+  <h2>5. Fournisseurs principaux</h2>
+  <table>
+    <tr><th>Catégorie</th><th>Fournisseur</th></tr>
+    ${fourn1?`<tr><td>Farine / Produits secs</td><td>${fourn1}</td></tr>`:''}
+    ${fourn2?`<tr><td>Produits frais / Laitiers</td><td>${fourn2}</td></tr>`:''}
+    ${fourn3?`<tr><td>Produits surgelés</td><td>${fourn3}</td></tr>`:''}
+  </table>
+</div>
+
+<!-- PARTIE II : BONNES PRATIQUES -->
+<div class="page page-break">
+  <h1>II. Bonnes pratiques d'hygiène</h1>
+
+  <h2>1. Hygiène corporelle du personnel</h2>
+  <div class="ok-box">✓ Valable pour le personnel en production et le personnel de vente</div>
+  <ul>
+    <li>Se laver et désinfecter les mains systématiquement : avant la prise de poste, après chaque manipulation souillante, après passage aux WC, après avoir manipulé des déchets</li>
+    <li>Porter une tenue de travail propre et complète : chaussures, pantalon, veste ou chemise, tablier, calot</li>
+    <li>Porter une coiffe enveloppant la totalité de la chevelure lors de la fabrication</li>
+    <li>Protéger les blessures par des pansements étanches et des gants</li>
+    <li>Ôter montres et bijoux avant la prise du travail</li>
+    <li>Ne pas tousser, ni éternuer au-dessus des denrées</li>
+    <li>Changer de tablier chaque jour</li>
+    <li>Arrêter de travailler en cas d'affection digestive ou de panaris</li>
+  </ul>
+
+  <h2>2. Lavage des mains — Protocole</h2>
+  <table>
+    <tr><th>Étape</th><th>Action</th><th>Durée</th></tr>
+    <tr><td>1</td><td>Mouiller les mains à l'eau tiède</td><td>—</td></tr>
+    <tr><td>2</td><td>Savonner avec savon bactéricide</td><td>—</td></tr>
+    <tr><td>3</td><td>Frotter mains, poignets, avant-bras</td><td>20 secondes minimum</td></tr>
+    <tr><td>4</td><td>Nettoyer les ongles</td><td>—</td></tr>
+    <tr><td>5</td><td>Rincer abondamment à l'eau claire</td><td>—</td></tr>
+    <tr><td>6</td><td>Sécher par tamponnement (papier jetable)</td><td>—</td></tr>
+  </table>
+
+  <h2>3. Hygiène des locaux de fabrication</h2>
+  <ul>
+    <li>Nettoyer et désinfecter les sols, murs et plafonds — éviter les coins inaccessibles</li>
+    <li>Ne jamais balayer à sec en présence de denrées sensibles non protégées</li>
+    <li>Désinsectiser et dératiser systématiquement</li>
+    <li>Protéger les ouvertures par des grilles et moustiquaires</li>
+    <li>Limiter les déplacements du personnel dans les zones les plus souillées</li>
+    <li>Éloigner les poubelles du plan de travail des denrées sensibles</li>
+    <li>Éviter l'introduction des emballages dans les locaux de fabrication</li>
+  </ul>
+
+  <h2>4. Plan de lutte contre les nuisibles</h2>
+  <table>
+    <tr><th>Prestataire</th><th>Fréquence</th><th>Dernier passage</th><th>Prochain passage</th></tr>
+    <tr><td>${prest3D||'À définir'}</td><td>${freqNuis||'Trimestrielle'}</td><td>${document.getElementById('dernierPassage').value?new Date(document.getElementById('dernierPassage').value).toLocaleDateString('fr-FR'):'—'}</td><td>À planifier</td></tr>
+  </table>
+  <div class="warn-box">⚠️ Conserver les contrats et rapports de passage dans ce classeur PMS</div>
+
+  <h2>5. Approvisionnement en eau</h2>
+  <p>L'établissement utilise exclusivement l'eau du réseau public contrôlée par les services hygiéniques de la commune. L'eau courante est la seule source d'eau utilisée pour les opérations dans le laboratoire.</p>
+  <ul>
+    <li>Ne jamais utiliser d'eaux non contrôlées (eaux de forage...)</li>
+    <li>Limiter la condensation par calorifugeage des tuyauteries</li>
+    <li>Ne jamais laisser de l'eau stagner dans les installations</li>
+  </ul>
+
+  <h2>6. Maîtrise des températures</h2>
+  <table>
+    <tr><th>Type de denrée</th><th>Température de conservation</th></tr>
+    <tr><td>Viandes hachées</td><td>≤ +2°C</td></tr>
+    <tr><td>Abats</td><td>≤ +3°C</td></tr>
+    <tr><td>Préparations de viandes</td><td>≤ +4°C</td></tr>
+    <tr><td>Ovoproduits, laits crus</td><td>≤ +4°C</td></tr>
+    <tr><td>Autres denrées très périssables (crèmes, chantilly)</td><td>≤ +4°C</td></tr>
+    <tr><td>Fromages affinés</td><td>≤ +8°C</td></tr>
+    <tr><td>Autres denrées périssables</td><td>≤ +8°C</td></tr>
+    <tr><td>Denrées congelées</td><td>≤ -18°C</td></tr>
+    <tr><td>Livraison chaude (plats cuisinés)</td><td>≥ +63°C</td></tr>
+    <tr><td>Température à cœur cuisson</td><td>≥ +63°C (80°C conseillé)</td></tr>
+    <tr><td>Refroidissement rapide</td><td>+63°C → +10°C en moins de 2h</td></tr>
+  </table>
+
+  <h3>Meubles réfrigérés de l'établissement</h3>
+  <table>
+    <tr><th>Zone / Meuble</th><th>Rôle assigné</th><th>Seuil min</th><th>Seuil max</th><th>Fréquence relevé</th></tr>
+    ${zonesRows||'<tr><td colspan="5" style="text-align:center;color:#94a3b8">Données depuis HygiPro</td></tr>'}
+  </table>
+  <div class="info-box">ℹ️ Les relevés de températures sont effectués 2 fois par jour (14h et 21h) et enregistrés dans l'application HygiPro. Les enregistrements sont disponibles sur demande de l'inspection.</div>
+
+  <h2>7. Plan de nettoyage et désinfection</h2>
+  <div class="ok-box">✓ Plan basé sur les fiches pratiques METRO Professional — Produits certifiés alimentaires</div>
+  <table>
+    <tr><th>Zone</th><th>Surface</th><th>Fréquence</th><th>Produit</th><th>Dilution</th><th>Temps contact</th></tr>
+    ${nettoyageRows||'<tr><td colspan="6" style="text-align:center;color:#94a3b8">Données depuis HygiPro</td></tr>'}
+  </table>
+  <div class="info-box">ℹ️ Les validations de nettoyage sont enregistrées avec signature dans l'application HygiPro.</div>
+</div>
+
+<!-- PARTIE III : HACCP -->
+<div class="page page-break">
+  <h1>III. Procédures basées sur les principes HACCP</h1>
+
+  <h2>1. Analyse des dangers biologiques</h2>
+  <div class="info-box">Les dangers biologiques sont les bactéries, virus et parasites susceptibles de contaminer les aliments. On distingue : Contamination (C), Multiplication (CS), Survie (S).</div>
+
+  <table class="danger-table">
+    <tr><th>Étape / Danger</th><th>Type</th><th>Mesures de maîtrise</th></tr>
+    <tr><td><strong>Réception des matières premières</strong><br>Produits non conformes, DLC dépassée, températures incorrectes</td><td>C, CS</td><td>Contrôle visuel, DLC, températures à réception. Refus des produits non conformes. Enregistrement des réceptions dans HygiPro.</td></tr>
+    <tr><td><strong>Stockage en réserve sèche</strong><br>Insectes, rongeurs, humidité excessive</td><td>C, CS</td><td>Stockage hors sol, lutte anti-nuisibles, rotation des stocks (FIFO), contrôle DLC/DLUO.</td></tr>
+    <tr><td><strong>Stockage en enceinte réfrigérée</strong><br>Rupture chaîne du froid, contamination croisée</td><td>CS</td><td>Relevés températures 2x/jour dans HygiPro. Séparation produits crus/cuits. Fermer les portes après chaque utilisation.</td></tr>
+    <tr><td><strong>Décongélation</strong><br>Multiplication rapide des germes</td><td>CS</td><td>Décongélation uniquement en enceinte réfrigérée (+4°C max). Jamais à température ambiante. DLC secondaire 24h. Jamais recongeler.</td></tr>
+    <tr><td><strong>Fabrication / Manipulation</strong><br>Contamination par le personnel, les ustensiles</td><td>C, CS</td><td>Hygiène des mains, tenue propre, ustensiles nettoyés et désinfectés. Éviter contaminations croisées cru/cuit.</td></tr>
+    <tr><td><strong>Cuisson</strong><br>Survie des germes si température insuffisante</td><td>S</td><td>Température à cœur ≥ 63°C (80°C conseillé). Enregistrement des cuissons dans HygiPro avec température à cœur mesurée.</td></tr>
+    <tr><td><strong>Refroidissement rapide</strong><br>Multiplication dans la zone dangereuse 10-63°C</td><td>CS</td><td>Passage de +63°C à +10°C en moins de 2h. Cellule de refroidissement ou bain-marie glacé. Stocker à +3°C max.</td></tr>
+    <tr><td><strong>Vente / Distribution</strong><br>Contamination en vitrine, rupture chaîne froid</td><td>C, CS</td><td>Vitrine réfrigérée surveillée. Étiquetage DLC. Protection produits (film, couvercle). Nettoyage vitrine quotidien.</td></tr>
+  </table>
+
+  <h2>2. Analyse des dangers chimiques</h2>
+  <table class="danger-table">
+    <tr><th>Danger chimique</th><th>Origine</th><th>Mesures de maîtrise</th></tr>
+    <tr><td>Résidus de produits nettoyage</td><td>Nettoyage insuffisamment rincé</td><td>Respecter les protocoles de rinçage. Stocker les produits séparément des denrées.</td></tr>
+    <tr><td>Mycotoxines (moisissures)</td><td>Farines, céréales mal stockées</td><td>Contrôle à réception, stockage hors humidité, rotation des stocks.</td></tr>
+    <tr><td>Allergènes non déclarés</td><td>Contamination croisée</td><td>Information obligatoire clients sur les 14 allergènes majeurs. Nettoyage entre préparations.</td></tr>
+    <tr><td>Additifs alimentaires</td><td>Dosage incorrect</td><td>Respecter les doses prescrites par le fabricant. Former le personnel.</td></tr>
+    <tr><td>Huiles de friture dégradées</td><td>Surchauffe, vieillissement</td><td>Ne pas dépasser 180°C. Contrôle visuel et olfactif quotidien. Changement régulier.</td></tr>
+  </table>
+
+  <h2>3. Analyse des dangers physiques</h2>
+  <table class="danger-table">
+    <tr><th>Corps étranger</th><th>Source probable</th><th>Fréquence</th><th>Mesures de maîtrise</th></tr>
+    <tr><td>Verre, ampoules</td><td>Éclairage, récipients</td><td>Possible</td><td>Protéger les éclairages. Jeter tout produit exposé à des débris de verre.</td></tr>
+    <tr><td>Métal, vis</td><td>Équipements</td><td>Rare</td><td>Maintenance régulière du matériel. Vérification avant utilisation.</td></tr>
+    <tr><td>Os, arêtes</td><td>Matières premières animales</td><td>Rare</td><td>Contrôle visuel à réception et à la préparation.</td></tr>
+    <tr><td>Plastique</td><td>Emballages, équipements</td><td>Rare</td><td>Éliminer les emballages hors zone de production. Matériel en bon état.</td></tr>
+    <tr><td>Cheveux, ongles</td><td>Personnel</td><td>Possible</td><td>Port de coiffe obligatoire. Ongles courts et propres. Pas de faux ongles.</td></tr>
+    <tr><td>Insectes, rongeurs</td><td>Nuisibles</td><td>Rare</td><td>Plan de lutte anti-nuisibles. Protéger les ouvertures. Contrat prestataire.</td></tr>
+  </table>
+
+  <h2>4. Points critiques de contrôle (CCP et PrPo)</h2>
+  <table>
+    <tr><th>Étape</th><th>Type</th><th>Limite critique</th><th>Action corrective</th><th>Enregistrement</th></tr>
+    <tr><td>Températures de stockage</td><td>PrPo</td><td>Selon denrée (voir tableau températures)</td><td>Transfert du produit, vérification matériel, signalement responsable</td><td>HygiPro — 2x/jour</td></tr>
+    <tr><td>Température à cœur cuisson</td><td>CCP</td><td>≥ 63°C (80°C conseillé)</td><td>Recuisson ou destruction du produit</td><td>HygiPro — chaque fournée</td></tr>
+    <tr><td>Refroidissement rapide</td><td>CCP</td><td>+63°C → +10°C en &lt; 2h</td><td>Destruction du produit si délai dépassé</td><td>HygiPro — enregistrement refroidissement</td></tr>
+    <tr><td>Réception matières premières</td><td>PrPo</td><td>DLC valide, températures conformes, emballages intègres</td><td>Refus ou retour fournisseur, signalement</td><td>HygiPro — chaque réception</td></tr>
+    <tr><td>Nettoyage et désinfection</td><td>PrPo</td><td>Selon plan de nettoyage</td><td>Renettoyage, action corrective documentée</td><td>HygiPro — signature quotidienne</td></tr>
+  </table>
+</div>
+
+<!-- FICHES MATIERES PREMIERES -->
+<div class="page page-break">
+  <h1>IV. Fiches matières premières — Dangers et mesures de maîtrise</h1>
+
+  <h2>Farines, fécules, amidons, sucres</h2>
+  <p><strong>Risques :</strong> Contamination par insectes ou rongeurs, humidité, corps étrangers (particules volantes).</p>
+  <p><strong>Mesures :</strong> Stockage hors sol sur palette. Ne pas balayer à sec. Transvaser dans des bacs fermés. Lutter contre les nuisibles. Vérifier l'intégrité des conditionnements à réception. Contrôler DLC/DLUO.</p>
+
+  <h2>Œufs (coquilles)</h2>
+  <p><strong>Risques :</strong> Salmonelles en surface de la coquille. Contamination lors du cassage.</p>
+  <p><strong>Mesures :</strong> Ne jamais utiliser d'œufs fêlés (sauf pâtes cuites). Ne jamais nettoyer les œufs. Conserver en réfrigération (+4°C max). Se nettoyer les mains avant et après cassage. Désinfecter la clarifieuse avant et après utilisation. Sortir uniquement la quantité nécessaire.</p>
+
+  <h2>Laits, crèmes, fromages blancs</h2>
+  <p><strong>Risques :</strong> Germes pathogènes. Multiplication rapide au-dessus de +4°C.</p>
+  <p><strong>Mesures :</strong> Stocker au froid positif (+4°C max). Refermer après chaque utilisation. Respecter impérativement les DLC. Pour crèmes sensibles : pasteuriser (72°C, 4 minutes). Conserver les crèmes Fleurettes en froid positif.</p>
+
+  <h2>Beurre</h2>
+  <p><strong>Risques :</strong> Corps gras sensibles aux odeurs environnantes.</p>
+  <p><strong>Mesures :</strong> Ne pas stocker dans un emballage ouvert. Stocker à l'abri des odeurs. Vérifier systématiquement le conditionnement.</p>
+
+  <h2>Ovoproduits (œufs liquides pasteurisés)</h2>
+  <p><strong>Risques :</strong> Multiplication des germes si stockage incorrect.</p>
+  <p><strong>Mesures :</strong> Respecter températures et durées de stockage (+4°C max). Utiliser dans les 3 jours après ouverture. Ne pas utiliser pour fabrications sensibles non recuites. Après décongélation conserver à +4°C max.</p>
+
+  <h2>Chocolats, poudres de cacao, pâte de cacao</h2>
+  <p><strong>Risques :</strong> Contamination par insectes. Humidité favorise développement moisissures.</p>
+  <p><strong>Mesures :</strong> Stocker en réserve sèche, à l'abri de l'humidité et de la lumière. Refermer soigneusement après usage. Utiliser la couverture de cacao pour fabrications sensibles.</p>
+
+  <h2>Viandes et charcuteries</h2>
+  <p><strong>Risques :</strong> Contamination à l'origine, multiplication rapide (milieu idéal).</p>
+  <p><strong>Mesures :</strong> Vérifier fraîcheur et DLC à réception. Éliminer l'emballage avant stockage en chambre froide. Stocker impérativement au froid positif (+4°C max). Désinfecter couteaux-trancheurs à l'alcool 70° avant utilisation. Stocker dans des caisses à clayettes couvertes et nettoyées régulièrement.</p>
+
+  <h2>Légumes et fruits</h2>
+  <p><strong>Risques :</strong> Spores de germes telluriques, contamination par conditionnements souillés.</p>
+  <p><strong>Mesures :</strong> Lavage à l'eau potable avant incorporation. Éliminer les emballages hors zone de fabrication. Stocker au froid positif (+4°C max). Éliminer les parties abîmées. Ne jamais recongeler après décongélation.</p>
+
+  <h2>Produits réceptionnés surgelés</h2>
+  <p><strong>Risques :</strong> Rupture chaîne du froid, contamination à la décongélation.</p>
+  <p><strong>Mesures :</strong> Stocker à -18°C. Ne jamais recongeler un produit décongelé. Conserver la DLUO et l'identification du lot. Décongeler uniquement en enceinte réfrigérée.</p>
+
+  <h2>Fromages affinés</h2>
+  <p><strong>Risques :</strong> Moisissures, contaminations croisées.</p>
+  <p><strong>Mesures :</strong> Stocker au froid positif (+6°C max). Éliminer les fromages anormalement moisis. Éviter les variations de température. Utiliser rapidement après ouverture du sachet.</p>
+</div>
+
+<!-- PARTIE IV : TRACABILITE -->
+<div class="page page-break">
+  <h1>V. Traçabilité et gestion des produits non conformes</h1>
+
+  <h2>1. Traçabilité des matières premières</h2>
+  <p>Toutes les réceptions de matières premières sont enregistrées dans l'application HygiPro avec :</p>
+  <ul>
+    <li>Nom du fournisseur</li>
+    <li>Nom du produit et numéro de lot</li>
+    <li>Date de livraison</li>
+    <li>Températures camion et produit à réception</li>
+    <li>Contrôles visuels (emballage, étiquetage, aspect, odeur)</li>
+    <li>DLC / DLUO</li>
+    <li>Conformité et action corrective si non-conforme</li>
+    <li>Signature du réceptionnaire</li>
+  </ul>
+
+  <h2>2. Traçabilité des produits fabriqués</h2>
+  <p>Les étiquettes de traçabilité sont générées dans HygiPro pour :</p>
+  <ul>
+    <li>Produits ouverts (DLC secondaire automatique)</li>
+    <li>Produits en décongélation (24h maximum réglementaire)</li>
+    <li>Produits en cours de fabrication</li>
+    <li>Produits cuits (température à cœur enregistrée)</li>
+  </ul>
+
+  <h2>3. Gestion des produits non conformes</h2>
+  <table>
+    <tr><th>Situation</th><th>Action à mener</th><th>Enregistrement</th></tr>
+    <tr><td>Produit reçu non conforme</td><td>Refus ou retour fournisseur. Ne pas mettre en vente.</td><td>Fiche réception HygiPro</td></tr>
+    <tr><td>DLC dépassée</td><td>Destruction immédiate du produit. Ne jamais modifier les dates.</td><td>Registre incidents HygiPro</td></tr>
+    <tr><td>Température hors seuil</td><td>Vérifier le matériel. Évaluer la dangerosité. Contacter le responsable.</td><td>Relevé température HygiPro</td></tr>
+    <tr><td>Corps étranger découvert</td><td>Retirer le lot concerné. Identifier l'origine. Alerter le responsable.</td><td>Registre incidents HygiPro</td></tr>
+    <tr><td>Plainte client</td><td>Recueillir les informations. Identifier le lot. Analyser la cause. Mettre en place action corrective.</td><td>Registre incidents HygiPro</td></tr>
+  </table>
+
+  <h2>4. Procédure TIAC (Toxi-Infection Alimentaire Collective)</h2>
+  <div class="warn-box">⚠️ En cas de TIAC suspectée ou avérée, appeler immédiatement l'ARS (Agence Régionale de Santé) et la DDPP (Direction Départementale de la Protection des Populations).</div>
+  <p><strong>Définition :</strong> Au moins 2 cas groupés d'une symptomatologie similaire, en général gastro-intestinale, dont on peut rapporter la cause à une même origine alimentaire.</p>
+  <p><strong>Procédure d'alerte :</strong></p>
+  <ul>
+    <li>Signalement immédiat à l'ARS : 0 800 059 059 (numéro national)</li>
+    <li>Conserver les aliments suspects au froid (ne pas les jeter)</li>
+    <li>Conserver les documents de traçabilité (HygiPro)</li>
+    <li>Coopérer avec les autorités sanitaires pour l'enquête épidémiologique</li>
+  </ul>
+
+  <h2>5. Allergènes — Information obligatoire</h2>
+  <div class="warn-box">⚠️ Obligation d'information depuis le 1er juillet 2015 — Règlement UE 1169/2011</div>
+  <p>Les 14 allergènes majeurs à déclarer obligatoirement :</p>
+  <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">
+    ${['Gluten (blé, seigle, orge, avoine)','Crustacés','Œufs','Poissons','Arachides','Soja','Lait (dont lactose)','Fruits à coque','Céleri','Moutarde','Graines de sésame','Anhydride sulfureux et sulfites','Lupin','Mollusques'].map(a=>`<span style="background:#fee2e2;color:#991b1b;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600">${a}</span>`).join('')}
+  </div>
+</div>
+
+<!-- SIGNATURES -->
+<div class="page">
+  <h1>Validation et mise à jour du PMS</h1>
+
+  <table>
+    <tr><th>Version</th><th>Date</th><th>Modifications</th><th>Validé par</th></tr>
+    <tr><td>${version}</td><td>${datePMS}</td><td>Création initiale du PMS</td><td>${resp}</td></tr>
+    <tr><td></td><td></td><td></td><td></td></tr>
+    <tr><td></td><td></td><td></td><td></td></tr>
+  </table>
+
+  <div class="sign-block">
+    <div>
+      <p style="margin-bottom:40px">Le responsable de l'établissement certifie que ce Plan de Maîtrise Sanitaire est conforme aux pratiques réelles de l'établissement et s'engage à le mettre à jour en cas de modification des procédés.</p>
+      <div class="sign-line">Signature et cachet du responsable</div>
+    </div>
+    <div>
+      <p style="margin-bottom:40px">Ce document a été généré automatiquement par HygiPro à partir des données de traçabilité de l'établissement. Les enregistrements (températures, nettoyage, réceptions, incidents) sont disponibles sur demande.</p>
+      <div class="sign-line">Date : ${dateGen}</div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <p>${nom} — Plan de Maîtrise Sanitaire Version ${version} — ${dateGen}</p>
+    <p>Généré par HygiPro · hygipro.vercel.app · Conforme DGAL/SDSSA 2022-349 · CE 852/2004</p>
+  </div>
+</div>
+
+<script>window.onload=function(){window.print();}<\/script>
+</body></html>`;
+
+  const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.target='_blank';a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),10000);
+}
+</script>
+</body>
+</html>
