@@ -16,8 +16,9 @@ export default async function handler(req, res) {
         'Authorization': 'Bearer re_58nxWcgM_8WhSRuBBHa1UvD9SQpRvitR8'
       },
       body: JSON.stringify({
-        from: 'HygiPro <onboarding@resend.dev>',
+        from: 'HygiPro <contact@hygi-pro.fr>',
         to: [to],
+        reply_to: 'contact@hygi-pro.fr',
         subject: subject,
         html: html
       })
